@@ -5,6 +5,7 @@
   "license": "MIT",
   "dependencies": {
     "ethereumjs-tx": "^2.1.2",
+    "line-by-line": "^0.1.6",
     "web3": "3.0.0-rc.4"
   }
 }
