@@ -53,14 +53,14 @@ class BalanceModel {
     }
 
     inc(address, amount) {
-        if (address == ADDRESS_ZERO) return;
+        if (address == ADDRESS_ZERO || amount.eqn(0)) return;
         let cur = this.balance.get(address);
         if (!cur) cur = ZERO;
         this.balance.set(address, cur.add(amount));
     }
 
     desc(address, amount) {
-        if (address == ADDRESS_ZERO) return;
+        if (address == ADDRESS_ZERO || amount.eqn(0)) return;
         let cur = this.balance.get(address);
         if (!cur) {
             console.log('Invalid balance', address);
