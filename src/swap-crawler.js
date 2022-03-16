@@ -67,7 +67,7 @@ async function run() {
         } catch (err) { console.log(`Error ${from}:`, err) }
         from += batchSize;
     }
-    let from = 15000000;
+    from = 15000000;
     while (from < 16103000) {
         try {
             await crawlSyncLogs(from, from + batchSize - 1);
