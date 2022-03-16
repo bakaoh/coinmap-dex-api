@@ -5,6 +5,8 @@ const Web3 = require("web3");
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const ZERO = Web3.utils.toBN(0);
 
+const sortBalance = (a, b) => (a[1].gt(b[1])) ? -1 : 1;
+
 class BalanceModel {
     constructor() {
         this.balance = new Map();
@@ -14,8 +16,20 @@ class BalanceModel {
         return this.balance.size;
     }
 
-    topHolder() {
-        
+    topHolder(n) {
+        const rs = [];
+        this.balance.forEach((balance, address) => {
+            if (rs.length < n) {
+                rs.push([address, balance]);
+                rs.sort(sortBalance);
+            } else if (balance.gt(rs[n - 1][1])) {
+                rs.pop();
+                rs.push([address, balance]);
+                rs.sort(sortBalance);
+            }
+        });
+
+        return rs;
     }
 
     loadLogFile(file) {
