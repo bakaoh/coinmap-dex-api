@@ -10,8 +10,12 @@ class BalanceModel {
         this.balance = new Map();
     }
 
-    print() {
-        console.log(this.balance.size);
+    totalHolder() {
+        return this.balance.size;
+    }
+
+    topHolder() {
+        
     }
 
     loadLogFile(file) {
@@ -22,7 +26,10 @@ class BalanceModel {
 
     onLog(line) {
         const p = line.split(',');
-        if (p.length != 4) console.log('Invalid log', line);
+        if (p.length != 4) {
+            console.log('Invalid log', line);
+            return;
+        }
         const block = p[0];
         const from = p[1];
         const to = p[2];
@@ -41,8 +48,19 @@ class BalanceModel {
     desc(address, amount) {
         if (address == ADDRESS_ZERO) return;
         let cur = this.balance.get(address);
-        if (!cur) cur = ZERO;
-        this.balance.set(address, cur.sub(amount));
+        if (!cur) {
+            console.log('Invalid balance', address);
+            return;
+        }
+        cur = cur.sub(amount);
+        if (cur.ltn(0)) {
+            this.balance.delete(address);
+            console.log('Invalid balance', address, cur.toString(10));
+        } else if (cur.eqn(0)) {
+            this.balance.delete(address);
+        } else {
+            this.balance.set(address, cur);
+        }
     }
 }
 

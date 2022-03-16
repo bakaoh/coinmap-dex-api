@@ -1,7 +1,7 @@
 const fs = require("fs");
 const Web3 = require("web3");
 
-const batchSize = 500;
+const batchSize = 1000;
 const endpoint = "https://bsc-dataseed.binance.org";
 const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 const cakeAddress = '0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82';
@@ -32,16 +32,16 @@ async function crawlLogs(fromBlock, toBlock) {
     fileLog.end();
     const ms = Date.now() - startMs;
     console.log(`Crawl [${fromBlock}-${toBlock}]: ${pastLogs.length} (${ms}ms)`)
-    if (ms < 5000) await sleep(5000 - ms);
+    if (ms < 2000) await sleep(2000 - ms);
 }
 
 async function run() {
-    let from = 16000000;
+    let from = 1000000;
     while (from < 16103000) {
         try {
             await crawlLogs(from, from + batchSize - 1);
         } catch (err) { console.log(`Error ${from}:`, err) }
-        from += 500;
+        from += batchSize;
     }
 }
 
