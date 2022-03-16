@@ -1,4 +1,5 @@
 const BalanceModel = require("./balance");
+const BlockModel = require("./block");
 
 async function main() {
     const m = new BalanceModel();
