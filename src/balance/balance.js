@@ -10,42 +10,23 @@ const sortBalance = (a, b) => (a[1].gt(b[1])) ? -1 : 1;
 
 class BalanceModel {
     constructor(checkpoints) {
-        this.balance = new Map();
+        this.balance = {};
         this.hastx = {};
         this.checkpoints = checkpoints;
         this.cid = 0;
         this.newholders = [];
     }
 
-    totalHolder() {
-        return this.balance.size;
-    }
-
-    topHolder(n) {
-        this.balance.forEach((balance, address) => {
-            if (rs.length < n) {
-                rs.push([address, balance]);
-                rs.sort(sortBalance);
-            } else if (balance.gt(rs[n - 1][1])) {
-                rs.pop();
-                rs.push([address, balance]);
-                rs.sort(sortBalance);
-            }
-        });
-
-        return rs;
-    }
-
     createCacheFile(block) {
-        const total = fs.createWriteStream(`logs/cake-total.log`, opts);
-        total.write(`${block},${this.balance.size}\n`);
-
         let dir = `logs/holders`;
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
         const holders = fs.createWriteStream(`${dir}/${block}.log`, opts);
 
+        let count = 0;
         const toplist = [];
-        this.balance.forEach((balance, address) => {
+        for (let address in this.balance) {
+            const balance = this.balance[address];
+            count++;
             holders.write(`${address},${balance}\n`);
             if (toplist.length < 100) {
                 toplist.push([address, balance]);
@@ -55,7 +36,10 @@ class BalanceModel {
                 toplist.push([address, balance]);
                 toplist.sort(sortBalance);
             }
-        });
+        }
+
+        const total = fs.createWriteStream(`logs/cake-total.log`, opts);
+        total.write(`${block},${count}\n`);
 
         dir = `logs/topholders`;
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -100,32 +84,29 @@ class BalanceModel {
 
     inc(address, amount) {
         if (address == ADDRESS_ZERO || amount.eqn(0)) return;
-        let cur = this.balance.get(address);
-        if (!cur) {
-            cur = ZERO;
-        }
+        const cur = this.balance[address] || ZERO;
         if (!this.hastx[address]) {
             this.newholders.push(address);
             this.hastx[address] = true;
         }
-        this.balance.set(address, cur.add(amount));
+        this.balance[address] = cur.add(amount);
     }
 
     desc(address, amount) {
         if (address == ADDRESS_ZERO || amount.eqn(0)) return;
-        let cur = this.balance.get(address);
+        let cur = this.balance[address];
         if (!cur) {
             console.log('Invalid balance', address);
             return;
         }
         cur = cur.sub(amount);
         if (cur.ltn(0)) {
-            this.balance.delete(address);
+            delete this.balance[address];
             console.log('Invalid balance', address, cur.toString(10));
         } else if (cur.eqn(0)) {
-            this.balance.delete(address);
+            delete this.balance[address];
         } else {
-            this.balance.set(address, cur);
+            this.balance[address] = cur;
         }
     }
 }
