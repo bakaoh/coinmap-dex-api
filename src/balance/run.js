@@ -2,7 +2,7 @@ const axios = require("axios");
 const BalanceModel = require("./balance");
 
 async function main() {
-    const { data } = await axios.get("http://128.199.189.253:9610/startofday?n=300");
+    const { data } = await axios.get("http://128.199.189.253:9610/startofday?n=540");
     const model = new BalanceModel(data);
     for (let i = 6; i <= 161; i++) {
         const startMs = Date.now();
