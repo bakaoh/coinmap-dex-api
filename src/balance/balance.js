@@ -4,12 +4,17 @@ const Web3 = require("web3");
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const ZERO = Web3.utils.toBN(0);
+const opts = { flags: "a" };
 
 const sortBalance = (a, b) => (a[1].gt(b[1])) ? -1 : 1;
 
 class BalanceModel {
-    constructor() {
+    constructor(checkpoints) {
         this.balance = new Map();
+        this.hastx = {};
+        this.checkpoints = checkpoints;
+        this.cid = 0;
+        this.newholders = [];
     }
 
     totalHolder() {
@@ -17,7 +22,6 @@ class BalanceModel {
     }
 
     topHolder(n) {
-        const rs = [];
         this.balance.forEach((balance, address) => {
             if (rs.length < n) {
                 rs.push([address, balance]);
@@ -32,6 +36,43 @@ class BalanceModel {
         return rs;
     }
 
+    createCacheFile(block) {
+        const total = fs.createWriteStream(`logs/cake-total.log`, opts);
+        total.write(`${block},${this.balance.size}\n`);
+
+        let dir = `logs/holders`;
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        const holders = fs.createWriteStream(`${dir}/${block}.log`, opts);
+
+        const toplist = [];
+        this.balance.forEach((balance, address) => {
+            holders.write(`${address},${balance}\n`);
+            if (toplist.length < 100) {
+                toplist.push([address, balance]);
+                toplist.sort(sortBalance);
+            } else if (balance.gt(toplist[100 - 1][1])) {
+                toplist.pop();
+                toplist.push([address, balance]);
+                toplist.sort(sortBalance);
+            }
+        });
+
+        dir = `logs/topholders`;
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        const topholders = fs.createWriteStream(`${dir}/${block}.log`, opts);
+        toplist.forEach((v) => {
+            topholders.write(`${v[0]},${v[1]}\n`);
+        });
+
+        dir = `logs/newholders`;
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        const newholders = fs.createWriteStream(`${dir}/${block}.log`, opts);
+        this.newholders.forEach((v) => {
+            newholders.write(`${v}\n`);
+        });
+        this.newholders = [];
+    }
+
     loadLogFile(file) {
         const lr = new LineByLine(file);
         lr.on('line', this.onLog.bind(this));
@@ -44,10 +85,15 @@ class BalanceModel {
             console.log('Invalid log', line);
             return;
         }
-        const block = p[0];
+        const block = parseInt(p[0]);
         const from = p[1];
         const to = p[2];
         const value = Web3.utils.toBN(p[3]);
+
+        if (block > this.checkpoints[this.cid]) {
+            this.createCacheFile(this.checkpoints[this.cid]);
+            while (block > parseInt(this.checkpoints[this.cid])) this.cid++;
+        }
         this.desc(from, value);
         this.inc(to, value);
     }
@@ -55,7 +101,13 @@ class BalanceModel {
     inc(address, amount) {
         if (address == ADDRESS_ZERO || amount.eqn(0)) return;
         let cur = this.balance.get(address);
-        if (!cur) cur = ZERO;
+        if (!cur) {
+            cur = ZERO;
+        }
+        if (!this.hastx[address]) {
+            this.newholders.push(address);
+            this.hastx[address] = true;
+        }
         this.balance.set(address, cur.add(amount));
     }
 
