@@ -1,5 +1,6 @@
 const LpModel = require("./lp");
 const SyncModel = require("./sync");
+const SwapModel = require("./swap");
 
 async function prefetchData() {
     const startMs = Date.now();
@@ -13,7 +14,7 @@ async function prefetchData() {
     console.log(`Done (${ms}ms)`)
 }
 
-async function main() {
+async function partitionSync() {
     let startMs = Date.now();
     const lp = new LpModel();
     await lp.loadLpDetailFile();
@@ -31,4 +32,21 @@ async function main() {
 }
 
 
-main();
+async function partitionSwap() {
+    let startMs = Date.now();
+    const lp = new LpModel();
+    await lp.loadLpDetailFile();
+    let ms = Date.now() - startMs;
+    console.log(`Load LP Detail done (${ms}ms)`)
+
+    const s = new SwapModel(lp);
+    for (let i = 150; i <= 161; i++) {
+        startMs = Date.now();
+        await s.partitionSwapLogFile(`logs/swap-${i}.log`).catch(err => { });
+        ms = Date.now() - startMs;
+        console.log(`Partition swap log [${i}] (${ms}ms)`)
+    }
+    // s.closeAll();
+}
+
+partitionSwap();
