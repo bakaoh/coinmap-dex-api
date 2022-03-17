@@ -2,20 +2,21 @@ const fs = require('fs');
 const LineByLine = require('line-by-line');
 const Web3 = require("web3");
 
-const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
-const ZERO = Web3.utils.toBN(0);
-
-const sortBalance = (a, b) => (a[1].gt(b[1])) ? -1 : 1;
+const opts = { flags: "a" };
 
 class SwapModel {
     constructor() {
         this.lp = {};
     }
 
-    print() {
+    writeLPFile() {
         const keys = Object.keys(this.lp);
         console.log("Total:", keys.length);
-        console.log(keys);
+        const lp = fs.createWriteStream(`logs/lp.log`, opts);
+        keys.forEach(address => {
+            lp.write(`${address}\n`);
+        })
+        lp.end();
     }
 
     loadLogFile(file) {

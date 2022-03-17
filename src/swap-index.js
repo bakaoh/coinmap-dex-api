@@ -9,7 +9,7 @@ async function main() {
     const ms = Date.now() - startMs;
     console.log(`Scan swap logs done (${ms}ms)`)
 
-    m.print();
+    m.writeLPFile();
 }
 
 main();
