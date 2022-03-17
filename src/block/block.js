@@ -8,14 +8,35 @@ const web3 = new Web3(endpoint);
 const opts = { flags: "a" };
 const fileLog = fs.createWriteStream(BLOCK_LOG, opts);
 
-async function getBlockTimestamp() {
-    const rs = await web3.eth.getBlock('latest', false);
+const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
+async function getBlockTimestamp(block = 'latest') {
+    const rs = await web3.eth.getBlock(block, false);
     return [rs.number, rs.timestamp];
 }
 
 class BlockModel {
     constructor() {
         this.block = [];
+    }
+
+    async crawl() {
+        let from = 0;
+        let batchSize = 10000;
+        const latest = await getBlockTimestamp();
+        while (from < latest[0]) {
+            const startMs = Date.now();
+            try {
+                const [number, ts] = await getBlockTimestamp(from);
+                fileLog.write(`${number},${ts}\n`);
+            } catch (err) { }
+
+            const ms = Date.now() - startMs;
+            console.log(`Get blocktime ${from} (${ms}ms)`)
+            if (ms < 2000) await sleep(2000 - ms);
+            from += batchSize;
+        }
+        fileLog.end();
     }
 
     estimateBlock(ms) {
