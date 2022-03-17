@@ -1,30 +1,30 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
-const Web3 = require("web3");
 const { getLPToken01 } = require('./multicall');
-const PancakePairAbi = require('./abi/PancakePair.json');
 
 const LP_FILE = `logs/lp.log`;
 const LP_DETAIL_FILE = `logs/lp-detail.log`;
-const endpoint = "https://bsc-dataseed.binance.org";
 const opts = { flags: "a" };
-const web3 = new Web3(endpoint);
 
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
-class SwapModel {
+class LpModel {
     constructor() {
         this.lp = {};
     }
 
-    async getToken(lpAddress) {
-        const pair = new web3.eth.Contract(PancakePairAbi, lpAddress);
-        const token0 = await pair.methods.token0().call();
-        const token1 = await pair.methods.token1().call();
-        console.log(token0, token1)
+    async getToken01(lpAddress) {
+        if (!this.lp[lpAddress]) {
+            const tokens = await getLPToken01([lpAddress])
+            this.lp[tokens[0][0]] = [tokens[0][1], tokens[0][2]];
+            const lp = fs.createWriteStream(LP_DETAIL_FILE, opts);
+            lp.write(`${tokens[0][0]},${tokens[0][1]},${tokens[0][2]}\n`);
+            lp.end();
+        }
+        return this.lp[lpAddress];
     }
 
-    createLPFile() {
+    createLpFile() {
         const keys = Object.keys(this.lp);
         console.log("Total:", keys.length);
         const lp = fs.createWriteStream(LP_FILE, opts);
@@ -34,7 +34,7 @@ class SwapModel {
         lp.end();
     }
 
-    loadLPFile() {
+    loadLpFile() {
         const lr = new LineByLine(LP_FILE);
         lr.on('line', (line) => {
             this.lp[line] = true;
@@ -42,7 +42,7 @@ class SwapModel {
         return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }
 
-    async createLPDetailFile() {
+    async createLpDetailFile() {
         const batchSize = 200;
         const keys = Object.keys(this.lp);
         const lp = fs.createWriteStream(LP_DETAIL_FILE, opts);
@@ -66,6 +66,16 @@ class SwapModel {
         lp.end();
     }
 
+    loadLpDetailFile() {
+        const lr = new LineByLine(LP_DETAIL_FILE);
+        lr.on('line', (line) => {
+            const p = line.split(',');
+            if (p.length != 3) return;
+            this.lp[p[0]] = [p[1], p[2]];
+        });
+        return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
+    }
+
     loadSwapLogFile(file) {
         const lr = new LineByLine(file);
         lr.on('line', (line) => {
@@ -78,4 +88,4 @@ class SwapModel {
 
 }
 
-module.exports = SwapModel;
+module.exports = LpModel;
