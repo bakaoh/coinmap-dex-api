@@ -11,16 +11,24 @@ const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 class LpModel {
     constructor() {
         this.lp = {};
+        this.invalid = {};
     }
 
     async getToken01(lpAddress) {
+        if (this.invalid[lpAddress]) throw `Invalid lp token ${lpAddress}`;
         if (!this.lp[lpAddress]) {
             const startMs = Date.now();
-            const tokens = await getLPToken01([lpAddress])
-            this.lp[tokens[0][0]] = [tokens[0][1], tokens[0][2]];
-            const lp = fs.createWriteStream(LP_DETAIL_FILE, opts);
-            lp.write(`${tokens[0][0]},${tokens[0][1]},${tokens[0][2]}\n`);
-            lp.end();
+            try {
+                const tokens = await getLPToken01([lpAddress])
+                this.lp[tokens[0][0]] = [tokens[0][1], tokens[0][2]];
+                const lp = fs.createWriteStream(LP_DETAIL_FILE, opts);
+                lp.write(`${tokens[0][0]},${tokens[0][1]},${tokens[0][2]}\n`);
+                lp.end();
+            } catch (err) {
+                if (err.toString().includes("Multicall aggregate: call failed")) {
+                    this.invalid[lpAddress] = true;
+                }
+            }
             const ms = Date.now() - startMs;
             if (ms < 2000) await sleep(2000 - ms);
         }
