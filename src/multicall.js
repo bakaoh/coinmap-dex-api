@@ -36,14 +36,13 @@ async function getLPToken01(addresses) {
 async function getTokenInfo(addresses) {
     const calldata = [];
     addresses.forEach(address => {
-        calldata.push([address, 'decimals', []]);
         calldata.push([address, 'symbol', []]);
         calldata.push([address, 'name', []]);
     })
     const data = await aggregate(calldata, Erc20Abi);
     const rs = [];
     for (let i = 0; i < addresses.length; i++) {
-        rs.push([addresses[i], data[i * 3][0], data[i * 3 + 1][0], data[i * 3 + 2][0]]);
+        rs.push([addresses[i], data[i * 2][0], data[i * 2 + 1][0]]);
     }
     return rs;
 }

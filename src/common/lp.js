@@ -12,6 +12,7 @@ const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 class LpModel {
     constructor() {
         this.lp = {};
+        this.token = {};
         this.invalid = {};
     }
 
@@ -33,7 +34,28 @@ class LpModel {
             const ms = Date.now() - startMs;
             if (ms < 2000) await sleep(2000 - ms);
         }
-        return this.lp[lpAddress];
+        return [lpAddress, ...this.lp[lpAddress]];
+    }
+
+    async getToken(address) {
+        if (this.invalid[address]) throw `Invalid token ${address}`;
+        if (!this.token[address]) {
+            const startMs = Date.now();
+            try {
+                const tokens = await getTokenInfo([address])
+                this.token[tokens[0][0]] = [tokens[0][1], tokens[0][2]];
+                const writer = fs.createWriteStream(TOKEN_DETAIL_FILE, opts);
+                writer.write(`${tokens[0][0]},${tokens[0][1]},${tokens[0][2]}\n`);
+                writer.end();
+            } catch (err) {
+                if (err.toString().includes("Multicall aggregate: call failed")) {
+                    this.invalid[address] = true;
+                }
+            }
+            const ms = Date.now() - startMs;
+            if (ms < 2000) await sleep(2000 - ms);
+        }
+        return [address, ...this.token[address]];
     }
 
     loadSwapLogFile(file) {
@@ -100,11 +122,14 @@ class LpModel {
 
     async createTokenDetailFile() {
         const batchSize = 200;
-        const keys = [];
+        const all = new Set();
         for (let address in this.lp) {
-            if (!keys.includes(this.lp[address][0])) keys.push(this.lp[address][0]);
-            if (!keys.includes(this.lp[address][1])) keys.push(this.lp[address][1]);
+            all.add(this.lp[address][0]);
+            all.add(this.lp[address][1]);
         }
+        const keys = [...all];
+        console.log(`Total token ${keys.length}`);
+
         const writer = fs.createWriteStream(TOKEN_DETAIL_FILE, opts);
         let from = 0;
         while (from < keys.length) {
@@ -113,7 +138,7 @@ class LpModel {
                 const startMs = Date.now();
                 const tokens = await getTokenInfo(keys.slice(from, to))
                 tokens.forEach(i => {
-                    writer.write(`${i[0]},${i[1]},${i[2]},${i[3]}\n`);
+                    writer.write(`${i[0]},${i[1]},${i[2]}\n`);
                 });
                 const ms = Date.now() - startMs;
                 console.log(`Query token [${from}-${to}] (${ms}ms)`)
@@ -124,6 +149,16 @@ class LpModel {
             from = to;
         }
         writer.end();
+    }
+
+    loadTokenDetailFile() {
+        const lr = new LineByLine(TOKEN_DETAIL_FILE);
+        lr.on('line', (line) => {
+            const p = line.split(',', 3);
+            if (p.length != 3) return;
+            this.token[p[0]] = [p[1], p[2]];
+        });
+        return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }
 }
 
