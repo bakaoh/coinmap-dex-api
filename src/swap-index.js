@@ -1,3 +1,4 @@
+const axios = require("axios");
 const LpModel = require("./lp");
 const SyncModel = require("./sync");
 const SwapModel = require("./swap");
@@ -46,7 +47,23 @@ async function partitionSwap() {
         ms = Date.now() - startMs;
         console.log(`Partition swap log [${i}] (${ms}ms)`)
     }
-    // s.closeAll();
+    s.closeAll();
 }
 
-partitionSwap();
+async function getBNBprice() {
+    const WBNB = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c';
+    const BUSD = '0xe9e7cea3dedca5984780bafc599bd69add087d56';
+    const { data } = await axios.get("http://128.199.189.253:9610/startofday?n=540");
+
+    let startMs = Date.now();
+    const lp = new LpModel();
+    await lp.loadLpDetailFile();
+
+    const s = new SyncModel(lp);
+    s.getPrice(WBNB, BUSD, data)
+
+    let ms = Date.now() - startMs;
+    console.log(`Get price done (${ms}ms)`)
+}
+
+getBNBprice();

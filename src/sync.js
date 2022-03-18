@@ -29,6 +29,29 @@ class SyncModel {
         return this.file[token].writer;
     }
 
+    async getPrice(token0, token1, checkpoints) {
+        let cid = 0;
+        for (let idx = 0; idx <= 160; idx++) {
+            await this.loadSyncLog(token0, idx, (block, othertoken, reserve0, reserve1) => {
+                if (token1 != othertoken) return;
+                if (block > checkpoints[cid]) {
+                    console.log(checkpoints[cid], reserve0, reserve1);
+                    while (block > checkpoints[cid]) cid++;
+                }
+            });
+        }
+    }
+
+    loadSyncLog(token, idx, cb) {
+        const lr = new LineByLine(`logs/sync/${token}/${idx}.log`);
+        lr.on('line', (line) => {
+            const p = line.split(',');
+            if (p.length != 4) return;
+            cb(p[0], p[1], p[2], p[3]);
+        });
+        return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
+    }
+
     async writeSyncLog(block, lpToken, reserve0, reserve1) {
         try {
             const token01 = await this.lp.getToken01(lpToken);
