@@ -53,7 +53,7 @@ async function crawlLogs(fromBlock, toBlock) {
     }
     const ms = Date.now() - startMs;
     console.log(`Crawl [${fromBlock}-${toBlock}]: ${pastLogs.length} (${ms}ms)`)
-    if (ms < 2000) await sleep(2000 - ms);
+    if (ms < 1000) await sleep(1000 - ms);
     return pastLogs.length;
 }
 
@@ -70,6 +70,7 @@ async function run() {
         } catch (err) {
             if (size > 100000 && batchSize > 50) batchSize -= 50;
             console.log(`Error ${from}:`, err)
+            await sleep(2000);
         }
     }
 }
