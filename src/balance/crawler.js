@@ -17,8 +17,8 @@ const CAKE = '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82';
 
 const IGNORE = [WBNB, BUSD, USDT, CAKE];
 
-const writer = {};
-let lastFileIdx;
+let writer = {};
+let lastFileIdx = 0;
 
 function getWriter(token, idx) {
     if (!writer[token]) {
