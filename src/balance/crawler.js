@@ -67,6 +67,7 @@ async function run() {
             else if (size > 10000) batchSize = Math.round(batchSize / 2);
             else if (size < 50000) batchSize = batchSize * 2;
             if (batchSize < 10) batchSize = 10;
+            else if (batchSize > 100) batchSize = 100;
         } catch (err) { console.log(`Error ${from}:`, err) }
         from += batchSize;
     }
