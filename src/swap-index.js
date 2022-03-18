@@ -52,7 +52,7 @@ async function partitionSwap() {
 
 async function getBNBprice() {
     const WBNB = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c';
-    const BUSD = '0xe9e7cea3dedca5984780bafc599bd69add087d56';
+    const BUSD = '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56';
     const { data } = await axios.get("http://128.199.189.253:9610/startofday?n=540");
 
     let startMs = Date.now();

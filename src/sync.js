@@ -31,7 +31,7 @@ class SyncModel {
 
     async getPrice(token0, token1, checkpoints) {
         let cid = 0;
-        for (let idx = 0; idx <= 160; idx++) {
+        for (let idx = 150; idx <= 160; idx++) {
             try {
                 await this.loadSyncLog(token0, idx, (block, othertoken, reserve0, reserve1) => {
                     if (token1 != othertoken) return;
