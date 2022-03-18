@@ -6,6 +6,8 @@ const opts = { flags: "a" };
 
 const WBNB = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c';
 const BUSD = '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56';
+const USDT = '0x55d398326f99059fF775485246999027B3197955';
+const CAKE = '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82';
 
 class SyncModel {
     constructor(lp) {
@@ -41,14 +43,14 @@ class SyncModel {
         for (let idx = fromIdx; idx <= toIdx; idx++) {
             try {
                 await this.loadSyncLog(token0, idx, (block, othertoken, reserve0, reserve1) => {
-                    liquidity[othertoken] = reserve0;
+                    liquidity[othertoken] = [reserve0, reserve1];
                     if (othertoken == BUSD) price = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
                     if (block > checkpoints[cid]) {
                         let total = Web3.utils.toBN(0);
                         for (let token1 in liquidity) {
-                            total = total.add(Web3.utils.toBN(liquidity[token1]))
+                            total = total.add(Web3.utils.toBN(liquidity[token1][0]))
                         }
-                        rs.push([checkpoints[cid], total.toString(10), total.mul(price).divn(100000), details ? JSON.parse(JSON.stringify(liquidity)) : {}]);
+                        rs.push([checkpoints[cid], total.toString(10), total.mul(price).divn(100000).toString(10), details ? JSON.parse(JSON.stringify(liquidity)) : {}]);
                         while (block > checkpoints[cid]) cid++;
                     }
                 });
