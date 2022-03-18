@@ -1,6 +1,7 @@
 const { Interface } = require('@ethersproject/abi');
 const Web3 = require("web3");
 
+const Erc20Abi = require('./abi/Erc20.json');
 const PancakePairAbi = require('./abi/PancakePair.json');
 const MulticallAbi = require('./abi/Multicall2.json');
 
@@ -32,4 +33,19 @@ async function getLPToken01(addresses) {
     return rs;
 }
 
-module.exports = { aggregate, getLPToken01 };
+async function getTokenInfo(addresses) {
+    const calldata = [];
+    addresses.forEach(address => {
+        calldata.push([address, 'decimals', []]);
+        calldata.push([address, 'symbol', []]);
+        calldata.push([address, 'name', []]);
+    })
+    const data = await aggregate(calldata, Erc20Abi);
+    const rs = [];
+    for (let i = 0; i < addresses.length; i++) {
+        rs.push([addresses[i], data[i * 3][0], data[i * 3 + 1][0], data[i * 3 + 2][0]]);
+    }
+    return rs;
+}
+
+module.exports = { aggregate, getLPToken01, getTokenInfo };

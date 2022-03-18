@@ -1,9 +1,10 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
-const { getLPToken01 } = require('./multicall');
+const { getLPToken01, getTokenInfo } = require('../multicall');
 
 const LP_FILE = `logs/lp.log`;
 const LP_DETAIL_FILE = `logs/lp-detail.log`;
+const TOKEN_DETAIL_FILE = `logs/token-detail.log`;
 const opts = { flags: "a" };
 
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
@@ -33,6 +34,16 @@ class LpModel {
             if (ms < 2000) await sleep(2000 - ms);
         }
         return this.lp[lpAddress];
+    }
+
+    loadSwapLogFile(file) {
+        const lr = new LineByLine(file);
+        lr.on('line', (line) => {
+            const p = line.split(',');
+            if (p.length != 8) return;
+            this.lp[p[1]] = true;
+        });
+        return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }
 
     createLpFile() {
@@ -87,16 +98,33 @@ class LpModel {
         return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }
 
-    loadSwapLogFile(file) {
-        const lr = new LineByLine(file);
-        lr.on('line', (line) => {
-            const p = line.split(',');
-            if (p.length != 8) return;
-            this.lp[p[1]] = true;
-        });
-        return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
+    async createTokenDetailFile() {
+        const batchSize = 200;
+        const keys = [];
+        for (let address in this.lp) {
+            if (!keys.includes(this.lp[address][0])) keys.push(this.lp[address][0]);
+            if (!keys.includes(this.lp[address][1])) keys.push(this.lp[address][1]);
+        }
+        const writer = fs.createWriteStream(TOKEN_DETAIL_FILE, opts);
+        let from = 0;
+        while (from < keys.length) {
+            const to = from + batchSize < keys.length ? from + batchSize : keys.length;
+            try {
+                const startMs = Date.now();
+                const tokens = await getTokenInfo(keys.slice(from, to))
+                tokens.forEach(i => {
+                    writer.write(`${i[0]},${i[1]},${i[2]},${i[3]}\n`);
+                });
+                const ms = Date.now() - startMs;
+                console.log(`Query token [${from}-${to}] (${ms}ms)`)
+                if (ms < 2000) await sleep(2000 - ms);
+            } catch (err) {
+                console.log(`Query token [${from}-${to}] error ${err}`)
+            }
+            from = to;
+        }
+        writer.end();
     }
-
 }
 
 module.exports = LpModel;

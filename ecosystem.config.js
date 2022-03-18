@@ -1,8 +1,8 @@
 module.exports = {
   apps: [
     {
-      name: "block-api",
-      script: "src/block/service.js",
+      name: "common-api",
+      script: "src/common/service.js",
       instances: 1,
       autorestart: true,
       max_memory_restart: "1000M",
