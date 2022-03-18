@@ -61,7 +61,7 @@ async function getBNBprice() {
     await lp.loadLpDetailFile();
 
     const s = new SyncModel(lp);
-    await s.getPrice(FAM, BUSD, data)
+    await s.getLiquidity(FAM, data)
 
     let ms = Date.now() - startMs;
     console.log(`Get price done (${ms}ms)`)

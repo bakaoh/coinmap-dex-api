@@ -15,15 +15,16 @@ class BalanceModel {
         this.checkpoints = checkpoints;
         this.cid = 0;
         this.newholders = [];
+
+        fs.mkdirSync('logs/holders', { recursive: true });
+        fs.mkdirSync('logs/topholders', { recursive: true });
+        fs.mkdirSync('logs/newholders', { recursive: true });
     }
 
     createCacheFile(block) {
-        let dir = `logs/holders`;
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        const holders = fs.createWriteStream(`${dir}/${block}.log`, opts);
-
         let count = 0;
         const toplist = [];
+        const holders = fs.createWriteStream(`logs/holders/${block}.log`, opts);
         for (let address in this.balance) {
             const balance = this.balance[address];
             count++;
@@ -41,19 +42,11 @@ class BalanceModel {
         const total = fs.createWriteStream(`logs/cake-total.log`, opts);
         total.write(`${block},${count}\n`);
 
-        dir = `logs/topholders`;
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        const topholders = fs.createWriteStream(`${dir}/${block}.log`, opts);
-        toplist.forEach((v) => {
-            topholders.write(`${v[0]},${v[1]}\n`);
-        });
+        const topholders = fs.createWriteStream(`logs/topholders/${block}.log`, opts);
+        toplist.forEach((v) => { topholders.write(`${v[0]},${v[1]}\n`); });
 
-        dir = `logs/newholders`;
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        const newholders = fs.createWriteStream(`${dir}/${block}.log`, opts);
-        this.newholders.forEach((v) => {
-            newholders.write(`${v}\n`);
-        });
+        const newholders = fs.createWriteStream(`logs/newholders/${block}.log`, opts);
+        this.newholders.forEach((v) => { newholders.write(`${v}\n`); });
         this.newholders = [];
     }
 

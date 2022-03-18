@@ -4,6 +4,9 @@ const Web3 = require("web3");
 
 const opts = { flags: "a" };
 
+const WBNB = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c';
+const BUSD = '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56';
+
 class SyncModel {
     constructor(lp) {
         this.lp = lp;
@@ -12,9 +15,7 @@ class SyncModel {
 
     closeAll() {
         const keys = Object.keys(this.file);
-        keys.forEach(address => {
-            this.file[address].writer.end();
-        });
+        keys.forEach(address => { this.file[address].writer.end(); });
     }
 
     getWriter(token, idx) {
@@ -30,7 +31,29 @@ class SyncModel {
         return this.file[token].writer;
     }
 
-    async getPrice(token0, token1, checkpoints) {
+    async getLiquidity(token0, checkpoints) {
+        let cid = 0;
+        let liquidity = {};
+        let price = Web3.utils.toBN(0);
+        for (let idx = 150; idx <= 160; idx++) {
+            try {
+                await this.loadSyncLog(token0, idx, (block, othertoken, reserve0, reserve1) => {
+                    liquidity[othertoken] = reserve0;
+                    if (othertoken == BUSD) price = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
+                    if (block > checkpoints[cid]) {
+                        let total = Web3.utils.toBN(0);
+                        for (let token1 in liquidity) {
+                            total = total.add(Web3.utils.toBN(liquidity[token1]))
+                        }
+                        console.log(checkpoints[cid], total.toString(10), total.mul(price).div(100000));
+                        while (block > checkpoints[cid]) cid++;
+                    }
+                });
+            } catch (err) { console.log(err) }
+        }
+    }
+
+    async getPrices(token0, token1, checkpoints) {
         let cid = 0;
         for (let idx = 150; idx <= 160; idx++) {
             try {
