@@ -59,17 +59,18 @@ async function crawlLogs(fromBlock, toBlock) {
 
 async function run() {
     let from = 0;
-    let batchSize = 100;
+    let batchSize = 1000;
+    let size = 0;
     while (from < 16165330) {
         try {
-            const size = await crawlLogs(from, from + batchSize - 1);
-            if (size > 100000) batchSize = Math.round(batchSize / 20);
-            else if (size > 10000) batchSize = Math.round(batchSize / 2);
-            else if (size < 50000) batchSize = batchSize * 2;
-            if (batchSize < 10) batchSize = 10;
-            else if (batchSize > 100) batchSize = 100;
-        } catch (err) { console.log(`Error ${from}:`, err) }
-        from += batchSize;
+            size = await crawlLogs(from, from + batchSize - 1);
+            if (size < 10000 && batchSize < 1500) batchSize += 50
+            else if (size > 100000 && batchSize > 50) batchSize -= 50;
+            from += batchSize;
+        } catch (err) {
+            if (size > 100000 && batchSize > 50) batchSize -= 50;
+            console.log(`Error ${from}:`, err)
+        }
     }
 }
 
