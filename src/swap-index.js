@@ -1,6 +1,6 @@
 const axios = require("axios");
 const LpModel = require("./lp");
-const SyncModel = require("./sync");
+const SyncModel = require("./common/sync");
 const SwapModel = require("./swap");
 
 async function prefetchData() {

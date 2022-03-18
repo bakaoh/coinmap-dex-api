@@ -31,11 +31,14 @@ class SyncModel {
         return this.file[token].writer;
     }
 
-    async getLiquidity(token0, checkpoints) {
+    async getLiquidity(token0, checkpoints, details = false) {
         let cid = 0;
         let liquidity = {};
         let price = Web3.utils.toBN(0);
-        for (let idx = 150; idx <= 160; idx++) {
+        const fromIdx = Math.floor(checkpoints[0] / 100000);
+        const toIdx = Math.ceil(checkpoints[checkpoints.length - 1] / 100000);
+        const rs = [];
+        for (let idx = fromIdx; idx <= toIdx; idx++) {
             try {
                 await this.loadSyncLog(token0, idx, (block, othertoken, reserve0, reserve1) => {
                     liquidity[othertoken] = reserve0;
@@ -45,28 +48,33 @@ class SyncModel {
                         for (let token1 in liquidity) {
                             total = total.add(Web3.utils.toBN(liquidity[token1]))
                         }
-                        console.log(checkpoints[cid], total.toString(10), total.mul(price).divn(100000));
+                        rs.push([checkpoints[cid], total.toString(10), total.mul(price).divn(100000), details ? JSON.parse(JSON.stringify(liquidity)) : {}]);
                         while (block > checkpoints[cid]) cid++;
                     }
                 });
             } catch (err) { console.log(err) }
         }
+        return rs;
     }
 
     async getPrices(token0, token1, checkpoints) {
         let cid = 0;
-        for (let idx = 150; idx <= 160; idx++) {
+        const fromIdx = Math.floor(checkpoints[0] / 100000);
+        const toIdx = Math.ceil(checkpoints[checkpoints.length - 1] / 100000);
+        const rs = [];
+        for (let idx = fromIdx; idx <= toIdx; idx++) {
             try {
                 await this.loadSyncLog(token0, idx, (block, othertoken, reserve0, reserve1) => {
                     if (token1 != othertoken) return;
                     if (block > checkpoints[cid]) {
                         const price = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
-                        console.log(checkpoints[cid], parseInt(price.toString(10)) / 100000);
+                        rs.push([checkpoints[cid], parseInt(price.toString(10)) / 100000]);
                         while (block > checkpoints[cid]) cid++;
                     }
                 });
             } catch (err) { console.log(err) }
         }
+        return rs;
     }
 
     loadSyncLog(token, idx, cb) {
@@ -83,8 +91,8 @@ class SyncModel {
         try {
             const token01 = await this.lp.getToken01(lpToken);
             const idx = Math.floor(block / 100000);
-            this.getWriter(token01[0], idx).write(`${block},${token01[1]},${reserve0},${reserve1}\n`);
-            this.getWriter(token01[1], idx).write(`${block},${token01[0]},${reserve1},${reserve0}\n`);
+            this.getWriter(token01[1], idx).write(`${block},${token01[2]},${reserve0},${reserve1}\n`);
+            this.getWriter(token01[2], idx).write(`${block},${token01[1]},${reserve1},${reserve0}\n`);
         } catch (err) { console.log(`Error`, block, lpToken, reserve0, reserve1, err.toString()) }
     }
 
