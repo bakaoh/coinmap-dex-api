@@ -121,7 +121,7 @@ class LpModel {
     }
 
     async createTokenDetailFile() {
-        const batchSize = 200;
+        const batchSize = 1;
         const all = new Set();
         for (let address in this.lp) {
             all.add(this.lp[address][0]);
@@ -142,9 +142,9 @@ class LpModel {
                 });
                 const ms = Date.now() - startMs;
                 console.log(`Query token [${from}-${to}] (${ms}ms)`)
-                if (ms < 2000) await sleep(2000 - ms);
+                if (ms < 1000) await sleep(1000 - ms);
             } catch (err) {
-                console.log(`Query token [${from}-${to}] error ${err}`)
+                console.log(`Query token [${from}-${to}] error ${err}`, keys.slice(from, to))
             }
             from = to;
         }
