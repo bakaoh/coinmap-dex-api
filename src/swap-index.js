@@ -51,6 +51,7 @@ async function partitionSwap() {
 }
 
 async function getBNBprice() {
+    const FAM = '0x4556A6f454f15C4cD57167a62bdA65A6be325D1F';
     const WBNB = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c';
     const BUSD = '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56';
     const { data } = await axios.get("http://128.199.189.253:9610/startofday?n=540");
@@ -60,7 +61,7 @@ async function getBNBprice() {
     await lp.loadLpDetailFile();
 
     const s = new SyncModel(lp);
-    await s.getPrice(WBNB, BUSD, data)
+    await s.getPrice(FAM, BUSD, data)
 
     let ms = Date.now() - startMs;
     console.log(`Get price done (${ms}ms)`)

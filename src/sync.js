@@ -1,5 +1,6 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
+const Web3 = require("web3");
 
 const opts = { flags: "a" };
 
@@ -36,7 +37,8 @@ class SyncModel {
                 await this.loadSyncLog(token0, idx, (block, othertoken, reserve0, reserve1) => {
                     if (token1 != othertoken) return;
                     if (block > checkpoints[cid]) {
-                        console.log(checkpoints[cid], reserve0, reserve1);
+                        const price = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
+                        console.log(checkpoints[cid], parseInt(price.toString(10)) / 100000);
                         while (block > checkpoints[cid]) cid++;
                     }
                 });
