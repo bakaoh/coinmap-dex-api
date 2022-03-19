@@ -63,9 +63,9 @@ async function start(port) {
     const startMs = Date.now();
     await blockModel.loadLogFile();
     blockModel.run(60 * 60 * 1000);
-    await syncModel.run();
     await tokenModel.loadLpDetailFile();
     await tokenModel.loadTokenDetailFile();
+    await syncModel.run();
     app.listen(port);
     const ms = Date.now() - startMs;
     console.log(`Service start at port ${port} (${ms}ms)`)
