@@ -44,12 +44,16 @@ async function crawlLogs(fromBlock, toBlock) {
     })
 
     for (let log of pastLogs) {
-        if (IGNORE.includes(log.address)) continue;
-        const fileLog = getWriter(log.address, fileIdx);
-        const value = web3.eth.abi.decodeParameters(['uint256'], log.data)
-        const from = web3.eth.abi.decodeParameters(['address'], log.topics[1])
-        const to = web3.eth.abi.decodeParameters(['address'], log.topics[2])
-        fileLog.write(`${log.blockNumber},${log.transactionIndex},${log.logIndex},${from[0]},${to[0]},${value[0].toString(10)}\n`);
+        try {
+            if (IGNORE.includes(log.address)) continue;
+            const fileLog = getWriter(log.address, fileIdx);
+            const value = web3.eth.abi.decodeParameters(['uint256'], log.data)
+            const from = web3.eth.abi.decodeParameters(['address'], log.topics[1])
+            const to = web3.eth.abi.decodeParameters(['address'], log.topics[2])
+            fileLog.write(`${log.blockNumber},${log.transactionIndex},${log.logIndex},${from[0]},${to[0]},${value[0].toString(10)}\n`);
+        } catch (err) {
+            console.log(`Decode`, log, err);
+        }
     }
     const ms = Date.now() - startMs;
     console.log(`Crawl [${fromBlock}-${toBlock}]: ${pastLogs.length} (${ms}ms)`)
