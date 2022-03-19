@@ -1,4 +1,5 @@
-const LpModel = require('./lp');
+const SyncModel = require('./sync');
 
-const m = new LpModel();
-m.loadLpDetailFile().then(() => m.createTokenDetailFile());
+const m = new SyncModel();
+
+m.run();

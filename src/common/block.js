@@ -1,10 +1,8 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
-const Web3 = require("web3");
+const { web3 } = require("../utils/bsc");
 
 const BLOCK_LOG = `logs/block.log`;
-const endpoint = "https://bsc-dataseed.binance.org";
-const web3 = new Web3(endpoint);
 const opts = { flags: "a" };
 const fileLog = fs.createWriteStream(BLOCK_LOG, opts);
 

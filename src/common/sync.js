@@ -1,18 +1,38 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
 const Web3 = require("web3");
+const { web3, ContractAddress } = require('../utils/bsc');
+const { getLastLine } = require('../utils/io');
 
 const opts = { flags: "a" };
-
-const WBNB = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c';
-const BUSD = '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56';
-const USDT = '0x55d398326f99059fF775485246999027B3197955';
-const CAKE = '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82';
+const SYNC_TOPIC = '0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1';
+const BLOCK_FILE = 'logs/sync.block';
 
 class SyncModel {
     constructor(lp) {
         this.lp = lp;
         this.file = {};
+    }
+
+    async run() {
+        const batchSize = 200;
+        const lastLine = await getLastLine(BLOCK_FILE);
+        let fromBlock = lastLine ? parseInt(lastLine) + 1 : 0;
+        console.log(`SyncModel start running from block ${fromBlock}`);
+        this.blockWriter = fs.createWriteStream(BLOCK_FILE, opts);
+
+        const latest = await web3.eth.getBlockNumber();
+        while (fromBlock < latest) {
+            try {
+                fromBlock = await crawlSyncLogs(fromBlock, fromBlock + batchSize - 1) + 1 + batchSize;
+            } catch (err) { console.log(`Error ${fromBlock}:`, err) }
+        }
+
+        this.interval = setInterval(async () => {
+            try {
+                fromBlock = await crawlSyncLogs(fromBlock) + 1;
+            } catch (err) { console.log(`Error ${fromBlock}:`, err) }
+        }, 3000)
     }
 
     closeAll() {
@@ -44,7 +64,7 @@ class SyncModel {
             try {
                 await this.loadSyncLog(token0, idx, (block, othertoken, reserve0, reserve1) => {
                     liquidity[othertoken] = [reserve0, reserve1];
-                    if (othertoken == BUSD) price = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
+                    if (othertoken == ContractAddress.BUSD) price = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
                     if (block > checkpoints[cid]) {
                         let total = Web3.utils.toBN(0);
                         for (let token1 in liquidity) {
@@ -98,16 +118,33 @@ class SyncModel {
         } catch (err) { console.log(`Error`, block, lpToken, reserve0, reserve1, err.toString()) }
     }
 
-    partitionSyncLogFile(file) {
-        const lr = new LineByLine(file);
-        lr.on('line', (line) => {
-            const p = line.split(',');
-            if (p.length != 4) return;
-            this.writeSyncLog(p[0], p[1], p[2], p[3]);
-        });
-        return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
-    }
+    async crawlSyncLogs(fromBlock, toBlock = 'latest') {
+        const startMs = Date.now();
+        const pastLogs = await web3.eth.getPastLogs({
+            fromBlock,
+            toBlock,
+            topics: [SYNC_TOPIC],
+        })
 
+        let lastBlock = 0;
+        for (let log of pastLogs) {
+            lastBlock = log.blockNumber;
+            const values = web3.eth.abi.decodeParameters(['uint256', 'uint256'], log.data)
+            this.writeSyncLog(log.blockNumber, log.address, values[0].toString(10), values[1].toString(10));
+        }
+
+        if (lastBlock != 0) {
+            this.blockWriter.write(`${lastBlock}\n`);
+        } else {
+            lastBlock = fromBlock - 1;
+        }
+
+        const ms = Date.now() - startMs;
+        console.log(`Crawl sync logs [${fromBlock}-${toBlock}]: ${pastLogs.length} (${ms}ms)`)
+        if (ms < 2000) await sleep(2000 - ms);
+
+        return lastBlock;
+    }
 }
 
 module.exports = SyncModel;
