@@ -46,6 +46,7 @@ async function crawlLogs(fromBlock, toBlock) {
     for (let log of pastLogs) {
         try {
             if (IGNORE.includes(log.address)) continue;
+            if (log.topics.length != 3 || log.data == '0x') continue;
             const fileLog = getWriter(log.address, fileIdx);
             const value = web3.eth.abi.decodeParameters(['uint256'], log.data)
             const from = web3.eth.abi.decodeParameters(['address'], log.topics[1])
