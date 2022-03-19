@@ -4,9 +4,11 @@ const Web3 = require("web3");
 const { web3, ContractAddress } = require('../utils/bsc');
 const { getLastLine } = require('../utils/io');
 
-const opts = { flags: "a" };
 const SYNC_TOPIC = '0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1';
 const BLOCK_FILE = 'logs/sync.block';
+
+const opts = { flags: "a" };
+const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
 class SyncModel {
     constructor(lp) {
@@ -24,14 +26,14 @@ class SyncModel {
         const latest = await web3.eth.getBlockNumber();
         while (fromBlock < latest) {
             try {
-                fromBlock = await crawlSyncLogs(fromBlock, fromBlock + batchSize - 1) + 1 + batchSize;
-            } catch (err) { console.log(`Error ${fromBlock}:`, err) }
+                fromBlock = await this.crawlSyncLogs(fromBlock, fromBlock + batchSize - 1) + 1 + batchSize;
+            } catch (err) { console.log(`Error ${fromBlock}:`, err); sleep(2000); }
         }
 
         this.interval = setInterval(async () => {
             try {
-                fromBlock = await crawlSyncLogs(fromBlock) + 1;
-            } catch (err) { console.log(`Error ${fromBlock}:`, err) }
+                fromBlock = await this.crawlSyncLogs(fromBlock) + 1;
+            } catch (err) { console.log(`Error ${fromBlock}:`, err); }
         }, 3000)
     }
 
