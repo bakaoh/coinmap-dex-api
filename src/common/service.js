@@ -63,6 +63,7 @@ async function start(port) {
     const startMs = Date.now();
     await blockModel.loadLogFile();
     blockModel.run(60 * 60 * 1000);
+    await syncModel.run();
     await tokenModel.loadLpDetailFile();
     await tokenModel.loadTokenDetailFile();
     app.listen(port);
