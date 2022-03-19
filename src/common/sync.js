@@ -20,14 +20,14 @@ class SyncModel {
         const batchSize = 200;
         const lastLine = await getLastLine(BLOCK_FILE);
         let fromBlock = lastLine ? parseInt(lastLine) + 1 : 0;
-        console.log(`SyncModel start running from block ${fromBlock}`);
-        this.blockWriter = fs.createWriteStream(BLOCK_FILE, opts);
-
         const latest = await web3.eth.getBlockNumber();
+        console.log(`SyncModel start running from block ${fromBlock}, latest ${latest}`);
+
+        this.blockWriter = fs.createWriteStream(BLOCK_FILE, opts);
         while (fromBlock < latest) {
             try {
-                fromBlock = await this.crawlSyncLogs(fromBlock, fromBlock + batchSize - 1) + 1 + batchSize;
-            } catch (err) { console.log(`Error ${fromBlock}:`, err); sleep(2000); }
+                fromBlock = await this.crawlSyncLogs(fromBlock, fromBlock + batchSize - 1) + 1;
+            } catch (err) { console.log(`Error ${fromBlock}:`, err); await sleep(2000); }
         }
 
         this.interval = setInterval(async () => {
@@ -131,12 +131,16 @@ class SyncModel {
         let lastBlock = 0;
         for (let log of pastLogs) {
             lastBlock = log.blockNumber;
-            const values = web3.eth.abi.decodeParameters(['uint256', 'uint256'], log.data)
-            this.writeSyncLog(log.blockNumber, log.address, values[0].toString(10), values[1].toString(10));
+            try {
+                const values = web3.eth.abi.decodeParameters(['uint256', 'uint256'], log.data)
+                this.writeSyncLog(log.blockNumber, log.address, values[0].toString(10), values[1].toString(10));
+            } catch (err) { console.log(`Write log error`, log, err) }
         }
 
         if (lastBlock != 0) {
             this.blockWriter.write(`${lastBlock}\n`);
+        } else if (toBlock != 'latest') {
+            lastBlock = toBlock;
         } else {
             lastBlock = fromBlock - 1;
         }
