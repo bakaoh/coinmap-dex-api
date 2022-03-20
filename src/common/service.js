@@ -50,27 +50,42 @@ app.get('/info/lp', async (req, res) => {
     res.json(rs);
 })
 
-app.get('/liquidity', async (req, res) => {
+app.get('/liquidity/history', async (req, res) => {
     const ts = getStartTsOfDay(req.query.n)
     const block = ts.map(ms => blockModel.estimateBlock(ms));
-    const rs = await syncModel.getLiquidity(req.query.a, block, req.query.d === 'true');
+    const rs = await syncModel.getLiquidityHistory(req.query.a, block, req.query.d === 'true');
     res.json(rs);
 })
 
-app.get('/price', async (req, res) => {
+app.get('/liquidity/now', async (req, res) => {
+    const rs = syncModel.getLiquidity(req.query.a);
+    res.json(rs);
+})
+
+app.get('/price/history', async (req, res) => {
     const ts = getStartTsOfDay(req.query.n)
     const block = ts.map(ms => blockModel.estimateBlock(ms));
-    const rs = await syncModel.getPrices(req.query.a, BUSD, block);
+    const rs = await syncModel.getPriceHistory(req.query.a, BUSD, block);
+    res.json(rs);
+})
+
+app.get('/price/now', async (req, res) => {
+    const rs = syncModel.getPrice(req.query.a);
     res.json(rs);
 })
 
 async function start(port) {
     const startMs = Date.now();
+
     await blockModel.loadLogFile();
     blockModel.run(60 * 60 * 1000);
+
     await tokenModel.loadLpDetailFile();
     await tokenModel.loadTokenDetailFile();
+
+    await syncModel.warmup();
     await syncModel.run();
+
     app.listen(port);
     const ms = Date.now() - startMs;
     console.log(`Service start at port ${port} (${ms}ms)`)

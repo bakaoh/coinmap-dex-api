@@ -13,9 +13,9 @@ function getLastLine(file, minLen = 3) {
 }
 
 function getLastFile(dir) {
-    let files = fs.readdirSync('logs');
+    let files = fs.readdirSync(dir);
     if (files.length == 0) return "";
-    return files.sort()[0];
+    return files.sort((a, b) => parseInt(b) - parseInt(a))[0];
 }
 
 module.exports = { getLastLine, getLastFile }

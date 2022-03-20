@@ -2,7 +2,7 @@ const fs = require('fs');
 const LineByLine = require('line-by-line');
 const Web3 = require("web3");
 const { web3, ContractAddress } = require('../utils/bsc');
-const { getLastLine } = require('../utils/io');
+const { getLastLine, getLastFile } = require('../utils/io');
 
 const SYNC_TOPIC = '0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1';
 const BLOCK_FILE = 'logs/sync.block';
@@ -14,6 +14,8 @@ class SyncModel {
     constructor(lp) {
         this.lp = lp;
         this.writer = {};
+        this.liquidity = {};
+        this.price = {};
     }
 
     async run() {
@@ -37,6 +39,34 @@ class SyncModel {
         }, 3000)
     }
 
+    async warmup() {
+        const startMs = Date.now();
+        let files = fs.readdirSync("logs/sync");
+        await this.loadLastSyncLog(ContractAddress.WBNB);
+        for (let token of files) {
+            if (token == ContractAddress.WBNB || token == ContractAddress.BUSD) continue;
+            await this.loadLastSyncLog(token);
+        }
+        const ms = Date.now() - startMs;
+        console.log(`SyncModel wamrup done (${ms}ms)`)
+    }
+
+    async loadLastSyncLog(token) {
+        try {
+            const idx = parseInt(getLastFile(`logs/sync/${token}`));
+            await this.loadSyncLog(file, idx, (block, othertoken, reserve0, reserve1) => {
+                this.liquidity[token][othertoken] = [reserve0, reserve1];
+                if (othertoken == ContractAddress.BUSD) {
+                    const priceInUsd = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
+                    this.price[token] = parseInt(priceInUsd.toString(10)) / 100000;
+                } else if (othertoken == ContractAddress.WBNB) {
+                    const priceInBnB = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
+                    this.price[token] = this.price[ContractAddress.WBNB] * parseInt(priceInBnB.toString(10)) / 100000
+                }
+            });
+        } catch (err) { }
+    }
+
     closeAll() {
         const keys = Object.keys(this.writer);
         keys.forEach(address => { this.writer[address].writer.end(); });
@@ -55,7 +85,11 @@ class SyncModel {
         return this.writer[token].writer;
     }
 
-    async getLiquidity(token0, checkpoints, details = false) {
+    getLiquidity(token) {
+        return this.liquidity[token];
+    }
+
+    async getLiquidityHistory(token0, checkpoints, details = false) {
         let cid = 0;
         let liquidity = {};
         let price = Web3.utils.toBN(0);
@@ -81,7 +115,11 @@ class SyncModel {
         return rs;
     }
 
-    async getPrices(token0, token1, checkpoints) {
+    getPrice(token) {
+        return this.price[token];
+    }
+
+    async getPriceHistory(token0, token1, checkpoints) {
         let cid = 0;
         const fromIdx = Math.floor(checkpoints[0] / 100000);
         const toIdx = Math.ceil(checkpoints[checkpoints.length - 1] / 100000);
@@ -117,6 +155,8 @@ class SyncModel {
             const idx = Math.floor(block / 100000);
             this.getWriter(token0, idx).write(`${block},${token1},${reserve0},${reserve1}\n`);
             this.getWriter(token1, idx).write(`${block},${token0},${reserve1},${reserve0}\n`);
+            this.liquidity[token0][token1] = [reserve0, reserve1];
+            this.liquidity[token1][token0] = [reserve1, reserve0];
         } catch (err) { console.log(`Error`, block, lpToken, reserve0, reserve1, err.toString()) }
     }
 
