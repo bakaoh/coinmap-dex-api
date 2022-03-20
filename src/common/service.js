@@ -35,6 +35,11 @@ app.get('/block/startofday', (req, res) => {
     res.json({ ts, block });
 })
 
+app.get('/info/search', async (req, res) => {
+    const rs = tokenModel.searchToken(req.query.q);
+    res.json(rs);
+})
+
 app.get('/info/token', async (req, res) => {
     const rs = await Promise.all(req.query.a.split(",").map(a => tokenModel.getToken(a)));
     res.json(rs);

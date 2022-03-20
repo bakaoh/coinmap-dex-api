@@ -24,6 +24,4 @@ function getPairAddress(tokenA, tokenB) {
     )
 }
 
-
-
 module.exports = { getPairAddress, ContractAddress, web3 };

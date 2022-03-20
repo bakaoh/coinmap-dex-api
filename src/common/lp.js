@@ -9,11 +9,48 @@ const opts = { flags: "a" };
 
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
-class LpModel {
+class TokenSearcher {
+    constructor() {
+        this.index = {};
+    }
+
+    indexing(prefix, info) {
+        if (prefix.length == 0) return;
+        const list = this.index[prefix] || [];
+        list.push(info);
+        this.index[prefix] = list;
+    }
+
+    add(address, symbol, name) {
+        const prefix1 = symbol.toLowerCase().substr(0, 2);
+        this.indexing(prefix1, { address, symbol, name });
+        const prefix2 = name.toLowerCase().substr(0, 2);
+        if (prefix1 != prefix2) this.indexing(prefix2, { address, symbol, name });
+    }
+
+    search(text) {
+        text = text.toLowerCase();
+        const prefix = text.substr(0, 2);
+        const list = this.index[prefix] || [];
+        const rs = [];
+        for (let token of list) {
+            if (token.symbol.toLowerCase().startsWith(text)) rs.push(token);
+            else if (token.name.toLowerCase().startsWith(text)) rs.push(token);
+        }
+        return rs;
+    }
+}
+
+class TokenModel {
     constructor() {
         this.lp = {};
         this.token = {};
         this.invalid = {};
+        this.searcher = new TokenSearcher();
+    }
+
+    searchToken(text) {
+        return this.searcher.search(text);
     }
 
     async getToken01(lpAddress) {
@@ -44,6 +81,7 @@ class LpModel {
             try {
                 const tokens = await getTokenInfo([address])
                 this.token[tokens[0][0]] = [tokens[0][1], tokens[0][2]];
+                this.searcher.add(tokens[0][0], tokens[0][1], tokens[0][2]);
                 const writer = fs.createWriteStream(TOKEN_DETAIL_FILE, opts);
                 writer.write(`${tokens[0][0]},${tokens[0][1]},${tokens[0][2]}\n`);
                 writer.end();
@@ -157,9 +195,10 @@ class LpModel {
             const p = line.split(',', 3);
             if (p.length != 3) return;
             this.token[p[0]] = [p[1], p[2]];
+            this.searcher.add(p[0], p[1], p[2]);
         });
         return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }
 }
 
-module.exports = LpModel;
+module.exports = TokenModel;
