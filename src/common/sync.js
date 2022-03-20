@@ -13,7 +13,7 @@ const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 class SyncModel {
     constructor(lp) {
         this.lp = lp;
-        this.file = {};
+        this.writer = {};
     }
 
     async run() {
@@ -38,21 +38,21 @@ class SyncModel {
     }
 
     closeAll() {
-        const keys = Object.keys(this.file);
-        keys.forEach(address => { this.file[address].writer.end(); });
+        const keys = Object.keys(this.writer);
+        keys.forEach(address => { this.writer[address].writer.end(); });
     }
 
     getWriter(token, idx) {
-        if (!this.file[token] || this.file[token].idx != idx) {
-            if (this.file[token]) this.file[token].writer.end();
+        if (!this.writer[token] || this.writer[token].idx != idx) {
+            if (this.writer[token]) this.writer[token].writer.end();
             const dir = `logs/sync/${token}`;
             if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-            this.file[token] = {
+            this.writer[token] = {
                 idx,
                 writer: fs.createWriteStream(`${dir}/${idx}.log`, opts)
             }
         }
-        return this.file[token].writer;
+        return this.writer[token].writer;
     }
 
     async getLiquidity(token0, checkpoints, details = false) {
@@ -113,10 +113,10 @@ class SyncModel {
 
     async writeSyncLog(block, lpToken, reserve0, reserve1) {
         try {
-            const token01 = await this.lp.getToken01(lpToken);
+            const { token0, token1 } = await this.lp.getToken01(lpToken);
             const idx = Math.floor(block / 100000);
-            this.getWriter(token01[1], idx).write(`${block},${token01[2]},${reserve0},${reserve1}\n`);
-            this.getWriter(token01[2], idx).write(`${block},${token01[1]},${reserve1},${reserve0}\n`);
+            this.getWriter(token0, idx).write(`${block},${token1},${reserve0},${reserve1}\n`);
+            this.getWriter(token1, idx).write(`${block},${token0},${reserve1},${reserve0}\n`);
         } catch (err) { console.log(`Error`, block, lpToken, reserve0, reserve1, err.toString()) }
     }
 

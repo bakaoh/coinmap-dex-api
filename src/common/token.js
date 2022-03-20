@@ -9,19 +9,20 @@ const opts = { flags: "a" };
 
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
-class TokenSearcher {
+class Indexer {
     constructor() {
-        this.index = {};
+        this.data = {};
     }
 
     indexing(prefix, info) {
         if (prefix.length == 0) return;
-        const list = this.index[prefix] || [];
+        const list = this.data[prefix] || [];
         list.push(info);
-        this.index[prefix] = list;
+        this.data[prefix] = list;
     }
 
     add(address, symbol, name) {
+        if (symbol == 'Cake-LP') return;
         const prefix1 = symbol.toLowerCase().substr(0, 2);
         this.indexing(prefix1, { address, symbol, name });
         const prefix2 = name.toLowerCase().substr(0, 2);
@@ -31,7 +32,7 @@ class TokenSearcher {
     search(text) {
         text = text.toLowerCase();
         const prefix = text.substr(0, 2);
-        const list = this.index[prefix] || [];
+        const list = this.data[prefix] || [];
         const rs = [];
         for (let token of list) {
             if (token.symbol.toLowerCase().startsWith(text)) rs.push(token);
@@ -46,32 +47,33 @@ class TokenModel {
         this.lp = {};
         this.token = {};
         this.invalid = {};
-        this.searcher = new TokenSearcher();
+        this.indexer = new Indexer();
     }
 
     searchToken(text) {
-        return this.searcher.search(text);
+        if (text.length < 2) return [];
+        return this.indexer.search(text);
     }
 
-    async getToken01(lpAddress) {
-        if (this.invalid[lpAddress]) throw `Invalid lp token ${lpAddress}`;
-        if (!this.lp[lpAddress]) {
+    async getToken01(address) {
+        if (this.invalid[address]) throw `Invalid lp token ${address}`;
+        if (!this.lp[address]) {
             const startMs = Date.now();
             try {
-                const tokens = await getLPToken01([lpAddress])
+                const tokens = await getLPToken01([address])
                 this.lp[tokens[0][0]] = [tokens[0][1], tokens[0][2]];
                 const lp = fs.createWriteStream(LP_DETAIL_FILE, opts);
                 lp.write(`${tokens[0][0]},${tokens[0][1]},${tokens[0][2]}\n`);
                 lp.end();
             } catch (err) {
                 if (err.toString().includes("Multicall aggregate: call failed")) {
-                    this.invalid[lpAddress] = true;
+                    this.invalid[address] = true;
                 }
             }
             const ms = Date.now() - startMs;
             if (ms < 2000) await sleep(2000 - ms);
         }
-        return [lpAddress, ...this.lp[lpAddress]];
+        return { address, token0: this.lp[address][0], token1: this.lp[address][1] };
     }
 
     async getToken(address) {
@@ -81,7 +83,7 @@ class TokenModel {
             try {
                 const tokens = await getTokenInfo([address])
                 this.token[tokens[0][0]] = [tokens[0][1], tokens[0][2]];
-                this.searcher.add(tokens[0][0], tokens[0][1], tokens[0][2]);
+                this.indexer.add(tokens[0][0], tokens[0][1], tokens[0][2]);
                 const writer = fs.createWriteStream(TOKEN_DETAIL_FILE, opts);
                 writer.write(`${tokens[0][0]},${tokens[0][1]},${tokens[0][2]}\n`);
                 writer.end();
@@ -93,7 +95,7 @@ class TokenModel {
             const ms = Date.now() - startMs;
             if (ms < 2000) await sleep(2000 - ms);
         }
-        return [address, ...this.token[address]];
+        return { address, symbol: this.token[address][0], name: this.token[address][1] };
     }
 
     loadSwapLogFile(file) {
@@ -195,7 +197,7 @@ class TokenModel {
             const p = line.split(',', 3);
             if (p.length != 3) return;
             this.token[p[0]] = [p[1], p[2]];
-            this.searcher.add(p[0], p[1], p[2]);
+            this.indexer.add(p[0], p[1], p[2]);
         });
         return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }

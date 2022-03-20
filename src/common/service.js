@@ -1,11 +1,11 @@
 const express = require("express");
 const BlockModel = require("./block");
-const LpModel = require("./lp");
+const TokenModel = require("./token");
 const SyncModel = require("./sync");
 
 const app = express();
 const blockModel = new BlockModel();
-const tokenModel = new LpModel();
+const tokenModel = new TokenModel();
 const syncModel = new SyncModel(tokenModel);
 app.use(express.json());
 
