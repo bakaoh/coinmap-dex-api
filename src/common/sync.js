@@ -58,6 +58,7 @@ class SyncModel {
             this.liquidity[token] = {};
             await this.loadSyncLog(token, idx, (block, othertoken, reserve0, reserve1) => {
                 this.liquidity[token][othertoken] = [reserve0, reserve1];
+                if (reserve0 == "0" || reserve1 == "0") return;
                 if (othertoken == ContractAddress.BUSD) {
                     const priceInUsd = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
                     this.price[token] = parseInt(priceInUsd.toString(10)) / 100000;
