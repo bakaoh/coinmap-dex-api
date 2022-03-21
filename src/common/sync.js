@@ -54,9 +54,10 @@ class SyncModel {
     async loadLastSyncLog(token) {
         if (token.length != 42) return;
         try {
-            const idx = parseInt(getLastFile(`logs/sync/${token}`));
+            const lastFile = getLastFile(`logs/sync/${token}`);
+            if (lastFile == '') return;
             this.liquidity[token] = {};
-            await this.loadSyncLog(token, idx, (block, othertoken, reserve0, reserve1) => {
+            await this.loadSyncLog(token, parseInt(lastFile), (block, othertoken, reserve0, reserve1) => {
                 this.liquidity[token][othertoken] = [reserve0, reserve1];
                 if (reserve0 == "0" || reserve1 == "0") return;
                 if (othertoken == ContractAddress.BUSD) {
@@ -67,7 +68,7 @@ class SyncModel {
                     this.price[token] = this.price[ContractAddress.WBNB] * parseInt(priceInBnB.toString(10)) / 100000
                 }
             });
-        } catch (err) { console.log(err) }
+        } catch (err) { }
     }
 
     closeAll() {

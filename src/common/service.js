@@ -22,6 +22,12 @@ function getStartTsOfDay(n) {
     return rs.reverse();
 }
 
+app.get('/api/v1/search', async (req, res) => {
+    const rs = tokenModel.searchToken(req.query.q);
+    res.json(rs);
+})
+
+// internal api
 app.get('/block/estimate', (req, res) => {
     const rs = blockModel.estimateBlock(req.query.ts);
     res.json(rs);
@@ -31,11 +37,6 @@ app.get('/block/startofday', (req, res) => {
     const ts = getStartTsOfDay(req.query.n)
     const block = ts.map(ms => blockModel.estimateBlock(ms));
     res.json({ ts, block });
-})
-
-app.get('/info/search', async (req, res) => {
-    const rs = tokenModel.searchToken(req.query.q);
-    res.json(rs);
 })
 
 app.get('/info/token', async (req, res) => {
