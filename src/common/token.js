@@ -76,6 +76,13 @@ class TokenModel {
         return { address, token0: this.lp[address][0], token1: this.lp[address][1] };
     }
 
+    getTokenSync(address) {
+        if (this.token[address]) {
+            return { address, symbol: this.token[address][0], name: this.token[address][1] };
+        }
+        return { address }
+    }
+
     async getToken(address) {
         if (this.invalid[address]) throw `Invalid token ${address}`;
         if (!this.token[address]) {
