@@ -46,7 +46,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     for (let pool in lq) {
         pools.push({ pool, supply: parseInt(lq[pool][0].substr(0, lq[pool][0].length - 18)) })
     }
-    pools = pools.sort((a, b) => b.supply - a.supply).slice(0, 3).map(pool => {
+    pools = pools.sort((a, b) => b.supply - a.supply).slice(0, 3).map(async (pool) => {
         return {
             name: symbol + "/" + (await tokenModel.getToken(getAddress(pool))).symbol,
             liquidity: pool.supply * price,
