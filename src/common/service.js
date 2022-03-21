@@ -34,7 +34,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     const block = ts.map(ms => blockModel.estimateBlock(ms));
     const data = (await syncModel.getLiquidityHistory(token, block)).map((p, i) => {
         return {
-            date: ts[i] * 1000,
+            date: ts[i],
             price: p[2],
             totalAmount: parseInt(p[3].substr(0, p[3].length - 18)),
         }
