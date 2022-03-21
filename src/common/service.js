@@ -47,7 +47,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
             liquidity: parseInt(lq[pool][0].substr(0, lq[pool][0].length - 18)),
         })
     }
-    res.json({ data, pools: pools.sort((a, b) => b.liquidity - a.liquidity).slice(3) });
+    res.json({ data, pools: pools.sort((a, b) => b.liquidity - a.liquidity).slice(0, 3) });
 })
 
 // internal api
@@ -75,7 +75,7 @@ app.get('/info/lp', async (req, res) => {
 app.get('/liquidity/history', async (req, res) => {
     const ts = getStartTsOfDay(req.query.n)
     const block = ts.map(ms => blockModel.estimateBlock(ms));
-    const rs = await syncModel.getLiquidityHistory(req.query.a, block, req.query.d === 'true');
+    const rs = await syncModel.getLiquidityHistory(req.query.a, block);
     res.json(rs);
 })
 
