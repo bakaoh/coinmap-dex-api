@@ -43,7 +43,8 @@ class Indexer {
 }
 
 class TokenModel {
-    constructor() {
+    constructor(readonly = false) {
+        this.readonly = readonly;
         this.lp = {};
         this.token = {};
         this.invalid = {};
@@ -62,9 +63,11 @@ class TokenModel {
             try {
                 const tokens = await getLPToken01([address])
                 this.lp[tokens[0][0]] = [tokens[0][1], tokens[0][2]];
-                const lp = fs.createWriteStream(LP_DETAIL_FILE, opts);
-                lp.write(`${tokens[0][0]},${tokens[0][1]},${tokens[0][2]}\n`);
-                lp.end();
+                if (!this.readonly) {
+                    const lp = fs.createWriteStream(LP_DETAIL_FILE, opts);
+                    lp.write(`${tokens[0][0]},${tokens[0][1]},${tokens[0][2]}\n`);
+                    lp.end();
+                }
             } catch (err) {
                 if (err.toString().includes("Multicall aggregate: call failed")) {
                     this.invalid[address] = true;
@@ -91,9 +94,11 @@ class TokenModel {
                 const tokens = await getTokenInfo([address])
                 this.token[tokens[0][0]] = [tokens[0][1], tokens[0][2]];
                 this.indexer.add(tokens[0][0], tokens[0][1], tokens[0][2]);
-                const writer = fs.createWriteStream(TOKEN_DETAIL_FILE, opts);
-                writer.write(`${tokens[0][0]},${tokens[0][1]},${tokens[0][2]}\n`);
-                writer.end();
+                if (!this.readonly) {
+                    const writer = fs.createWriteStream(TOKEN_DETAIL_FILE, opts);
+                    writer.write(`${tokens[0][0]},${tokens[0][1]},${tokens[0][2]}\n`);
+                    writer.end();
+                }
             } catch (err) {
                 if (err.toString().includes("Multicall aggregate: call failed")) {
                     this.invalid[address] = true;
@@ -116,6 +121,7 @@ class TokenModel {
     }
 
     createLpFile() {
+        if (this.readonly) return;
         const keys = Object.keys(this.lp);
         console.log("Total:", keys.length);
         const lp = fs.createWriteStream(LP_FILE, opts);
@@ -134,6 +140,7 @@ class TokenModel {
     }
 
     async createLpDetailFile() {
+        if (this.readonly) return;
         const batchSize = 200;
         const keys = Object.keys(this.lp);
         const lp = fs.createWriteStream(LP_DETAIL_FILE, opts);
@@ -168,6 +175,7 @@ class TokenModel {
     }
 
     async createTokenDetailFile() {
+        if (this.readonly) return;
         const batchSize = 1;
         const all = new Set();
         for (let address in this.lp) {
