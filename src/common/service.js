@@ -29,25 +29,25 @@ app.get('/api/v1/search', async (req, res) => {
 
 app.get('/api/v1/pool/:token', async (req, res) => {
     const token = getAddress(req.params.token);
-    const name = (await tokenModel.getToken(token)).name
+    const symbol = (await tokenModel.getToken(token)).symbol
     const ts = getStartTsOfDay(7)
     const block = ts.map(ms => blockModel.estimateBlock(ms));
     const data = (await syncModel.getLiquidityHistory(token, block)).map((p, i) => {
         return {
             date: ts[i] * 1000,
             price: p[2],
-            totalAmount: p[3].substr(0, p[3].length - 18),
+            totalAmount: parseInt(p[3].substr(0, p[3].length - 18)),
         }
     });
     const lq = syncModel.getLiquidity(token);
     const pools = [];
     for (let pool in lq) {
         pools.push({
-            name: name + "-" + (await tokenModel.getToken(getAddress(pool))).name,
-            liquidity: lq[pool][0].substr(0, lq[pool][0].length - 18),
+            name: symbol + "-" + (await tokenModel.getToken(getAddress(pool))).symbol,
+            liquidity: parseInt(lq[pool][0].substr(0, lq[pool][0].length - 18)),
         })
     }
-    res.json({ data, pools });
+    res.json({ data, pools: pools.sort((a, b) => b.liquidity - a.liquidity).slice(3) });
 })
 
 // internal api
