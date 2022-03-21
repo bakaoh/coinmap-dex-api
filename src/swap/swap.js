@@ -61,7 +61,9 @@ class SwapModel {
         try {
             const lastFile = getLastFile(`logs/swap/${token}`);
             if (lastFile == '') return rs;
-            await this.loadSwapLog(token, parseInt(lastFile), (block, bs, othertoken, from, to, amount0, amount1) => {
+            const lastLines = await readLastLines.read(`logs/swap/${token}/${lastFile}`, 10);
+            lastLines.trim().split('\n').forEach(line => {
+                const [block, bs, othertoken, from, to, amount0, amount1] = line.split(',');
                 rs.push({ block, bs, othertoken, from, to, amount0, amount1 });
             });
         } catch (err) { }
