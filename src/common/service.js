@@ -35,13 +35,13 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     const data = (await syncModel.getLiquidityHistory(token, block)).map((p, i) => {
         return {
             date: ts[i] * 1000,
-            price: 0,
-            totalAmount: p[2].substr(0, p[2].length - 18),
+            price: p[2],
+            totalAmount: p[3].substr(0, p[3].length - 18),
         }
     });
     const lq = syncModel.getLiquidity(token);
     const pools = [];
-    for (let pool in pools) {
+    for (let pool in lq) {
         pools.push({
             name: name + "-" + (await tokenModel.getToken(getAddress(pool))).name,
             liquidity: lq[pool][0].substr(0, lq[pool][0].length - 18),

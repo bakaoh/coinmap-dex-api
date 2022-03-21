@@ -103,7 +103,7 @@ class SyncModel {
                         for (let token1 in liquidity) {
                             total = total.add(Web3.utils.toBN(liquidity[token1][0]))
                         }
-                        rs.push([checkpoints[cid], total.toString(10), total.mul(price).divn(100000).toString(10), details ? JSON.parse(JSON.stringify(liquidity)) : {}]);
+                        rs.push([checkpoints[cid], total.toString(10), parseInt(price.toString(10)) / 100000, total.mul(price).divn(100000).toString(10), details ? JSON.parse(JSON.stringify(liquidity)) : {}]);
                         while (block > checkpoints[cid]) cid++;
                     }
                 });
