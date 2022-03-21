@@ -1,5 +1,6 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
+const readLastLines = require('read-last-lines');
 const Web3 = require("web3");
 const { web3, ContractAddress } = require('../utils/bsc');
 const { getLastLine, getLastFile } = require('../utils/io');
@@ -57,7 +58,9 @@ class SyncModel {
             const lastFile = getLastFile(`logs/sync/${token}`);
             if (lastFile == '') return;
             this.liquidity[token] = {};
-            await this.loadSyncLog(token, parseInt(lastFile), (block, othertoken, reserve0, reserve1) => {
+            const lastLines = await readLastLines.read(`logs/sync/${token}/${lastFile}`, 50);
+            lastLines.trim().split('\n').forEach(line => {
+                const [block, othertoken, reserve0, reserve1] = line.split(',');
                 this.liquidity[token][othertoken] = [reserve0, reserve1];
                 this.updatePrice(token, othertoken, reserve0, reserve1);
             });

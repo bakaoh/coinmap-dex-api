@@ -1,5 +1,6 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
+const readLastLines = require('read-last-lines');
 const { web3, ContractAddress } = require('../utils/bsc');
 const { getLastLine, getLastFile } = require('../utils/io');
 
