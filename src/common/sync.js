@@ -66,7 +66,7 @@ class SyncModel {
                     this.price[token] = this.price[ContractAddress.WBNB] * parseInt(priceInBnB.toString(10)) / 100000
                 }
             });
-        } catch (err) { }
+        } catch (err) { console.log(err) }
     }
 
     closeAll() {
