@@ -2,15 +2,13 @@ const express = require("express");
 const BlockModel = require("./block");
 const TokenModel = require("./token");
 const SyncModel = require("./sync");
+const { ContractAddress } = require('../utils/bsc');
 
 const app = express();
 const blockModel = new BlockModel();
 const tokenModel = new TokenModel();
 const syncModel = new SyncModel(tokenModel);
 app.use(express.json());
-
-const WBNB = '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c';
-const BUSD = '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56';
 
 function getStartTsOfDay(n) {
     const start = new Date();
@@ -65,13 +63,14 @@ app.get('/liquidity/now', async (req, res) => {
 app.get('/price/history', async (req, res) => {
     const ts = getStartTsOfDay(req.query.n)
     const block = ts.map(ms => blockModel.estimateBlock(ms));
-    const rs = await syncModel.getPriceHistory(req.query.a, BUSD, block);
+    const rs = await syncModel.getPriceHistory(req.query.a, ContractAddress.BUSD, block);
     res.json(rs);
 })
 
 app.get('/price/now', async (req, res) => {
-    const rs = syncModel.getPrice(req.query.a);
-    res.json(rs);
+    const price = syncModel.getPrice(req.query.a);
+    const bnbPrice = syncModel.getPrice(ContractAddress.WBNB);
+    res.json({ address: req.query.a, price, bnbPrice });
 })
 
 async function start(port) {
