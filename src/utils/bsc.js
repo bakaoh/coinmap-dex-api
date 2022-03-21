@@ -1,6 +1,6 @@
 const Web3 = require("web3");
 const { pack, keccak256 } = require('@ethersproject/solidity');
-const { getCreate2Address } = require('@ethersproject/address');
+const { getCreate2Address, getChecksumAddress } = require('@ethersproject/address');
 
 const PANCAKE_INIT_CODE_HASH = '0x00fb7f630766e6a796048ea87d01acd3068e8ff67d078148a3fa3f4a84f69bd5'
 const ENDPOINT = "https://bsc-dataseed.binance.org";
@@ -24,4 +24,4 @@ function getPairAddress(tokenA, tokenB) {
     )
 }
 
-module.exports = { getPairAddress, ContractAddress, web3 };
+module.exports = { getPairAddress, ContractAddress, web3, getChecksumAddress };

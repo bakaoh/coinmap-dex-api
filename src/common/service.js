@@ -2,7 +2,7 @@ const express = require("express");
 const BlockModel = require("./block");
 const TokenModel = require("./token");
 const SyncModel = require("./sync");
-const { ContractAddress } = require('../utils/bsc');
+const { ContractAddress, getChecksumAddress } = require('../utils/bsc');
 
 const app = express();
 const blockModel = new BlockModel();
@@ -25,6 +25,29 @@ function getStartTsOfDay(n) {
 app.get('/api/v1/search', async (req, res) => {
     const rs = tokenModel.searchToken(req.query.q);
     res.json(rs);
+})
+
+app.get('/api/v1/pool/:token', async (req, res) => {
+    const token = getChecksumAddress(req.params.token);
+    const name = (await tokenModel.getToken(token)).name
+    const ts = getStartTsOfDay(7)
+    const block = ts.map(ms => blockModel.estimateBlock(ms));
+    const data = await syncModel.getLiquidityHistory(token, block).map((p, i) => {
+        return {
+            date: ts[i] * 1000,
+            price: 0,
+            totalAmount: p[2].substr(0, p[2].length - 18),
+        }
+    });
+    const lq = syncModel.getLiquidity(token);
+    const pools = [];
+    for (let pool in pools) {
+        pools.push({
+            name: name + "-" + (await tokenModel.getToken(getChecksumAddress(pool))).name,
+            liquidity: lq[pool][0].substr(0, lq[pool][0].length - 18),
+        })
+    }
+    res.json({ data, pools });
 })
 
 // internal api
