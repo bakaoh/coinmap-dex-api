@@ -22,6 +22,8 @@ function getStartTsOfDay(n) {
     return rs.reverse();
 }
 
+const getNumber = (bn) => parseInt(bn.substr(0, bn.length - 18));
+
 app.get('/api/v1/search', async (req, res) => {
     const rs = tokenModel.searchToken(req.query.q);
     res.json(rs);
@@ -35,22 +37,19 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     const ts = getStartTsOfDay(7)
     const block = ts.map(ms => blockModel.estimateBlock(ms));
     const data = (await syncModel.getLiquidityHistory(token, block)).map((p, i) => {
-        return {
-            date: ts[i],
-            price: p[2],
-            totalAmount: parseInt(p[3].substr(0, p[3].length - 18)),
-        }
+        return { date: ts[i], price: p[2], totalAmount: getNumber(p[3]) }
     });
     const lq = syncModel.getLiquidity(token);
     let pools = [];
     for (let pool in lq) {
-        pools.push({ pool, supply: parseInt(lq[pool][0].substr(0, lq[pool][0].length - 18)) })
+        pools.push({ address: pool, reserve0: getNumber(lq[pool][0]), reserve1: getNumber(lq[pool][1]), })
     }
-    pools = pools.sort((a, b) => b.supply - a.supply).slice(0, 3).map(pool => {
+    pools = pools.sort((a, b) => b.reserve0 - a.reserve0).slice(0, 3).map(pool => {
         return {
-            name: symbol + "/" + tokenModel.getTokenSync(pool.pool).symbol,
-            liquidity: pool.supply * price,
-            supply: pool.supply,
+            name: symbol + "/" + tokenModel.getTokenSync(pool.address).symbol,
+            liquidity: pool.reserve0 * price,
+            reserve0: pool.reserve0,
+            reserve1: pool.reserve1,
         }
     })
     res.json({ data, pools });

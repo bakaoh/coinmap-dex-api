@@ -91,7 +91,7 @@ class SyncModel {
         let liquidity = {};
         let price = Web3.utils.toBN(0);
         const fromIdx = Math.floor(checkpoints[0] / 100000);
-        const toIdx = Math.ceil(checkpoints[checkpoints.length - 1] / 100000);
+        const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / 100000);
         const rs = [];
         for (let idx = fromIdx; idx <= toIdx; idx++) {
             try {
@@ -119,7 +119,7 @@ class SyncModel {
     async getPriceHistory(token0, token1, checkpoints) {
         let cid = 0;
         const fromIdx = Math.floor(checkpoints[0] / 100000);
-        const toIdx = Math.ceil(checkpoints[checkpoints.length - 1] / 100000);
+        const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / 100000);
         const rs = [];
         for (let idx = fromIdx; idx <= toIdx; idx++) {
             try {

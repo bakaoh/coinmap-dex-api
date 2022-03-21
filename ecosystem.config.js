@@ -5,7 +5,7 @@ module.exports = {
       script: "src/common/service.js",
       instances: 1,
       autorestart: true,
-      max_memory_restart: "1000M",
+      max_memory_restart: "2000M",
       watch: false,
       time: true
     }
