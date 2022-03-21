@@ -59,14 +59,7 @@ class SyncModel {
             this.liquidity[token] = {};
             await this.loadSyncLog(token, parseInt(lastFile), (block, othertoken, reserve0, reserve1) => {
                 this.liquidity[token][othertoken] = [reserve0, reserve1];
-                if (reserve0 == "0" || reserve1 == "0") return;
-                if (othertoken == ContractAddress.BUSD) {
-                    const priceInUsd = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
-                    this.price[token] = parseInt(priceInUsd.toString(10)) / 100000;
-                } else if (othertoken == ContractAddress.WBNB) {
-                    const priceInBnB = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
-                    this.price[token] = this.price[ContractAddress.WBNB] * parseInt(priceInBnB.toString(10)) / 100000
-                }
+                this.updatePrice(token, othertoken, reserve0, reserve1);
             });
         } catch (err) { }
     }
@@ -163,6 +156,8 @@ class SyncModel {
             this.liquidity[token0][token1] = [reserve0, reserve1];
             if (!this.liquidity[token1]) this.liquidity[token1] = {};
             this.liquidity[token1][token0] = [reserve1, reserve0];
+            this.updatePrice(token0, token1, reserve0, reserve1);
+            this.updatePrice(token1, token0, reserve1, reserve0);
         } catch (err) { console.log(`Error`, block, lpToken, reserve0, reserve1, err.toString()) }
     }
 
@@ -196,6 +191,17 @@ class SyncModel {
         if (ms < 2000) await sleep(2000 - ms);
 
         return lastBlock;
+    }
+
+    updatePrice(token, othertoken, reserve0, reserve1) {
+        if (reserve0 == "0" || reserve1 == "0") return;
+        if (othertoken == ContractAddress.BUSD) {
+            const priceInUsd = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
+            this.price[token] = parseInt(priceInUsd.toString(10)) / 100000;
+        } else if (othertoken == ContractAddress.WBNB) {
+            const priceInBnB = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
+            this.price[token] = this.price[ContractAddress.WBNB] * parseInt(priceInBnB.toString(10)) / 100000
+        }
     }
 }
 
