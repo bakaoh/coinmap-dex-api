@@ -42,16 +42,18 @@ app.get('/api/v1/pool/:token', async (req, res) => {
         }
     });
     const lq = syncModel.getLiquidity(token);
-    const pools = [];
+    let pools = [];
     for (let pool in lq) {
-        const supply = parseInt(lq[pool][0].substr(0, lq[pool][0].length - 18));
-        pools.push({
-            name: symbol + "/" + (await tokenModel.getToken(getAddress(pool))).symbol,
-            liquidity: supply * price,
-            supply
-        })
+        pools.push({ pool, supply: parseInt(lq[pool][0].substr(0, lq[pool][0].length - 18)) })
     }
-    res.json({ data, pools: pools.sort((a, b) => b.liquidity - a.liquidity).slice(0, 3) });
+    pools = pools.sort((a, b) => b.supply - a.supply).slice(0, 3).map(pool => {
+        return {
+            name: symbol + "/" + (await tokenModel.getToken(getAddress(pool))).symbol,
+            liquidity: pool.supply * price,
+            supply: pool.supply,
+        }
+    })
+    res.json({ data, pools });
 })
 
 // internal api
