@@ -33,7 +33,7 @@ app.get('/api/v1/transaction/:token', async (req, res) => {
         } else return;
         const item = {
             price: parseInt(txPrice.toString(10)) / 100000,
-            total: parseInt(total.toString(10)) / 100000,
+            total: parseInt(txTotal.toString(10)) / 100000,
             amount: getNumber(tx.amount0),
         }
         if (tx.bs == "SELL") {
