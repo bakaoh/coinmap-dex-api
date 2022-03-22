@@ -19,7 +19,7 @@ app.get('/api/v1/transaction/:token', async (req, res) => {
     const buyOrder = [];
     const sellOrder = [];
     const lastTx = await swapModel.getLastTx(token, 20);
-    const bnbPriceBN = Web3.utils.toBN("" + bnbPrice)
+    const bnbPriceBN = Web3.utils.toBN(Math.round(bnbPrice));
     lastTx.forEach(tx => {
         let txPrice, txTotal;
         const amount0BN = Web3.utils.toBN(tx.amount0);
