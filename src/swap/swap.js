@@ -113,6 +113,7 @@ class SwapModel {
         for (let idx = fromIdx; idx <= toIdx; idx++) {
             try {
                 await this.loadSwapLog(token0, idx, (block, bs, othertoken, from, to, amount0, amount1) => {
+                    if (amount0 == '0' || amount1 == '0') return;
                     const price = parseInt(Web3.utils.toBN(amount1).muln(100000).div(Web3.utils.toBN(amount0)) / 100000);
                     if (lastPrice[othertoken] && Math.abs(lastPrice[othertoken] - price) > (lastPrice[othertoken] / 100)) {
                         totalTransactionHighValue = totalTransactionHighValue.add(Web3.utils.toBN(amount0));
