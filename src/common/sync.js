@@ -1,7 +1,7 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
 const Web3 = require("web3");
-const { web3, ContractAddress } = require('../utils/bsc');
+const { web3, ContractAddress, isUSD } = require('../utils/bsc');
 const { getLastLine, getLastFile } = require('../utils/io');
 
 const SYNC_TOPIC = '0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1';
@@ -99,7 +99,7 @@ class SyncModel {
                 await this.loadSyncLog(token0, idx, (block, othertoken, reserve0, reserve1) => {
                     if (reserve0 == "0" || reserve1 == "0") return;
                     liquidity[othertoken] = [reserve0, reserve1];
-                    if (othertoken == ContractAddress.BUSD) price = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
+                    if (isUSD(othertoken)) price = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
                     if (block > checkpoints[cid]) {
                         let total = Web3.utils.toBN(0);
                         for (let token1 in liquidity) {
@@ -199,7 +199,7 @@ class SyncModel {
 
     updatePrice(token, othertoken, reserve0, reserve1) {
         if (reserve0 == "0" || reserve1 == "0") return;
-        if (othertoken == ContractAddress.BUSD) {
+        if (isUSD(othertoken)) {
             const priceInUsd = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
             this.price[token] = parseInt(priceInUsd.toString(10)) / 100000;
         } else if (othertoken == ContractAddress.WBNB) {

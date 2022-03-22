@@ -64,14 +64,14 @@ async function crawlLogs(fromBlock, toBlock) {
 
 async function run() {
     let from = 0;
-    let batchSize = 1020;
+    let batchSize = 1000;
     let ms = 0;
     while (from < 16165330) {
         try {
             ms = await crawlLogs(from, from + batchSize - 1);
+            from += batchSize;
             if (ms < 2000 && batchSize < 1500) batchSize += 50
             else if (ms > 5000 && batchSize > 50) batchSize -= 50;
-            from += batchSize;
         } catch (err) {
             if (ms > 5000 && batchSize > 50) batchSize -= 50;
             console.log(`Error ${from}:`, err)

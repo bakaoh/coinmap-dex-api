@@ -25,4 +25,6 @@ function getPairAddress(tokenA, tokenB) {
     )
 }
 
-module.exports = { getPairAddress, ContractAddress, web3, getAddress };
+const isUSD = (address) => address == ContractAddress.BUSD || address == ContractAddress.USDT;
+
+module.exports = { getPairAddress, ContractAddress, web3, getAddress, isUSD };

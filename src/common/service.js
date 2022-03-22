@@ -1,9 +1,9 @@
 const express = require("express");
-const NodeCache = require("node-cache");
 
 const BlockModel = require("./block");
 const TokenModel = require("./token");
 const SyncModel = require("./sync");
+const { getCache } = require("../cache");
 const { ContractAddress, getAddress } = require('../utils/bsc');
 const { getNumber } = require('../utils/format');
 
@@ -11,7 +11,6 @@ const app = express();
 const blockModel = new BlockModel();
 const tokenModel = new TokenModel();
 const syncModel = new SyncModel(tokenModel);
-const cache = new NodeCache({ stdTTL: 3 * 60 * 60, useClones: false });
 app.use(express.json());
 
 function getStartTsOfDay(n) {
@@ -38,27 +37,23 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     const symbol = (await tokenModel.getToken(token)).symbol
     const price = syncModel.getPrice(token);
 
-    let data = cache.get(`poolhistory-${token}`);
-    if (data == undefined) {
+    const data = getCache(`poolhistory-${token}`, async () => {
         const { ts, block } = getStartTsOfDay(10)
-        data = (await syncModel.getLiquidityHistory(token, block)).map((p, i) => {
-            return { date: ts[i], price: p[2], totalAmount: getNumber(p[3]) }
-        });
-        cache.set(`poolhistory-${token}`, data);
-    }
+        return (await syncModel.getLiquidityHistory(token, block)).map((p, i) => ({
+            date: ts[i], price: p[2], totalAmount: getNumber(p[3])
+        }));
+    });
     const lq = syncModel.getLiquidity(token);
     let pools = [];
     for (let pool in lq) {
         pools.push({ address: pool, reserve0: getNumber(lq[pool][0]), reserve1: getNumber(lq[pool][1]), })
     }
-    pools = pools.sort((a, b) => b.reserve0 - a.reserve0).slice(0, 3).map(pool => {
-        return {
-            name: symbol + "/" + tokenModel.getTokenSync(pool.address).symbol,
-            liquidity: pool.reserve0 * price,
-            reserve0: pool.reserve0,
-            reserve1: pool.reserve1,
-        }
-    })
+    pools = pools.sort((a, b) => b.reserve0 - a.reserve0).slice(0, 3).map(pool => ({
+        name: symbol + "/" + tokenModel.getTokenSync(pool.address).symbol,
+        liquidity: pool.reserve0 * price,
+        reserve0: pool.reserve0,
+        reserve1: pool.reserve1,
+    }))
     res.json({ data, pools });
 })
 
