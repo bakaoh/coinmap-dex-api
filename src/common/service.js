@@ -3,6 +3,7 @@ const BlockModel = require("./block");
 const TokenModel = require("./token");
 const SyncModel = require("./sync");
 const { ContractAddress, getAddress } = require('../utils/bsc');
+const { getNumber } = require('../utils/format');
 
 const app = express();
 const blockModel = new BlockModel();
@@ -21,8 +22,6 @@ function getStartTsOfDay(n) {
     }
     return rs.reverse();
 }
-
-const getNumber = (bn) => parseInt(bn.substr(0, bn.length - 18) || '0');
 
 app.get('/api/v1/search', async (req, res) => {
     const rs = tokenModel.searchToken(req.query.q);
