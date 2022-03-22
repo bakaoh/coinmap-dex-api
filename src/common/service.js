@@ -22,7 +22,7 @@ function getStartTsOfDay(n) {
     return rs.reverse();
 }
 
-const getNumber = (bn) => parseInt(bn.substr(0, bn.length - 18));
+const getNumber = (bn) => parseInt(bn.substr(0, bn.length - 18) || '0');
 
 app.get('/api/v1/search', async (req, res) => {
     const rs = tokenModel.searchToken(req.query.q);
