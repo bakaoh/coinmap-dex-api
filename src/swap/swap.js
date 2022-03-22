@@ -101,6 +101,36 @@ class SwapModel {
         return rs;
     }
 
+    async getSharkHistory(token0, checkpoints) {
+        let cid = 0;
+        const fromIdx = Math.floor(checkpoints[0] / 100000);
+        const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / 100000);
+        const rs = [];
+        let totalBalance = Web3.utils.toBN(0);
+        let totalTransaction = Web3.utils.toBN(0);
+        let totalTransactionHighValue = Web3.utils.toBN(0);
+        const lastPrice = {};
+        for (let idx = fromIdx; idx <= toIdx; idx++) {
+            try {
+                await this.loadSwapLog(token0, idx, (block, bs, othertoken, from, to, amount0, amount1) => {
+                    const price = parseInt(Web3.utils.toBN(amount1).muln(100000).div(Web3.utils.toBN(amount0)) / 100000);
+                    if (lastPrice[othertoken] && Math.abs(lastPrice[othertoken] - price) > (lastPrice[othertoken] / 100)) {
+                        totalTransactionHighValue = totalTransactionHighValue.add(Web3.utils.toBN(amount0));
+                    }
+                    lastPrice[othertoken] = price;
+                    if (block > checkpoints[cid]) {
+                        rs.push([checkpoints[cid], totalBalance.toString(10), totalTransaction.toString(10), totalTransactionHighValue.toString(10)]);
+                        totalBalance = Web3.utils.toBN(0);
+                        totalTransaction = Web3.utils.toBN(0);
+                        totalTransactionHighValue = Web3.utils.toBN(0);
+                        while (block > checkpoints[cid]) cid++;
+                    }
+                });
+            } catch (err) { console.log(err) }
+        }
+        return rs;
+    }
+
     loadSwapLog(token, idx, cb) {
         const lr = new LineByLine(`logs/swap/${token}/${idx}.log`);
         lr.on('line', (line) => {

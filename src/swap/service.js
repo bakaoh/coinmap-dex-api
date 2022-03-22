@@ -42,6 +42,21 @@ app.get('/api/v1/volume/:token', async (req, res) => {
     res.json(rs);
 })
 
+app.get('/api/v1/shark/:token', async (req, res) => {
+    const token = getAddress(req.params.token);
+    const ts = getStartTsOfDay(10)
+    const block = ts.map(ms => blockModel.estimateBlock(ms));
+    const rs = (await swapModel.getSharkHistory(token, block)).map((p, i) => {
+        return {
+            date: ts[i],
+            totalBalance: getNumber(p[1]),
+            totalTransaction: getNumber(p[2]),
+            totalTransactionHighValue: getNumber(p[3]),
+        }
+    });
+    res.json(rs);
+})
+
 app.get('/api/v1/transaction/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const { price, bnbPrice } = (await axios.get(`http://localhost:9610/price/now?a=${token}`)).data
