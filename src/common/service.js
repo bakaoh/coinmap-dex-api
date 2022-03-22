@@ -34,7 +34,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     const symbol = (await tokenModel.getToken(token)).symbol
     const price = syncModel.getPrice(token);
 
-    const ts = getStartTsOfDay(7)
+    const ts = getStartTsOfDay(10)
     const block = ts.map(ms => blockModel.estimateBlock(ms));
     const data = (await syncModel.getLiquidityHistory(token, block)).map((p, i) => {
         return { date: ts[i], price: p[2], totalAmount: getNumber(p[3]) }
