@@ -66,7 +66,7 @@ async function run() {
     let from = 0;
     let batchSize = 1000;
     let ms = 0;
-    while (from < 16165330) {
+    while (from < 16278527) {
         try {
             ms = await crawlLogs(from, from + batchSize - 1);
             from += batchSize;
