@@ -29,7 +29,7 @@ const getNumber = (bn, n = 0) => parseInt(bn.substr(0, bn.length + n - 18) || '0
 
 app.get('/api/v1/volume/:token', async (req, res) => {
     const token = getAddress(req.params.token);
-    const ts = getStartTsOfDay(7)
+    const ts = getStartTsOfDay(15)
     const block = ts.map(ms => blockModel.estimateBlock(ms));
     const rs = (await swapModel.getVolumeHistory(token, block)).map((p, i) => {
         return {
