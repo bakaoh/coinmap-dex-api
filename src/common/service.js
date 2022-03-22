@@ -39,9 +39,9 @@ app.get('/api/v1/pool/:token', async (req, res) => {
 
     const data = getCache(`poolhistory-${token}`, async () => {
         const { ts, block } = getStartTsOfDay(10)
-        return (await syncModel.getLiquidityHistory(token, block)).map((p, i) => ({
-            date: ts[i], price: p[2], totalAmount: getNumber(p[3])
-        }));
+        return (await syncModel.getLiquidityHistory(token, block)).map((p, i) => {
+            return { date: ts[i], price: p[2], totalAmount: getNumber(p[3]) }
+        });
     });
     const lq = syncModel.getLiquidity(token);
     let pools = [];
