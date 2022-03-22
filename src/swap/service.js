@@ -26,14 +26,14 @@ app.get('/api/v1/transaction/:token', async (req, res) => {
         const amount1BN = Web3.utils.toBN(tx.amount1);
         if (tx.othertoken == ContractAddress.WBNB) {
             txPrice = amount1BN.mul(bnbPriceBN).muln(100000).div(amount0BN);
-            txTotal = amount1BN.mul(bnbPriceBN).muln(100000);
+            txTotal = amount1BN.mul(bnbPriceBN);
         } else if (tx.othertoken == ContractAddress.BUSD || tx.othertoken == ContractAddress.USDT) {
             txPrice = amount1BN.muln(100000).div(amount0BN);
-            txTotal = amount1BN.muln(100000);
+            txTotal = amount1BN;
         } else return;
         const item = {
             price: parseInt(txPrice.toString(10)) / 100000,
-            total: parseInt(txTotal.toString(10)) / 100000,
+            total: getNumber(txTotal.toString(10)),
             amount: getNumber(tx.amount0),
         }
         if (tx.bs == "SELL") {
