@@ -1,4 +1,6 @@
 const express = require("express");
+const NodeCache = require("node-cache");
+
 const BlockModel = require("./block");
 const TokenModel = require("./token");
 const SyncModel = require("./sync");
@@ -9,18 +11,21 @@ const app = express();
 const blockModel = new BlockModel();
 const tokenModel = new TokenModel();
 const syncModel = new SyncModel(tokenModel);
+const cache = new NodeCache({ stdTTL: 3 * 60 * 60, useClones: false });
 app.use(express.json());
 
 function getStartTsOfDay(n) {
     const start = new Date();
     start.setUTCHours(0, 0, 0, 0);
-    const rs = [];
-    let ts = start.getTime();
+    let ts = [];
+    let t = start.getTime();
     for (let i = 0; i < n; i++) {
-        rs.push(ts);
-        ts -= 60 * 60 * 24 * 1000;
+        ts.push(t);
+        t -= 60 * 60 * 24 * 1000;
     }
-    return rs.reverse();
+    ts = ts.reverse();
+    const block = ts.map(ms => blockModel.estimateBlock(ms));
+    return { ts, block }
 }
 
 app.get('/api/v1/search', async (req, res) => {
@@ -33,11 +38,14 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     const symbol = (await tokenModel.getToken(token)).symbol
     const price = syncModel.getPrice(token);
 
-    const ts = getStartTsOfDay(10)
-    const block = ts.map(ms => blockModel.estimateBlock(ms));
-    const data = (await syncModel.getLiquidityHistory(token, block)).map((p, i) => {
-        return { date: ts[i], price: p[2], totalAmount: getNumber(p[3]) }
-    });
+    let data = cache.get(`poolhistory-${token}`);
+    if (data == undefined) {
+        const { ts, block } = getStartTsOfDay(10)
+        data = (await syncModel.getLiquidityHistory(token, block)).map((p, i) => {
+            return { date: ts[i], price: p[2], totalAmount: getNumber(p[3]) }
+        });
+        cache.set(`poolhistory-${token}`, data);
+    }
     const lq = syncModel.getLiquidity(token);
     let pools = [];
     for (let pool in lq) {
@@ -61,8 +69,7 @@ app.get('/block/estimate', (req, res) => {
 })
 
 app.get('/block/startofday', (req, res) => {
-    const ts = getStartTsOfDay(req.query.n)
-    const block = ts.map(ms => blockModel.estimateBlock(ms));
+    const { ts, block } = getStartTsOfDay(req.query.n)
     res.json({ ts, block });
 })
 
@@ -77,8 +84,7 @@ app.get('/info/lp', async (req, res) => {
 })
 
 app.get('/liquidity/history', async (req, res) => {
-    const ts = getStartTsOfDay(req.query.n)
-    const block = ts.map(ms => blockModel.estimateBlock(ms));
+    const { block } = getStartTsOfDay(req.query.n)
     const rs = await syncModel.getLiquidityHistory(req.query.a, block);
     res.json(rs);
 })
@@ -89,8 +95,7 @@ app.get('/liquidity/now', async (req, res) => {
 })
 
 app.get('/price/history', async (req, res) => {
-    const ts = getStartTsOfDay(req.query.n)
-    const block = ts.map(ms => blockModel.estimateBlock(ms));
+    const { block } = getStartTsOfDay(req.query.n)
     const rs = await syncModel.getPriceHistory(req.query.a, ContractAddress.BUSD, block);
     res.json(rs);
 })
