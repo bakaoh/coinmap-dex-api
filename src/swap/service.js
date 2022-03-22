@@ -1,6 +1,7 @@
 const express = require("express");
 const axios = require("axios");
 const Web3 = require("web3");
+const NodeCache = require("node-cache");
 
 const TokenModel = require("../common/token");
 const SwapModel = require("./swap");
@@ -10,39 +11,50 @@ const { getNumber } = require('../utils/format');
 const app = express();
 const tokenModel = new TokenModel(true);
 const swapModel = new SwapModel(tokenModel);
+const cache = new NodeCache({ stdTTL: 3 * 60 * 60, useClones: false });
 app.use(express.json());
+
+const COMMON_BASE = 'http://localhost:9610';
 
 app.get('/api/v1/volume/:token', async (req, res) => {
     const token = getAddress(req.params.token);
-    const { ts, block } = (await axios.get(`http://localhost:9610/block/startofday?n=8`)).data;
-    const rs = (await swapModel.getVolumeHistory(token, block)).map((p, i) => {
-        return {
-            date: ts[i],
-            totalTransaction: getNumber(p[1]),
-            totalAmountSell: getNumber(p[2]),
-            totalAmountBuyByNewWallet: getNumber(p[3]),
-        }
-    });
+    let rs = cache.get(`volume-${token}`);
+    if (rs == undefined) {
+        const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=8`)).data;
+        rs = (await swapModel.getVolumeHistory(token, block)).map((p, i) => {
+            return {
+                date: ts[i],
+                totalTransaction: getNumber(p[1]),
+                totalAmountSell: getNumber(p[2]),
+                totalAmountBuyByNewWallet: getNumber(p[3]),
+            }
+        });
+        cache.set(`volume-${token}`, rs);
+    }
     res.json(rs);
 })
 
 app.get('/api/v1/shark/:token', async (req, res) => {
     const token = getAddress(req.params.token);
-    const { ts, block } = (await axios.get(`http://localhost:9610/block/startofday?n=8`)).data;
-    const rs = (await swapModel.getSharkHistory(token, block)).map((p, i) => {
-        return {
-            date: ts[i],
-            totalBalance: getNumber(p[1]),
-            totalTransaction: getNumber(p[2]),
-            totalTransactionHighValue: getNumber(p[3]),
-        }
-    });
+    let rs = cache.get(`shark-${token}`);
+    if (rs == undefined) {
+        const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=8`)).data;
+        rs = (await swapModel.getSharkHistory(token, block)).map((p, i) => {
+            return {
+                date: ts[i],
+                totalBalance: getNumber(p[1]),
+                totalTransaction: getNumber(p[2]),
+                totalTransactionHighValue: getNumber(p[3]),
+            }
+        });
+        cache.set(`shark-${token}`, rs);
+    }
     res.json(rs);
 })
 
 app.get('/api/v1/transaction/:token', async (req, res) => {
     const token = getAddress(req.params.token);
-    const { price, bnbPrice } = (await axios.get(`http://localhost:9610/price/now?a=${token}`)).data
+    const { price, bnbPrice } = (await axios.get(`${COMMON_BASE}/price/now?a=${token}`)).data
     const buyOrder = [];
     const sellOrder = [];
     const lastTx = await swapModel.getLastTx(token, 20);
