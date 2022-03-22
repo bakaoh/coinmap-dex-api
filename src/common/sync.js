@@ -58,6 +58,7 @@ class SyncModel {
             if (lastFile == '') return;
             this.liquidity[token] = {};
             await this.loadSyncLog(token, parseInt(lastFile), (block, othertoken, reserve0, reserve1) => {
+                if (reserve0 == "0" || reserve1 == "0") return;
                 this.liquidity[token][othertoken] = [reserve0, reserve1];
                 this.updatePrice(token, othertoken, reserve0, reserve1);
             });
@@ -96,6 +97,7 @@ class SyncModel {
         for (let idx = fromIdx; idx <= toIdx; idx++) {
             try {
                 await this.loadSyncLog(token0, idx, (block, othertoken, reserve0, reserve1) => {
+                    if (reserve0 == "0" || reserve1 == "0") return;
                     liquidity[othertoken] = [reserve0, reserve1];
                     if (othertoken == ContractAddress.BUSD) price = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
                     if (block > checkpoints[cid]) {
@@ -125,6 +127,7 @@ class SyncModel {
             try {
                 await this.loadSyncLog(token0, idx, (block, othertoken, reserve0, reserve1) => {
                     if (token1 != othertoken) return;
+                    if (reserve0 == "0" || reserve1 == "0") return;
                     if (block > checkpoints[cid]) {
                         const price = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
                         rs.push([checkpoints[cid], parseInt(price.toString(10)) / 100000]);
@@ -152,6 +155,7 @@ class SyncModel {
             const idx = Math.floor(block / 100000);
             this.getWriter(token0, idx).write(`${block},${token1},${reserve0},${reserve1}\n`);
             this.getWriter(token1, idx).write(`${block},${token0},${reserve1},${reserve0}\n`);
+            if (reserve0 == "0" || reserve1 == "0") return;
             if (!this.liquidity[token0]) this.liquidity[token0] = {};
             this.liquidity[token0][token1] = [reserve0, reserve1];
             if (!this.liquidity[token1]) this.liquidity[token1] = {};
