@@ -87,10 +87,6 @@ class SwapModel {
                     totalTransaction = totalTransaction.add(amount0BN);
                     if (bs == "SELL") totalAmountSell = totalAmountSell.add(amount0BN);
                     if (block > checkpoints[cid]) {
-                        let total = Web3.utils.toBN(0);
-                        for (let token1 in liquidity) {
-                            total = total.add(Web3.utils.toBN(liquidity[token1][0]))
-                        }
                         rs.push([checkpoints[cid], totalTransaction.toString(10), totalAmountSell.toString(10), totalAmountBuyByNewWallet.toString(10)]);
                         totalTransaction = Web3.utils.toBN(0);
                         totalAmountSell = Web3.utils.toBN(0);
