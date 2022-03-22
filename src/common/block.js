@@ -14,11 +14,13 @@ async function getBlockTimestamp(block = 'latest') {
 }
 
 class BlockModel {
-    constructor() {
+    constructor(readonly = false) {
+        this.readonly = readonly;
         this.block = [];
     }
 
     async crawl() {
+        if (this.readonly) return;
         let from = 0;
         let batchSize = 10000;
         const latest = await getBlockTimestamp();
@@ -58,7 +60,9 @@ class BlockModel {
         this.interval = setInterval(async () => {
             try {
                 const [number, ts] = await getBlockTimestamp();
-                fileLog.write(`${number},${ts}\n`);
+                if (!this.readonly) {
+                    fileLog.write(`${number},${ts}\n`);
+                }
                 this.block.push([number, ts]);
             } catch (err) { }
         }, ms)
