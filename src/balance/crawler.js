@@ -74,7 +74,7 @@ async function run() {
             else if (ms > 5000 && batchSize > 50) batchSize -= 50;
         } catch (err) {
             if (ms > 5000 && batchSize > 50) batchSize -= 50;
-            console.log(`Error ${from}:`, err)
+            console.log(`Error ${from}: ${err}`)
             await sleep(2000);
         }
     }
