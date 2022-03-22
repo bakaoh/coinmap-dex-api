@@ -63,10 +63,11 @@ async function crawlLogs(fromBlock, toBlock) {
 }
 
 async function run() {
-    let from = 0;
+    const iid = process.env.IID_OFFSET;
+    let from = iid * 1000000;
     let batchSize = 1000;
     let ms = 0;
-    while (from < 16278527) {
+    while (from < ((iid + 1) * 1000000 - 1)) {
         try {
             ms = await crawlLogs(from, from + batchSize - 1);
             from += batchSize;
