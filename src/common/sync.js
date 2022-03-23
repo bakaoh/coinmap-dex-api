@@ -12,9 +12,9 @@ const opts = { flags: "a" };
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
 const getAmountOut = (amountIn, reserveIn, reserveOut) => {
-    const amountInWithFee = amountIn.mul(998);
+    const amountInWithFee = amountIn.muln(998);
     const numerator = amountInWithFee.mul(reserveOut);
-    const denominator = reserveIn.mul(1000).add(amountInWithFee);
+    const denominator = reserveIn.muln(1000).add(amountInWithFee);
     return numerator.div(denominator);
 }
 
@@ -262,7 +262,7 @@ class SyncModel {
         const ms = Date.now() - startMs;
         console.log(`Crawl sync logs [${fromBlock}-${toBlock}]: ${pastLogs.length} (${ms}ms)`)
         if (ms < sleepMs) await sleep(sleepMs - ms);
-        if (this.lastCache - lastBlock > 10) {
+        if (lastBlock - this.lastCache > 10) {
             this.createCacheFile();
             this.lastCache = lastBlock;
         }
