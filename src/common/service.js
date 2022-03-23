@@ -101,6 +101,13 @@ app.get('/price/now', async (req, res) => {
     res.json({ address: req.query.a, price, bnbPrice });
 })
 
+app.get('/route/find', async (req, res) => {
+    const tokenA = getAddress(req.params.a);
+    const tokenB = getAddress(req.params.b);
+    const { path, aperb, bpera } = syncModel.getPath(tokenA, tokenB);
+    res.json({ path, aperb, bpera });
+})
+
 async function start(port) {
     const startMs = Date.now();
 

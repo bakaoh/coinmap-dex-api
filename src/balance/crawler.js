@@ -3,7 +3,6 @@ const Web3 = require("web3");
 
 const endpoint = "https://bsc-dataseed.binance.org";
 const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
-const cakeAddress = '0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82';
 const opts = { flags: "a" };
 
 const web3 = new Web3(endpoint);
@@ -40,12 +39,13 @@ async function crawlLogs(fromBlock, toBlock) {
     const pastLogs = await web3.eth.getPastLogs({
         fromBlock,
         toBlock,
+        address: CAKE,
         topics: [transferTopic],
     })
 
     for (let log of pastLogs) {
         try {
-            if (IGNORE.includes(log.address)) continue;
+            // if (IGNORE.includes(log.address)) continue;
             if (log.topics.length != 3 || log.data == '0x') continue;
             const fileLog = getWriter(log.address, fileIdx);
             const value = web3.eth.abi.decodeParameters(['uint256'], log.data)
