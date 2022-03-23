@@ -57,6 +57,13 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     res.json({ data, pools });
 })
 
+app.get('/route/:tokenA/:tokenB/:amountIn', async (req, res) => {
+    const tokenA = getAddress(req.params.tokenA);
+    const tokenB = getAddress(req.params.tokenB);
+    const rs = syncModel.getPath(tokenA, tokenB, req.params.amountIn);
+    res.json(rs);
+})
+
 // internal api
 app.get('/block/estimate', (req, res) => {
     const rs = blockModel.estimateBlock(req.query.ts);
@@ -99,13 +106,6 @@ app.get('/price/now', async (req, res) => {
     const price = syncModel.getPrice(req.query.a);
     const bnbPrice = syncModel.getPrice(ContractAddress.WBNB);
     res.json({ address: req.query.a, price, bnbPrice });
-})
-
-app.get('/route/:tokenA/:tokenB/:amountIn', async (req, res) => {
-    const tokenA = getAddress(req.params.a);
-    const tokenB = getAddress(req.params.b);
-    const rs = syncModel.getPath(tokenA, tokenB, req.params.amountIn);
-    res.json(rs);
 })
 
 async function start(port) {

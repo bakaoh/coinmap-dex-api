@@ -262,7 +262,7 @@ class SyncModel {
         const ms = Date.now() - startMs;
         console.log(`Crawl sync logs [${fromBlock}-${toBlock}]: ${pastLogs.length} (${ms}ms)`)
         if (ms < sleepMs) await sleep(sleepMs - ms);
-        if (this.lastCache - lastBlock > 10000) {
+        if (this.lastCache - lastBlock > 10) {
             this.createCacheFile();
             this.lastCache = lastBlock;
         }
