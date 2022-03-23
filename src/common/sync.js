@@ -199,7 +199,7 @@ class SyncModel {
         } catch (err) { console.log(`Error`, block, lpToken, reserve0, reserve1, err.toString()) }
     }
 
-    async crawlSyncLogs(fromBlock, toBlock = 'latest', sleep = 0) {
+    async crawlSyncLogs(fromBlock, toBlock = 'latest', sleepMs = 0) {
         const startMs = Date.now();
         const pastLogs = await web3.eth.getPastLogs({
             fromBlock,
@@ -226,7 +226,7 @@ class SyncModel {
 
         const ms = Date.now() - startMs;
         console.log(`Crawl sync logs [${fromBlock}-${toBlock}]: ${pastLogs.length} (${ms}ms)`)
-        if (sleep && ms < sleep) await sleep(sleep - ms);
+        if (ms < sleepMs) await sleep(sleepMs - ms);
         if (this.lastCache - lastBlock > 10000) {
             this.createCacheFile();
             this.lastCache = lastBlock;
