@@ -17,6 +17,7 @@ class SyncModel {
         this.writer = {};
         this.liquidity = {};
         this.price = {};
+        this.lastCache = 0;
     }
 
     async run() {
@@ -29,7 +30,7 @@ class SyncModel {
         this.blockWriter = fs.createWriteStream(BLOCK_FILE, opts);
         while (fromBlock < latest) {
             try {
-                fromBlock = await this.crawlSyncLogs(fromBlock, fromBlock + batchSize - 1) + 1;
+                fromBlock = await this.crawlSyncLogs(fromBlock, fromBlock + batchSize - 1, 2000) + 1;
             } catch (err) { console.log(`Error ${fromBlock}:`, err); await sleep(2000); }
         }
 
@@ -42,25 +43,36 @@ class SyncModel {
 
     async warmup() {
         const startMs = Date.now();
+        try {
+            this.loadCacheFile();
+            console.log(`SyncModel warmup done (${Date.now() - startMs}ms)`)
+            return;
+        } catch (err) { console.log(`SyncModel warmup using cache file error: ${err}`) }
+
         let files = fs.readdirSync("logs/sync");
         await this.loadLastSyncLog(ContractAddress.WBNB);
         for (let token of files) {
             if (token == ContractAddress.WBNB || token == ContractAddress.BUSD) continue;
             await this.loadLastSyncLog(token);
         }
-        const ms = Date.now() - startMs;
-        console.log(`SyncModel wamrup done (${ms}ms)`)
+        console.log(`SyncModel warmup done (${Date.now() - startMs}ms)`)
+    }
 
-        const startCMs = Date.now();
-        this.createCacheFile();
-        const cms = Date.now() - startCMs;
-        console.log(`SyncModel createCacheFile done (${cms}ms)`)
+    loadCacheFile() {
+        const lr = new LineByLine(CACHE_FILE);
+        lr.on('line', (line) => {
+            const { token, othertoken, reserve0, reserve1 } = line.split(',');
+            if (reserve0 == "0" || reserve1 == "0") return;
+            this.liquidity[token][othertoken] = [reserve0, reserve1];
+            this.updatePrice(token, othertoken, reserve0, reserve1);
+        });
+        return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }
 
     createCacheFile() {
+        const startMs = Date.now();
         const tokens = Object.keys(this.liquidity);
-        console.log("Total:", tokens.length);
-        const writer = fs.createWriteStream(CACHE_FILE, opts);
+        const writer = fs.createWriteStream(CACHE_FILE);
         tokens.forEach(token => {
             const others = Object.keys(this.liquidity[token]);
             others.forEach(othertoken => {
@@ -69,6 +81,7 @@ class SyncModel {
             })
         })
         writer.end();
+        console.log(`SyncModel create cache done (${Date.now() - startMs}ms)`)
     }
 
     async loadLastSyncLog(token) {
@@ -185,7 +198,7 @@ class SyncModel {
         } catch (err) { console.log(`Error`, block, lpToken, reserve0, reserve1, err.toString()) }
     }
 
-    async crawlSyncLogs(fromBlock, toBlock = 'latest') {
+    async crawlSyncLogs(fromBlock, toBlock = 'latest', sleep = 0) {
         const startMs = Date.now();
         const pastLogs = await web3.eth.getPastLogs({
             fromBlock,
@@ -212,8 +225,11 @@ class SyncModel {
 
         const ms = Date.now() - startMs;
         console.log(`Crawl sync logs [${fromBlock}-${toBlock}]: ${pastLogs.length} (${ms}ms)`)
-        if (ms < 2000) await sleep(2000 - ms);
-
+        if (sleep && ms < sleep) await sleep(sleep - ms);
+        if (this.lastCache - lastBlock > 10000) {
+            this.createCacheFile();
+            this.lastCache = lastBlock;
+        }
         return lastBlock;
     }
 
