@@ -1,7 +1,6 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
-const Web3 = require("web3");
-const { web3, ContractAddress, isUSD } = require('../utils/bsc');
+const { web3, ContractAddress, isUSD, toBN } = require('../utils/bsc');
 const { getLastLine, getLastFile } = require('../utils/io');
 
 const SYNC_TOPIC = '0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1';
@@ -137,7 +136,7 @@ class SyncModel {
     async getLiquidityHistory(token0, checkpoints) {
         let cid = 0;
         let liquidity = {};
-        let price = Web3.utils.toBN(0);
+        let price = toBN(0);
         const fromIdx = Math.floor(checkpoints[0] / 100000);
         const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / 100000);
         const rs = [];
@@ -146,11 +145,11 @@ class SyncModel {
                 await this.loadSyncLog(token0, idx, (block, othertoken, reserve0, reserve1) => {
                     if (reserve0 == "0" || reserve1 == "0") return;
                     liquidity[othertoken] = [reserve0, reserve1];
-                    if (isUSD(othertoken)) price = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
+                    if (isUSD(othertoken)) price = toBN(reserve1).muln(100000).div(toBN(reserve0))
                     if (block > checkpoints[cid]) {
-                        let total = Web3.utils.toBN(0);
+                        let total = toBN(0);
                         for (let token1 in liquidity) {
-                            total = total.add(Web3.utils.toBN(liquidity[token1][0]))
+                            total = total.add(toBN(liquidity[token1][0]))
                         }
                         rs.push([checkpoints[cid], total.toString(10), parseInt(price.toString(10)) / 100000, total.mul(price).divn(100000).toString(10)]);
                         while (block > checkpoints[cid]) cid++;
@@ -176,7 +175,7 @@ class SyncModel {
                     if (token1 != othertoken) return;
                     if (reserve0 == "0" || reserve1 == "0") return;
                     if (block > checkpoints[cid]) {
-                        const price = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
+                        const price = toBN(reserve1).muln(100000).div(toBN(reserve0))
                         rs.push([checkpoints[cid], parseInt(price.toString(10)) / 100000]);
                         while (block > checkpoints[cid]) cid++;
                     }
@@ -190,12 +189,12 @@ class SyncModel {
         const lpA = this.liquidity[tokenA];
         const lpB = this.liquidity[tokenB];
         if (!lpA || !lpB) return { path: [], aperb: '0' };
-        amountIn = Web3.utils.toBN(amountIn);
+        amountIn = toBN(amountIn);
         if (lpA[tokenB]) {
             const [reserve0, reserve1] = lpA[tokenB];
             // TODO: check min liquidity
             if (reserve0 != '0' && reserve1 != '0') {
-                const amountOut = getAmountOut(amountIn, Web3.utils.toBN(reserve0), Web3.utils.toBN(reserve1))
+                const amountOut = getAmountOut(amountIn, toBN(reserve0), toBN(reserve1))
                 const aperb = parseInt(amountOut.muln(100000).div(amountIn).toString(10)) / 100000
                 return { path: [tokenA, tokenB], aperb };
             }
@@ -206,8 +205,8 @@ class SyncModel {
             const [reserveBC, reserveCB] = lpB[tokenC];
             // TODO: check min liquidity
             if (reserveBC == '0' || reserveCB == '0' || reserveAC == '0' || reserveCA == '0') continue;
-            const amountOut0 = getAmountOut(amountIn, Web3.utils.toBN(reserveAC), Web3.utils.toBN(reserveCA));
-            const amountOut1 = getAmountOut(amountOut0, Web3.utils.toBN(reserveCB), Web3.utils.toBN(reserveBC));
+            const amountOut0 = getAmountOut(amountIn, toBN(reserveAC), toBN(reserveCA));
+            const amountOut1 = getAmountOut(amountOut0, toBN(reserveCB), toBN(reserveBC));
             const aperb = parseInt(amountOut1.muln(100000).div(amountIn).toString(10)) / 100000
             return { path: [tokenA, tokenC, tokenB], aperb };
         }
@@ -278,10 +277,10 @@ class SyncModel {
     updatePrice(token, othertoken, reserve0, reserve1) {
         if (reserve0 == "0" || reserve1 == "0") return;
         if (isUSD(othertoken)) {
-            const priceInUsd = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
+            const priceInUsd = toBN(reserve1).muln(100000).div(toBN(reserve0))
             this.price[token] = parseInt(priceInUsd.toString(10)) / 100000;
         } else if (othertoken == ContractAddress.WBNB) {
-            const priceInBnB = Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0))
+            const priceInBnB = toBN(reserve1).muln(100000).div(toBN(reserve0))
             this.price[token] = this.price[ContractAddress.WBNB] * parseInt(priceInBnB.toString(10)) / 100000
         }
     }

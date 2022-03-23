@@ -1,9 +1,8 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
 const readLastLines = require('read-last-lines');
-const Web3 = require("web3");
 
-const { web3, ContractAddress } = require('../utils/bsc');
+const { web3, ContractAddress, toBN } = require('../utils/bsc');
 const { getLastLine, getLastFile } = require('../utils/io');
 
 const SWAP_TOPIC = '0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822';
@@ -77,22 +76,22 @@ class SwapModel {
         const fromIdx = Math.floor(checkpoints[0] / 100000);
         const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / 100000);
         const rs = [];
-        let totalTransaction = Web3.utils.toBN(0);
-        let totalAmountSell = Web3.utils.toBN(0);
-        let totalAmountBuyByNewWallet = Web3.utils.toBN(0);
+        let totalTransaction = toBN(0);
+        let totalAmountSell = toBN(0);
+        let totalAmountBuyByNewWallet = toBN(0);
         for (let idx = fromIdx; idx <= toIdx; idx++) {
             try {
                 await this.loadSwapLog(token0, idx, (block, bs, othertoken, from, to, amount0, amount1) => {
-                    const amount0BN = Web3.utils.toBN(amount0);
+                    const amount0BN = toBN(amount0);
                     totalTransaction = totalTransaction.add(amount0BN);
                     if (bs == "SELL") totalAmountSell = totalAmountSell.add(amount0BN);
                     if (block > checkpoints[cid]) {
                         // TODO: totalAmountBuyByNewWallet
                         totalAmountBuyByNewWallet = totalTransaction.muln(Math.round(Math.random() * 30)).divn(100);
                         rs.push([checkpoints[cid], totalTransaction.toString(10), totalAmountSell.toString(10), totalAmountBuyByNewWallet.toString(10)]);
-                        totalTransaction = Web3.utils.toBN(0);
-                        totalAmountSell = Web3.utils.toBN(0);
-                        totalAmountBuyByNewWallet = Web3.utils.toBN(0);
+                        totalTransaction = toBN(0);
+                        totalAmountSell = toBN(0);
+                        totalAmountBuyByNewWallet = toBN(0);
                         while (block > checkpoints[cid]) cid++;
                     }
                 });
@@ -106,24 +105,24 @@ class SwapModel {
         const fromIdx = Math.floor(checkpoints[0] / 100000);
         const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / 100000);
         const rs = [];
-        let totalBalance = Web3.utils.toBN(0);
-        let totalTransaction = Web3.utils.toBN(0);
-        let totalTransactionHighValue = Web3.utils.toBN(0);
+        let totalBalance = toBN(0);
+        let totalTransaction = toBN(0);
+        let totalTransactionHighValue = toBN(0);
         const lastPrice = {};
         for (let idx = fromIdx; idx <= toIdx; idx++) {
             try {
                 await this.loadSwapLog(token0, idx, (block, bs, othertoken, from, to, amount0, amount1) => {
                     if (amount0 == '0' || amount1 == '0') return;
-                    const price = parseInt(Web3.utils.toBN(amount1).muln(100000).div(Web3.utils.toBN(amount0)) / 100000);
+                    const price = parseInt(toBN(amount1).muln(100000).div(toBN(amount0)) / 100000);
                     if (lastPrice[othertoken] && Math.abs(lastPrice[othertoken] - price) > (lastPrice[othertoken] / 100)) {
-                        totalTransactionHighValue = totalTransactionHighValue.add(Web3.utils.toBN(amount0));
+                        totalTransactionHighValue = totalTransactionHighValue.add(toBN(amount0));
                     }
                     lastPrice[othertoken] = price;
                     if (block > checkpoints[cid]) {
                         rs.push([checkpoints[cid], totalBalance.toString(10), totalTransaction.toString(10), totalTransactionHighValue.toString(10)]);
-                        totalBalance = Web3.utils.toBN(0);
-                        totalTransaction = Web3.utils.toBN(0);
-                        totalTransactionHighValue = Web3.utils.toBN(0);
+                        totalBalance = toBN(0);
+                        totalTransaction = toBN(0);
+                        totalTransactionHighValue = toBN(0);
                         while (block > checkpoints[cid]) cid++;
                     }
                 });

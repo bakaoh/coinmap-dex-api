@@ -36,4 +36,11 @@ const getAddress2 = (token) => {
 
 const isUSD = (address) => address == ContractAddress.BUSD || address == ContractAddress.USDT;
 
-module.exports = { getPairAddress, ContractAddress, web3, getAddress: getAddress2, isUSD };
+module.exports = {
+    getPairAddress,
+    ContractAddress,
+    web3,
+    getAddress: getAddress2,
+    toBN: Web3.utils.toBN,
+    isUSD
+};

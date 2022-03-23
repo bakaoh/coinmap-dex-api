@@ -19,6 +19,15 @@ module.exports = {
       time: true
     },
     {
+      name: "balance-api",
+      script: "src/balance/service.js",
+      instances: 1,
+      autorestart: true,
+      max_memory_restart: "2000M",
+      watch: false,
+      time: true
+    },
+    {
       name: "cmc6",
       script: "src/balance/crawler.js",
       instances: 1,
