@@ -12,10 +12,16 @@ const opts = { flags: "a" };
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
 const getAmountOut = (amountIn, reserveIn, reserveOut) => {
-    const amountInWithFee = amountIn.muln(998);
+    const amountInWithFee = amountIn.muln(9975);
     const numerator = amountInWithFee.mul(reserveOut);
-    const denominator = reserveIn.muln(1000).add(amountInWithFee);
+    const denominator = reserveIn.muln(10000).add(amountInWithFee);
     return numerator.div(denominator);
+}
+
+const getAmountIn = (amountOut, reserveIn, reserveOut) => {
+    const numerator = reserveIn.mul(amountOut).muln(10000);
+    const denominator = reserveOut.sub(amountOut).muln(9975);
+    return numerator.div(denominator).add(1);
 }
 
 class SyncModel {

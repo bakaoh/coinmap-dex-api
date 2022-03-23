@@ -57,10 +57,10 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     res.json({ data, pools });
 })
 
-app.get('/route/:tokenA/:tokenB/:amountIn', async (req, res) => {
+app.get('/route/:tokenA/:tokenB', async (req, res) => {
     const tokenA = getAddress(req.params.tokenA);
     const tokenB = getAddress(req.params.tokenB);
-    const rs = syncModel.getPath(tokenA, tokenB, req.params.amountIn);
+    const rs = syncModel.getPath(tokenA, tokenB, req.query.in);
     res.json(rs);
 })
 
