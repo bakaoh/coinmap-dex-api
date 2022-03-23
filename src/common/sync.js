@@ -11,6 +11,13 @@ const CACHE_FILE = 'logs/sync.cache';
 const opts = { flags: "a" };
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
+const getAmountOut = (amountIn, reserveIn, reserveOut) => {
+    const amountInWithFee = amountIn.mul(998);
+    const numerator = amountInWithFee.mul(reserveOut);
+    const denominator = reserveIn.mul(1000).add(amountInWithFee);
+    return numerator.div(denominator);
+}
+
 class SyncModel {
     constructor(lp) {
         this.lp = lp;
@@ -173,17 +180,18 @@ class SyncModel {
         return rs;
     }
 
-    getPath(tokenA, tokenB) {
+    getPath(tokenA, tokenB, amountIn = "1000000000000000000") {
         const lpA = this.liquidity[tokenA];
         const lpB = this.liquidity[tokenB];
-        if (!lpA || !lpB) return { path: [], aperb: '0', bpera: '0' };
+        if (!lpA || !lpB) return { path: [], aperb: '0' };
+        amountIn = Web3.utils.toBN(amountIn);
         if (lpA[tokenB]) {
             const [reserve0, reserve1] = lpA[tokenB];
             // TODO: check min liquidity
             if (reserve0 != '0' && reserve1 != '0') {
-                const aperb = parseInt(Web3.utils.toBN(reserve1).muln(100000).div(Web3.utils.toBN(reserve0)).toString(10)) / 100000
-                const bpera = parseInt(Web3.utils.toBN(reserve0).muln(100000).div(Web3.utils.toBN(reserve1)).toString(10)) / 100000
-                return { path: [tokenA, tokenB], aperb, bpera };
+                const amountOut = getAmountOut(amountIn, Web3.utils.toBN(reserve0), Web3.utils.toBN(reserve1))
+                const aperb = parseInt(amountOut.muln(100000).div(amountIn).toString(10)) / 100000
+                return { path: [tokenA, tokenB], aperb };
             }
         }
         for (let tokenC in lpA) {
@@ -192,11 +200,12 @@ class SyncModel {
             const [reserveBC, reserveCB] = lpB[tokenC];
             // TODO: check min liquidity
             if (reserveBC == '0' || reserveCB == '0' || reserveAC == '0' || reserveCA == '0') continue;
-            const aperb = parseInt(Web3.utils.toBN(reserveCA).mul(Web3.utils.toBN(reserveBC)).muln(100000).div(Web3.utils.toBN(reserveAC)).div(Web3.utils.toBN(reserveCB)).toString(10)) / 100000
-            const bpera = parseInt(Web3.utils.toBN(reserveAC).mul(Web3.utils.toBN(reserveCB)).muln(100000).div(Web3.utils.toBN(reserveCA)).div(Web3.utils.toBN(reserveBC)).toString(10)) / 100000
-            return { path: [tokenA, tokenC, tokenB], aperb, bpera };
+            const amountOut0 = getAmountOut(amountIn, Web3.utils.toBN(reserveAC), Web3.utils.toBN(reserveCA));
+            const amountOut1 = getAmountOut(amountOut0, Web3.utils.toBN(reserveCB), Web3.utils.toBN(reserveBC));
+            const aperb = parseInt(amountOut1.muln(100000).div(amountIn).toString(10)) / 100000
+            return { path: [tokenA, tokenC, tokenB], aperb };
         }
-        return { path: [], aperb: '0', bpera: '0' };
+        return { path: [], aperb: '0' };
     }
 
     loadSyncLog(token, idx, cb) {

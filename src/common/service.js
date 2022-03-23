@@ -101,11 +101,11 @@ app.get('/price/now', async (req, res) => {
     res.json({ address: req.query.a, price, bnbPrice });
 })
 
-app.get('/route/find', async (req, res) => {
-    const tokenA = getAddress(req.query.a);
-    const tokenB = getAddress(req.query.b);
-    const { path, aperb, bpera } = syncModel.getPath(tokenA, tokenB);
-    res.json({ path, aperb, bpera });
+app.get('/route/:tokenA/:tokenB/:amountIn', async (req, res) => {
+    const tokenA = getAddress(req.params.a);
+    const tokenB = getAddress(req.params.b);
+    const rs = syncModel.getPath(tokenA, tokenB, req.params.amountIn);
+    res.json(rs);
 })
 
 async function start(port) {

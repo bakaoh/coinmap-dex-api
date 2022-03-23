@@ -25,6 +25,15 @@ function getPairAddress(tokenA, tokenB) {
     )
 }
 
+const getAddress2 = (token) => {
+    const name = token.toUpperCase();
+    if (name == 'WBNB') return ContractAddress.WBNB;
+    if (name == 'BUSD') return ContractAddress.BUSD;
+    if (name == 'CAKE') return ContractAddress.CAKE;
+    if (name == 'USDT') return ContractAddress.USDT;
+    return getAddress(token);
+}
+
 const isUSD = (address) => address == ContractAddress.BUSD || address == ContractAddress.USDT;
 
-module.exports = { getPairAddress, ContractAddress, web3, getAddress, isUSD };
+module.exports = { getPairAddress, ContractAddress, web3, getAddress: getAddress2, isUSD };
