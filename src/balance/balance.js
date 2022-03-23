@@ -13,6 +13,7 @@ const IGNORE = [ContractAddress.WBNB, ContractAddress.BUSD, ContractAddress.USDT
 const opts = { flags: "a" };
 
 const sortBalance = (a, b) => (a[1].gt(b[1])) ? -1 : 1;
+const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
 class BalanceModel {
     constructor(checkpoints) {
