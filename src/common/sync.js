@@ -52,13 +52,12 @@ class SyncModel {
         console.log(`SyncModel wamrup done (${ms}ms)`)
 
         const startCMs = Date.now();
-        createCacheFile();
+        this.createCacheFile();
         const cms = Date.now() - startCMs;
         console.log(`SyncModel createCacheFile done (${cms}ms)`)
     }
 
     createCacheFile() {
-        if (this.readonly) return;
         const tokens = Object.keys(this.liquidity);
         console.log("Total:", tokens.length);
         const writer = fs.createWriteStream(CACHE_FILE, opts);
