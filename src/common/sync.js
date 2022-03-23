@@ -63,6 +63,7 @@ class SyncModel {
         lr.on('line', (line) => {
             const { token, othertoken, reserve0, reserve1 } = line.split(',');
             if (reserve0 == "0" || reserve1 == "0") return;
+            if (!this.liquidity[token]) this.liquidity[token] = {};
             this.liquidity[token][othertoken] = [reserve0, reserve1];
             this.updatePrice(token, othertoken, reserve0, reserve1);
         });
