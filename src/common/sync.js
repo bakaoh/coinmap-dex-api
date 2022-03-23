@@ -6,6 +6,7 @@ const { getLastLine, getLastFile } = require('../utils/io');
 
 const SYNC_TOPIC = '0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1';
 const BLOCK_FILE = 'logs/sync.block';
+const CACHE_FILE = 'logs/sync.cache';
 
 const opts = { flags: "a" };
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
@@ -49,6 +50,26 @@ class SyncModel {
         }
         const ms = Date.now() - startMs;
         console.log(`SyncModel wamrup done (${ms}ms)`)
+
+        const startCMs = Date.now();
+        createCacheFile();
+        const cms = Date.now() - startCMs;
+        console.log(`SyncModel createCacheFile done (${cms}ms)`)
+    }
+
+    createCacheFile() {
+        if (this.readonly) return;
+        const tokens = Object.keys(this.liquidity);
+        console.log("Total:", tokens.length);
+        const writer = fs.createWriteStream(CACHE_FILE, opts);
+        tokens.forEach(token => {
+            const others = Object.keys(this.liquidity[token]);
+            others.forEach(othertoken => {
+                const lp = this.liquidity[token][othertoken];
+                writer.write(`${token},${othertoken},${lp[0]},${lp[1]}\n`);
+            })
+        })
+        writer.end();
     }
 
     async loadLastSyncLog(token) {

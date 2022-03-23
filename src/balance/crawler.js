@@ -63,7 +63,7 @@ async function crawlLogs(fromBlock, toBlock) {
 }
 
 async function run() {
-    const iid = process.env.IID_OFFSET;
+    const iid = parseInt(process.env.IID_OFFSET);
     let from = iid * 1000000;
     let batchSize = 1000;
     let ms = 0;
