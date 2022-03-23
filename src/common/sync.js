@@ -44,7 +44,7 @@ class SyncModel {
     async warmup() {
         const startMs = Date.now();
         try {
-            this.loadCacheFile();
+            await this.loadCacheFile();
             console.log(`SyncModel warmup done (${Date.now() - startMs}ms)`)
             return;
         } catch (err) { console.log(`SyncModel warmup using cache file error: ${err}`) }
