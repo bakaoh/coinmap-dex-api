@@ -102,8 +102,8 @@ app.get('/price/now', async (req, res) => {
 })
 
 app.get('/route/find', async (req, res) => {
-    const tokenA = getAddress(req.params.a);
-    const tokenB = getAddress(req.params.b);
+    const tokenA = getAddress(req.query.a);
+    const tokenB = getAddress(req.query.b);
     const { path, aperb, bpera } = syncModel.getPath(tokenA, tokenB);
     res.json({ path, aperb, bpera });
 })
