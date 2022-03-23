@@ -5,7 +5,7 @@ const { web3, ContractAddress, toBN } = require('../utils/bsc');
 const { getLastLine, getLastFile } = require('../utils/io');
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
-const ZERO = Web3.utils.toBN(0);
+const ZERO = toBN(0);
 
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 const BLOCK_FILE = 'logs/transfer.block';
@@ -155,7 +155,7 @@ class BalanceModel {
         const block = parseInt(p[0]);
         const from = p[1];
         const to = p[2];
-        const value = Web3.utils.toBN(p[3]);
+        const value = toBN(p[3]);
 
         if (block > this.checkpoints[this.cid]) {
             this.createCacheFile(this.checkpoints[this.cid]);
