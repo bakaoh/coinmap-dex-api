@@ -1,7 +1,7 @@
 const fs = require('fs');
 const readLastLines = require('read-last-lines');
 
-const { web3, ContractAddress } = require('../utils/bsc');
+const { web3, ContractAddress, toBN } = require('../utils/bsc');
 const { getLastLine } = require('../utils/io');
 
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
