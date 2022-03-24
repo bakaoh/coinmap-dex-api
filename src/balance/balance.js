@@ -47,7 +47,7 @@ class Crawler {
                     totalToken = totalToken.add(toBN(balance));
                     totalAction = totalAction.add(toBN(action));
                 });
-            } catch (err) { }
+            } catch (err) { console.log(err) }
             rs.push({ block, totalToken, totalAction });
         }
         return rs;
@@ -63,7 +63,6 @@ class Crawler {
                 return;
             }
             cb(p[0], p[1], p[2]);
-
         });
         return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }
