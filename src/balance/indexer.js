@@ -25,6 +25,7 @@ class Indexer {
         fs.mkdirSync(`db/holders/${this.token}`, { recursive: true });
         fs.mkdirSync(`db/topholders/${this.token}`, { recursive: true });
         fs.mkdirSync(`db/newholders/${this.token}`, { recursive: true });
+        fs.mkdirSync(`db/summary/${this.token}`, { recursive: true });
     }
 
     async run(checkpoints) {
@@ -50,7 +51,7 @@ class Indexer {
     }
 
     loadHoldersFile(cp) {
-        const file = `db/holders/${token}/${cp}.log`
+        const file = `db/holders/${this.token}/${cp}.log`
         const lr = new LineByLine(file);
         lr.on('line', (line) => {
             const p = line.split(',');
@@ -95,7 +96,7 @@ class Indexer {
     }
 
     loadLogFile(idx) {
-        const file = `db/transfer/${token}/${idx}.log`
+        const file = `db/transfer/${this.token}/${idx}.log`
         const lr = new LineByLine(file);
         lr.on('line', (line) => {
             const p = line.split(',');
