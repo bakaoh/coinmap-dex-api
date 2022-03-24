@@ -1,33 +1,17 @@
 const fs = require('fs');
-const LineByLine = require('line-by-line');
-
-const { web3, ContractAddress, toBN } = require('../utils/bsc');
-const { getLastLine, getLastFile } = require('../utils/io');
-
-const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
-const ZERO = toBN(0);
+const { web3, ContractAddress } = require('../utils/bsc');
+const { getLastLine } = require('../utils/io');
 
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 const BLOCK_FILE = 'logs/transfer.block';
 const IGNORE = [ContractAddress.WBNB, ContractAddress.BUSD, ContractAddress.USDT];
 const opts = { flags: "a" };
 
-const sortBalance = (a, b) => (a[1].gt(b[1])) ? -1 : 1;
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
-class BalanceModel {
-    constructor(checkpoints) {
+class Crawler {
+    constructor() {
         this.writer = {};
-
-        this.balance = {};
-        this.hastx = {};
-        this.checkpoints = checkpoints;
-        this.cid = 0;
-        this.newholders = [];
-
-        fs.mkdirSync('logs/holders', { recursive: true });
-        fs.mkdirSync('logs/topholders', { recursive: true });
-        fs.mkdirSync('logs/newholders', { recursive: true });
     }
 
     async run() {
@@ -111,88 +95,6 @@ class BalanceModel {
 
         return lastBlock;
     }
-
-    createCacheFile(block) {
-        let count = 0;
-        const toplist = [];
-        const holders = fs.createWriteStream(`logs/holders/${block}.log`, opts);
-        for (let address in this.balance) {
-            const balance = this.balance[address];
-            count++;
-            holders.write(`${address},${balance}\n`);
-            if (toplist.length < 100) {
-                toplist.push([address, balance]);
-                toplist.sort(sortBalance);
-            } else if (balance.gt(toplist[100 - 1][1])) {
-                toplist.pop();
-                toplist.push([address, balance]);
-                toplist.sort(sortBalance);
-            }
-        }
-
-        const total = fs.createWriteStream(`logs/cake-total.log`, opts);
-        total.write(`${block},${count}\n`);
-
-        const topholders = fs.createWriteStream(`logs/topholders/${block}.log`, opts);
-        toplist.forEach((v) => { topholders.write(`${v[0]},${v[1]}\n`); });
-
-        const newholders = fs.createWriteStream(`logs/newholders/${block}.log`, opts);
-        this.newholders.forEach((v) => { newholders.write(`${v}\n`); });
-        this.newholders = [];
-    }
-
-    loadLogFile(file) {
-        const lr = new LineByLine(file);
-        lr.on('line', this.onLog.bind(this));
-        return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
-    }
-
-    onLog(line) {
-        const p = line.split(',');
-        if (p.length != 4) {
-            console.log('Invalid log', line);
-            return;
-        }
-        const block = parseInt(p[0]);
-        const from = p[1];
-        const to = p[2];
-        const value = toBN(p[3]);
-
-        if (block > this.checkpoints[this.cid]) {
-            this.createCacheFile(this.checkpoints[this.cid]);
-            while (block > parseInt(this.checkpoints[this.cid])) this.cid++;
-        }
-        this.desc(from, value);
-        this.inc(to, value);
-    }
-
-    inc(address, amount) {
-        if (address == ADDRESS_ZERO || amount.eqn(0)) return;
-        const cur = this.balance[address] || ZERO;
-        if (!this.hastx[address]) {
-            this.newholders.push(address);
-            this.hastx[address] = true;
-        }
-        this.balance[address] = cur.add(amount);
-    }
-
-    desc(address, amount) {
-        if (address == ADDRESS_ZERO || amount.eqn(0)) return;
-        let cur = this.balance[address];
-        if (!cur) {
-            console.log('Invalid balance', address);
-            return;
-        }
-        cur = cur.sub(amount);
-        if (cur.ltn(0)) {
-            delete this.balance[address];
-            console.log('Invalid balance', address, cur.toString(10));
-        } else if (cur.eqn(0)) {
-            delete this.balance[address];
-        } else {
-            this.balance[address] = cur;
-        }
-    }
 }
 
-module.exports = BalanceModel;
+module.exports = Crawler;
