@@ -23,15 +23,15 @@ class Indexer {
         this.lastCp = 0;
         this.lastBlock = 0;
 
-        fs.mkdirSync(`db/holders/${this.token}`, { recursive: true });
-        fs.mkdirSync(`db/topholders/${this.token}`, { recursive: true });
-        fs.mkdirSync(`db/newholders/${this.token}`, { recursive: true });
-        fs.mkdirSync(`db/summary/${this.token}`, { recursive: true });
+        fs.mkdirSync(`cache/holders/${this.token}`, { recursive: true });
+        fs.mkdirSync(`cache/topholders/${this.token}`, { recursive: true });
+        fs.mkdirSync(`cache/newholders/${this.token}`, { recursive: true });
+        fs.mkdirSync(`cache/summary/${this.token}`, { recursive: true });
     }
 
     async run(checkpoints) {
         this.checkpoints = checkpoints;
-        const lastFile = getLastFile(`db/holders/${this.token}`);
+        const lastFile = getLastFile(`cache/holders/${this.token}`);
         if (lastFile != "") {
             const startMs = Date.now();
             this.lastCp = parseInt(lastFile);
@@ -45,14 +45,16 @@ class Indexer {
             try {
                 await this.loadLogFile(i);
             } catch (err) {
-                console.log(`Indexer load log file [${i}] err: ${err}`);
+                if (!err.toString().includes('no such file')) {
+                    console.log(`Indexer load log file [${i}] err: ${err}`);
+                }
             }
-            console.log(`Indexer load log file [${i}] done (${Date.now() - startMs}ms)`);
+            // console.log(`Indexer load log file [${i}] done (${Date.now() - startMs}ms)`);
         }
     }
 
     loadHoldersFile(cp) {
-        const file = `db/holders/${this.token}/${cp}.log`
+        const file = `cache/holders/${this.token}/${cp}.log`
         const lr = new LineByLine(file);
         lr.on('line', (line) => {
             const p = line.split(',');
@@ -68,7 +70,7 @@ class Indexer {
     createCacheFile(block) {
         let count = 0;
         const toplist = [];
-        const holders = fs.createWriteStream(`db/holders/${this.token}/${block}.log`, opts);
+        const holders = fs.createWriteStream(`cache/holders/${this.token}/${block}.log`, opts);
         for (let address in this.balance) {
             const balance = this.balance[address];
             if (balance.gtn(0)) count++;
@@ -82,15 +84,19 @@ class Indexer {
                 toplist.sort(sortBalance);
             }
         }
+        holders.end();
 
-        const total = fs.createWriteStream(`db/summary/${this.token}/total-holder.log`, opts);
+        const total = fs.createWriteStream(`cache/summary/${this.token}/total-holder.log`, opts);
         total.write(`${block},${count}\n`);
+        total.end();
 
-        const topholders = fs.createWriteStream(`db/topholders/${this.token}/${block}.log`, opts);
+        const topholders = fs.createWriteStream(`cache/topholders/${this.token}/${block}.log`, opts);
         toplist.forEach((v) => { topholders.write(`${v[0]},${v[1]},${this.dailyaction[v[0]] || ZERO}\n`); });
+        topholders.end();
 
-        const newholders = fs.createWriteStream(`db/newholders/${this.token}/${block}.log`, opts);
+        const newholders = fs.createWriteStream(`cache/newholders/${this.token}/${block}.log`, opts);
         this.newholders.forEach((v) => { newholders.write(`${v}\n`); });
+        newholders.end();
 
         this.newholders = [];
         this.dailyaction = {};

@@ -2,3 +2,4 @@ node_modules/
 logs/
 src/test.js
 db/
+cache/
