@@ -50,8 +50,8 @@ async function writeSwapLog(block, txIdx, logIdx, lpToken, from, to, in0, in1, o
 
 function getWriter(token, idx) {
     if (!writer[token]) {
-        fs.mkdirSync(`cake/db/transfer/${token}`, { recursive: true });
-        writer[token] = fs.createWriteStream(`cake/db/transfer/${token}/${idx}.log`, opts);
+        fs.mkdirSync(`db/swap/${token}`, { recursive: true });
+        writer[token] = fs.createWriteStream(`db/swap/${token}/${idx}.log`, opts);
     }
     return writer[token];
 }
