@@ -22,6 +22,7 @@ class Indexer {
         this.cid = 0;
         this.lastCp = 0;
         this.lastBlock = 0;
+        this.first = true;
 
         fs.mkdirSync(`cache/holders/${this.token}`, { recursive: true });
         fs.mkdirSync(`cache/topholders/${this.token}`, { recursive: true });
@@ -33,6 +34,7 @@ class Indexer {
         this.checkpoints = checkpoints;
         const lastFile = getLastFile(`cache/holders/${this.token}`);
         if (lastFile != "") {
+            this.first = false;
             const startMs = Date.now();
             this.lastCp = parseInt(lastFile);
             await this.loadHoldersFile(this.lastCp);
@@ -111,6 +113,7 @@ class Indexer {
 
         this.newholders = [];
         this.dailyaction = {};
+        this.first = false;
     }
 
     loadLogFile(idx) {
@@ -144,7 +147,7 @@ class Indexer {
     inc(address, amount) {
         if (address == ADDRESS_ZERO || amount.eqn(0)) return;
         const cur = this.balance[address] || ZERO;
-        if (!this.balance[address]) {
+        if (!this.balance[address] && !this.first) {
             this.newholders.push(address);
         }
         this.balance[address] = cur.add(amount);
