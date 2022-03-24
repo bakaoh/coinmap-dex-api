@@ -34,8 +34,8 @@ app.get('/api/v1/shark/:token', async (req, res) => {
         const swapData = (await axios.get(`${SWAP_BASE}/api/v1/shark/${token}`)).data;
         return swapData.map((p, i) => ({
             date: ts[i],
-            totalBalance: getNumber(data[i].totalToken),
-            totalTransaction: getNumber(data[i].totalAction),
+            totalBalance: getNumber(data[i].totalToken.toString(10)),
+            totalTransaction: getNumber(data[i].totalAction.toString(10)),
             totalTransactionHighValue: getNumber(p[3]),
         }));
     });
