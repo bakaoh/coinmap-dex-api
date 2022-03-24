@@ -24,6 +24,7 @@ async function run() {
         if (tokenModel.lp[token]) continue;
         const startMs = Date.now();
         console.log(`Indexing token [${c++}] ${token}`);
+        if (c < 5200) continue;
         const indexer = new Indexer(token);
         await indexer.run(block);
         console.log(`Indexed token [${c++}] ${token} (${Date.now() - startMs}ms)`)
