@@ -17,8 +17,8 @@ async function run() {
         if (token == '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82') continue;
         if (tokenModel.lp[token]) continue;
         console.log(`Indexing token [${c++}] ${token}`);
-        const indexer = new Indexer(token);
-        await indexer.run(block);
+        // const indexer = new Indexer(token);
+        // await indexer.run(block);
     }
 }
 
