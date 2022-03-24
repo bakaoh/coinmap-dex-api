@@ -42,10 +42,12 @@ class Crawler {
         for (let block of checkpoints) {
             let totalToken = toBN(0);
             let totalAction = toBN(0);
-            await this.loadTopHolders(token, block, (address, balance, action) => {
-                totalToken = totalToken.add(toBN(balance));
-                totalAction = totalAction.add(toBN(action));
-            });
+            try {
+                await this.loadTopHolders(token, block, (address, balance, action) => {
+                    totalToken = totalToken.add(toBN(balance));
+                    totalAction = totalAction.add(toBN(action));
+                });
+            } catch (err) { }
             rs.push({ block, totalToken, totalAction });
         }
         return rs;
