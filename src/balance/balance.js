@@ -1,4 +1,6 @@
 const fs = require('fs');
+const readLastLines = require('read-last-lines');
+
 const { web3, ContractAddress } = require('../utils/bsc');
 const { getLastLine } = require('../utils/io');
 
@@ -33,6 +35,48 @@ class Crawler {
                 fromBlock = await this.crawlTransferLogs(fromBlock) + 1;
             } catch (err) { console.log(`Error ${fromBlock}:`, err); }
         }, 3000)
+    }
+
+    async getSharkHistory(token, checkpoints) {
+        const rs = [];
+        for (let block of checkpoints) {
+            let totalToken = toBN(0);
+            let totalAction = toBN(0);
+            await this.loadTopHolders(token, block, (address, balance, action) => {
+                totalToken = totalToken.add(toBN(balance));
+                totalAction = totalAction.add(toBN(action));
+            });
+            rs.push({ block, totalToken, totalAction });
+        }
+        return rs;
+    }
+
+    loadTopHolders(token, cp, cb) {
+        const file = `cache/topholders/${token}/${cp}.log`
+        const lr = new LineByLine(file);
+        lr.on('line', (line) => {
+            const p = line.split(',');
+            if (p.length != 3) {
+                console.log('Invalid log', line);
+                return;
+            }
+            cb(p[0], p[1], p[2]);
+
+        });
+        return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
+    }
+
+    async getTotalHolders(token, n) {
+        const rs = [];
+        try {
+            const file = `cache/summary/${token}/total-holder.log`
+            const lastLines = await readLastLines.read(file, n);
+            lastLines.trim().split('\n').forEach(line => {
+                const [block, total] = line.split(',');
+                rs.push({ block, total });
+            });
+        } catch (err) { }
+        return rs;
     }
 
     closeAll() {
