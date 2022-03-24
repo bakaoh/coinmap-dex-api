@@ -21,6 +21,7 @@ class Indexer {
         this.newholders = [];
         this.cid = 0;
         this.lastCp = 0;
+        this.lastBlock = 0;
 
         fs.mkdirSync(`db/holders/${this.token}`, { recursive: true });
         fs.mkdirSync(`db/topholders/${this.token}`, { recursive: true });
@@ -106,6 +107,8 @@ class Indexer {
             }
             const block = parseInt(p[0]);
             if (block <= this.lastCp) return;
+            if (block < this.lastBlock) return;
+            this.lastBlock = block;
 
             const from = p[3];
             const to = p[4];
