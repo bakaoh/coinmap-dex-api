@@ -174,7 +174,7 @@ class SwapModel {
                 const values = web3.eth.abi.decodeParameters(['uint256', 'uint256', 'uint256', 'uint256'], log.data)
                 const from = web3.eth.abi.decodeParameters(['address'], log.topics[1])
                 const to = web3.eth.abi.decodeParameters(['address'], log.topics[2])
-                this.writeSwapLog(log.blockNumber, log.address, from[0], to[0], values[0].toString(10), values[1].toString(10), values[2].toString(10), values[3].toString(10));
+                await this.writeSwapLog(log.blockNumber, log.address, from[0], to[0], values[0].toString(10), values[1].toString(10), values[2].toString(10), values[3].toString(10));
             } catch (err) { console.log(`Write log error`, log, err) }
         }
 

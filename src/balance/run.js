@@ -22,4 +22,10 @@ async function run() {
     }
 }
 
-run();
+async function runCake() {
+    const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=365`)).data;
+    const indexer = new Indexer('0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82');
+    await indexer.run(block);
+}
+
+runCake();

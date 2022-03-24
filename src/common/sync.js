@@ -252,7 +252,7 @@ class SyncModel {
             lastBlock = log.blockNumber;
             try {
                 const values = web3.eth.abi.decodeParameters(['uint256', 'uint256'], log.data)
-                this.writeSyncLog(log.blockNumber, log.address, values[0].toString(10), values[1].toString(10));
+                await this.writeSyncLog(log.blockNumber, log.address, values[0].toString(10), values[1].toString(10));
             } catch (err) { console.log(`Write log error`, log, err) }
         }
 

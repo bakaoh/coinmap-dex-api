@@ -77,7 +77,7 @@ class Crawler {
                 const values = web3.eth.abi.decodeParameters(['uint256'], log.data)
                 const from = web3.eth.abi.decodeParameters(['address'], log.topics[1])
                 const to = web3.eth.abi.decodeParameters(['address'], log.topics[2])
-                this.writeTransferLog(log.blockNumber, log.transactionIndex, log.logIndex, log.address, from[0], to[0], values[0].toString(10));
+                await this.writeTransferLog(log.blockNumber, log.transactionIndex, log.logIndex, log.address, from[0], to[0], values[0].toString(10));
             } catch (err) { console.log(`Write log error`, log, err) }
         }
 
