@@ -13,47 +13,21 @@ const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 let writer = {};
 let lastFileIdx = 0;
 
-const COMMON_BASE = 'http://128.199.189.253:9610';
-
-const cacheLP = {};
-
-async function getToken01(lpToken) {
-    if (!cacheLP[lpToken]) {
-        try {
-            const lps = (await axios.get(`${COMMON_BASE}/info/lp?a=${lpToken}`)).data;
-            cacheLP[lpToken] = lps[0];
-        } catch (err) {
-            cacheLP[lpToken] = { token0: "", token1: "" };
-        }
+function getWriter(token, idx) {
+    if (!writer[token]) {
+        fs.mkdirSync(`db/lpswap/${token}`, { recursive: true });
+        writer[token] = fs.createWriteStream(`db/lpswap/${token}/${idx}`, opts);
     }
-    return cacheLP[lpToken];
+    return writer[token];
 }
 
 async function writeSwapLog(block, txIdx, logIdx, lpToken, from, to, in0, in1, out0, out1) {
     try {
-        const { token0, token1 } = await getToken01(lpToken);
-        if (token0 == "" || token1 == "") return;
         const idx = Math.floor(block / 100000);
         if (from == ContractAddress.PANCAKE_ROUTER) from = "ROUTER";
         if (to == ContractAddress.PANCAKE_ROUTER) to = "ROUTER";
-        if (in0 == '0') {
-            // BUY TOKEN 0, SELL TOKEN 1
-            getWriter(token0, idx).write(`${block},${txIdx},${logIdx},BUY,${token1},${from},${to},${out0},${in1}\n`);
-            getWriter(token1, idx).write(`${block},${txIdx},${logIdx},SELL,${token0},${from},${to},${in1},${out0}\n`);
-        } else {
-            // SELL TOKEN 0, BUY TOKEN 1
-            getWriter(token0, idx).write(`${block},${txIdx},${logIdx},SELL,${token1},${from},${to},${in0},${out1}\n`);
-            getWriter(token1, idx).write(`${block},${txIdx},${logIdx},BUY,${token0},${from},${to},${out1},${in0}\n`);
-        }
+        getWriter(lpToken, idx).write(`${block},${txIdx},${logIdx},${from},${to},${in0},${in1},${out0},${out1}\n`);
     } catch (err) { console.log(`Error`, block, txIdx, logIdx, lpToken, from, to, in0, in1, out0, out1, err.toString()) }
-}
-
-function getWriter(token, idx) {
-    if (!writer[token]) {
-        fs.mkdirSync(`db/swap/${token}`, { recursive: true });
-        writer[token] = fs.createWriteStream(`db/swap/${token}/${idx}.log`, opts);
-    }
-    return writer[token];
 }
 
 async function crawlLogs(fromBlock, toBlock) {
