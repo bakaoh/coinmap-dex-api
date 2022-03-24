@@ -36,7 +36,7 @@ app.get('/api/v1/shark/:token', async (req, res) => {
             date: ts[i],
             totalBalance: getNumber(data[i].totalToken.toString(10)),
             totalTransaction: getNumber(data[i].totalAction.toString(10)),
-            totalTransactionHighValue: getNumber(p[3]),
+            totalTransactionHighValue: p.totalTransactionHighValue,
         }));
     });
     res.json(rs);
