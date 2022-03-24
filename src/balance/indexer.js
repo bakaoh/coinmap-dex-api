@@ -46,7 +46,7 @@ class Indexer {
                 await this.loadLogFile(i);
             } catch (err) {
                 if (err.toString().includes('no such file')) {
-                    const block = idx * 100000;
+                    const block = i * 100000;
                     while (block > parseInt(this.checkpoints[this.cid])) {
                         this.createCacheFile(this.checkpoints[this.cid]);
                         this.cid++;
