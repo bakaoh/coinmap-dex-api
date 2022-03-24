@@ -45,7 +45,15 @@ class Indexer {
             try {
                 await this.loadLogFile(i);
             } catch (err) {
-                console.log(`Indexer load log file [${i}] err: ${err}`);
+                if (err.toString().includes('no such file')) {
+                    const block = idx * 100000;
+                    while (block > parseInt(this.checkpoints[this.cid])) {
+                        this.createCacheFile(this.checkpoints[this.cid]);
+                        this.cid++;
+                    }
+                } else {
+                    console.log(`Indexer load log file [${i}] err: ${err}`);
+                }
             }
             // console.log(`Indexer load log file [${i}] done (${Date.now() - startMs}ms)`);
         }
@@ -125,16 +133,7 @@ class Indexer {
             this.desc(from, value);
             this.inc(to, value);
         });
-        return new Promise((res, rej) => lr.on('end', () => res())
-            .on('error', err => {
-                if (!err.toString().includes('no such file')) {
-                    const block = idx * 100000;
-                    while (block > parseInt(this.checkpoints[this.cid])) {
-                        this.createCacheFile(this.checkpoints[this.cid]);
-                        this.cid++;
-                    }
-                } else rej(err)
-            }));
+        return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }
 
     inc(address, amount) {
