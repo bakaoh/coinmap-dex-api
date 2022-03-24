@@ -1,4 +1,5 @@
 const fs = require('fs');
+const LineByLine = require('line-by-line');
 const readLastLines = require('read-last-lines');
 
 const { web3, ContractAddress, toBN } = require('../utils/bsc');
@@ -47,7 +48,7 @@ class Crawler {
                     totalToken = totalToken.add(toBN(balance));
                     totalAction = totalAction.add(toBN(action));
                 });
-            } catch (err) { console.log(err) }
+            } catch (err) { }
             rs.push({ block, totalToken, totalAction });
         }
         return rs;
