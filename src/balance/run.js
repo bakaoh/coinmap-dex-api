@@ -9,7 +9,7 @@ async function run() {
     await tokenModel.loadLpDetailFile();
     await tokenModel.loadTokenDetailFile();
 
-    const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=365`)).data;
+    const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=30`)).data;
 
     let c = 0;
     console.log(`Total token: ${Object.keys(tokenModel.token).length}`);

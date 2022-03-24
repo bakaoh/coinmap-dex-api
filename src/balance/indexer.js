@@ -36,6 +36,11 @@ class Indexer {
             const startMs = Date.now();
             this.lastCp = parseInt(lastFile);
             await this.loadHoldersFile(this.lastCp);
+            const block = this.lastCp;
+            while (block >= parseInt(this.checkpoints[this.cid])) {
+                this.cid++;
+                if (this.cid >= this.checkpoints.length) return;
+            }
             console.log(`Indexer load holders done (${Date.now() - startMs}ms)`)
         }
         const fromIdx = Math.floor(this.lastCp / 100000);
