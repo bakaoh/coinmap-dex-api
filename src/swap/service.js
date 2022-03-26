@@ -78,8 +78,8 @@ app.get('/api/v1/transaction/:token', async (req, res) => {
 async function start(port) {
     const startMs = Date.now();
 
-    await tokenModel.loadLpDetailFile();
-    await tokenModel.loadTokenDetailFile();
+    // await tokenModel.loadLpDetailFile();
+    // await tokenModel.loadTokenDetailFile();
 
     await swapModel.run();
 

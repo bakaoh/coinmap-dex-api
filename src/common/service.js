@@ -111,11 +111,11 @@ app.get('/price/now', async (req, res) => {
 async function start(port) {
     const startMs = Date.now();
 
-    await blockModel.loadLogFile();
-    blockModel.run(60 * 60 * 1000);
+    // await blockModel.loadLogFile();
+    // blockModel.run(60 * 60 * 1000);
 
-    await tokenModel.loadLpDetailFile();
-    await tokenModel.loadTokenDetailFile();
+    // await tokenModel.loadLpDetailFile();
+    // await tokenModel.loadTokenDetailFile();
 
     await syncModel.warmup();
     await syncModel.run();
