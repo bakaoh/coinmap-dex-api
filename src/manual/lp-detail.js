@@ -64,7 +64,7 @@ async function run() {
     let folders = fs.readdirSync('db/transfer');
 
     let c = 0;
-    for (let token in folders) {
+    for (let token of folders) {
         const startMs = Date.now();
         try {
             for (let idx = 0; idx < 164; idx++) {
