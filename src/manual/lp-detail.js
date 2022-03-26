@@ -42,21 +42,16 @@ class Collector {
         for (let lpAddress in this.lp) {
             const keys = Object.keys(this.lp[lpAddress]);
             if (keys.length == 1) {
-                const tokenA = keys[0];
-                let tokenB = "";
-                if (getPairAddress(tokenA, ContractAddress.WBNB) == lpAddress) {
-                    tokenB = ContractAddress.WBNB;
-                } else if (getPairAddress(tokenA, ContractAddress.BUSD) == lpAddress) {
-                    tokenB = ContractAddress.BUSD;
-                } else if (getPairAddress(tokenA, ContractAddress.USDT) == lpAddress) {
-                    tokenB = ContractAddress.USDT;
-                } else {
-                    err_writer.write(`${lpAddress},${keys}\n`);
-                    continue;
+                if (getPairAddress(keys[0], ContractAddress.WBNB) == lpAddress) {
+                    keys.push(ContractAddress.WBNB);
+                } else if (getPairAddress(keys[0], ContractAddress.BUSD) == lpAddress) {
+                    keys.push(ContractAddress.BUSD);
+                } else if (getPairAddress(keys[0], ContractAddress.USDT) == lpAddress) {
+                    keys.push(ContractAddress.USDT);
                 }
-                const tokens = tokenA.toLowerCase() < tokenB.toLowerCase() ? [tokenA, tokenB] : [tokenB, tokenA]
-                writer.write(`${lpAddress},${tokens[0]},${tokens[1]}\n`);
-            } else if (keys.length != 2) {
+            }
+
+            if (keys.length != 2) {
                 err_writer.write(`${lpAddress},${keys}\n`);
             } else {
                 const [tokenA, tokenB] = keys;
@@ -78,11 +73,12 @@ async function run() {
     let c = 0;
     for (let token of folders) {
         const startMs = Date.now();
-        try {
-            for (let idx = 0; idx < 164; idx++) {
+        for (let idx = 0; idx < 164; idx++) {
+            try {
+
                 await collector.loadLogFile(token, idx);
-            }
-        } catch (err) { }
+            } catch (err) { }
+        }
         console.log(`Scan token [${c++}] ${token} (${Date.now() - startMs}ms)`)
     }
     await collector.createLpDetailFile();
