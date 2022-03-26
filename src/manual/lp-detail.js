@@ -21,7 +21,7 @@ class Collector {
                 return;
             }
             const from = p[3];
-            if (!this.lp[from]) continue;
+            if (!this.lp[from]) return;
             this.lp[from][token] = true;
         });
         return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
