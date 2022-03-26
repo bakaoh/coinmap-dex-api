@@ -1,5 +1,6 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
+const { ContractAddress, getPairAddress } = require('../utils/bsc');
 
 const LP_FILE = `logs/lp.log`;
 const LP_DETAIL_FILE = `logs/lp-detail.log`;
@@ -41,16 +42,27 @@ class Collector {
         for (let lpAddress in this.lp) {
             const keys = Object.keys(this.lp[lpAddress]);
             if (keys.length == 1) {
-                writer.write(`${lpAddress},${keys[0]}\n`);
-                continue;
-            }
-            if (keys.length != 2) {
+                const tokenA = keys[0];
+                let tokenB = "";
+                if (getPairAddress(tokenA, ContractAddress.WBNB) == lpAddress) {
+                    tokenB = ContractAddress.WBNB;
+                } else if (getPairAddress(tokenA, ContractAddress.BUSD) == lpAddress) {
+                    tokenB = ContractAddress.BUSD;
+                } else if (getPairAddress(tokenA, ContractAddress.USDT) == lpAddress) {
+                    tokenB = ContractAddress.USDT;
+                } else {
+                    err_writer.write(`${lpAddress},${keys}\n`);
+                    continue;
+                }
+                const tokens = tokenA.toLowerCase() < tokenB.toLowerCase() ? [tokenA, tokenB] : [tokenB, tokenA]
+                writer.write(`${lpAddress},${tokens[0]},${tokens[1]}\n`);
+            } else if (keys.length != 2) {
                 err_writer.write(`${lpAddress},${keys}\n`);
-                continue;
+            } else {
+                const [tokenA, tokenB] = keys;
+                const tokens = tokenA.toLowerCase() < tokenB.toLowerCase() ? [tokenA, tokenB] : [tokenB, tokenA]
+                writer.write(`${lpAddress},${tokens[0]},${tokens[1]}\n`);
             }
-            const [tokenA, tokenB] = keys;
-            const tokens = tokenA.toLowerCase() < tokenB.toLowerCase() ? [tokenA, tokenB] : [tokenB, tokenA]
-            writer.write(`${lpAddress},${tokens[0]},${tokens[1]}\n`);
         }
         writer.end();
         err_writer.end();
