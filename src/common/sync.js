@@ -123,7 +123,7 @@ class SyncModel {
             if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
             this.writer[token] = {
                 idx,
-                writer: fs.createWriteStream(`${dir}/${idx}.log`, opts)
+                writer: fs.createWriteStream(`${dir}/${idx}`, opts)
             }
         }
         return this.writer[token].writer;
