@@ -40,6 +40,10 @@ class Collector {
         const err_writer = fs.createWriteStream(LP_ERROR_FILE, opts);
         for (let lpAddress in this.lp) {
             const keys = Object.keys(this.lp[lpAddress]);
+            if (keys.length == 1) {
+                writer.write(`${lpAddress},${keys[0]}\n`);
+                continue;
+            }
             if (keys.length != 2) {
                 err_writer.write(`${lpAddress},${keys}\n`);
                 continue;
@@ -63,7 +67,7 @@ async function run() {
     for (let token in folders) {
         const startMs = Date.now();
         try {
-            for (let idx = 140; idx < 164; idx++) {
+            for (let idx = 0; idx < 164; idx++) {
                 await collector.loadLogFile(token, idx);
             }
         } catch (err) { }
