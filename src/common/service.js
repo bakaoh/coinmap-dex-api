@@ -3,6 +3,7 @@ const express = require("express");
 const BlockModel = require("./block");
 const TokenModel = require("./token");
 const SyncModel = require("./sync");
+const PairModel = require("./pair");
 const { getCache } = require("../cache");
 const { ContractAddress, getAddress } = require('../utils/bsc');
 const { getNumber } = require('../utils/format');
@@ -11,6 +12,7 @@ const app = express();
 const blockModel = new BlockModel();
 const tokenModel = new TokenModel();
 const syncModel = new SyncModel(tokenModel);
+const pairModel = new PairModel();
 app.use(express.json());
 
 function getStartTsOfDay(n) {
@@ -119,6 +121,7 @@ async function start(port) {
 
     await syncModel.warmup();
     await syncModel.run();
+    await pairModel.run();
 
     app.listen(port);
     const ms = Date.now() - startMs;
