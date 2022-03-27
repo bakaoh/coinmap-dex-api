@@ -15,13 +15,13 @@ class PairModel {
     }
 
     async run() {
-        const batchSize = 3000;
+        const batchSize = 4500;
         const lastLine = await getLastLine(BLOCK_FILE);
         let fromBlock = lastLine ? parseInt(lastLine) + 1 : 0;
         const latest = await web3.eth.getBlockNumber();
         console.log(`SyncModel start running from block ${fromBlock}, latest ${latest}`);
 
-        this.blockWriter = fs.createWriteStream(BLOCK_FILE);
+        this.blockWriter = fs.createWriteStream(BLOCK_FILE, opts);
         while (fromBlock < latest) {
             try {
                 fromBlock = await this.crawlPairCreatedLogs(fromBlock, fromBlock + batchSize - 1, 2000) + 1;
@@ -56,7 +56,7 @@ class PairModel {
                 const values = web3.eth.abi.decodeParameters(['address', 'uint256'], log.data)
                 const token0 = web3.eth.abi.decodeParameters(['address'], log.topics[1])
                 const token1 = web3.eth.abi.decodeParameters(['address'], log.topics[2])
-                await this.writePairCreatedLog(log.blockNumber, log.transactionIndex, log.logIndex, log.address, token0, token1, values[0], values[1].toString(10));
+                await this.writePairCreatedLog(log.blockNumber, log.transactionIndex, log.logIndex, log.address, token0[0], token1[0], values[0], values[1].toString(10));
             } catch (err) { console.log(`Write log error`, log, err) }
         }
 
