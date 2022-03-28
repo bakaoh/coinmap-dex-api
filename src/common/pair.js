@@ -22,9 +22,9 @@ class PairModel {
 
     addPool(block, txIdx, logIdx, factory, token0, token1, pair, idx) {
         if (!this.pools[token0]) this.pools[token0] = [];
-        this.pools[token0].push({ token: token1, pair });
+        this.pools[token0].push({ token0, token1, pair });
         if (!this.pools[token1]) this.pools[token1] = [];
-        this.pools[token1].push({ token: token0, pair });
+        this.pools[token1].push({ token0, token1, pair });
     }
 
     load() {

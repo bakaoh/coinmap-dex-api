@@ -11,7 +11,7 @@ const { getNumber } = require('../utils/format');
 const app = express();
 const blockModel = new BlockModel();
 const tokenModel = new TokenModel();
-const syncModel = new SyncModel(tokenModel);
+const syncModel = new SyncModel();
 const pairModel = new PairModel();
 app.use(express.json());
 
@@ -113,6 +113,9 @@ app.get('/price/now', async (req, res) => {
 app.get('/pools/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const pools = pairModel.getPools(token);
+    for (let pool of pools) {
+        pool[reserves] = await syncModel.getReserves(pool.pair);
+    }
     res.json(pools);
 })
 

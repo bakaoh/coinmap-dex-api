@@ -1,5 +1,6 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
+const readLastLines = require('read-last-lines');
 const { web3, ContractAddress, isUSD, toBN } = require('../utils/bsc');
 const { getLastLine, getLastFile } = require('../utils/io');
 
@@ -24,12 +25,24 @@ const getAmountIn = (amountOut, reserveIn, reserveOut) => {
 }
 
 class SyncModel {
-    constructor(lp) {
-        this.lp = lp;
-        this.writer = {};
+    constructor() {
+        this.reserves = {};
+        this.writers = {};
         this.liquidity = {};
         this.price = {};
         this.lastCache = 0;
+    }
+
+    async getReserves(pair) {
+        if (!this.reserves[pair]) {
+            const lastFile = getLastFile(`logs/lpsync/${pair}`);
+            if (lastFile == '') return [0, 0];
+            const lastLine = await getLastLine(`logs/lpsync/${pair}/${lastFile}`);
+            const p = lastLine.split(',');
+            if (p.length != 6) return [0, 0];
+            this.reserves[pair] = [p[5], p[6]];
+        }
+        return this.reserves[pair];
     }
 
     async run() {
@@ -112,21 +125,21 @@ class SyncModel {
     }
 
     closeAll() {
-        const keys = Object.keys(this.writer);
-        keys.forEach(address => { this.writer[address].writer.end(); });
+        const keys = Object.keys(this.writers);
+        keys.forEach(address => { this.writers[address].writer.end(); });
     }
 
     getWriter(token, idx) {
-        if (!this.writer[token] || this.writer[token].idx != idx) {
-            if (this.writer[token]) this.writer[token].writer.end();
+        if (!this.writers[token] || this.writers[token].idx != idx) {
+            if (this.writers[token]) this.writers[token].writer.end();
             const dir = `logs/lpsync/${token}`;
             if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-            this.writer[token] = {
+            this.writers[token] = {
                 idx,
                 writer: fs.createWriteStream(`${dir}/${idx}`, opts)
             }
         }
-        return this.writer[token].writer;
+        return this.writers[token].writer;
     }
 
     getLiquidity(token) {
@@ -223,10 +236,11 @@ class SyncModel {
         // return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }
 
-    async writeSyncLog(block, txIdx, logIdx, lpToken, reserve0, reserve1) {
+    async writeSyncLog(block, txIdx, logIdx, pair, reserve0, reserve1) {
         try {
             const idx = Math.floor(block / 100000);
-            this.getWriter(lpToken, idx).write(`${block},${txIdx},${logIdx},${reserve0},${reserve1}\n`);
+            this.getWriter(pair, idx).write(`${block},${txIdx},${logIdx},${reserve0},${reserve1}\n`);
+            this.reserves[pair] = [reserve0, reserve1];
             // if (reserve0 == "0" || reserve1 == "0") return;
             // if (!this.liquidity[token0]) this.liquidity[token0] = {};
             // this.liquidity[token0][token1] = [reserve0, reserve1];
@@ -234,7 +248,7 @@ class SyncModel {
             // this.liquidity[token1][token0] = [reserve1, reserve0];
             // this.updatePrice(token0, token1, reserve0, reserve1);
             // this.updatePrice(token1, token0, reserve1, reserve0);
-        } catch (err) { console.log(`Error`, block, txIdx, logIdx, lpToken, reserve0, reserve1, err.toString()) }
+        } catch (err) { console.log(`Error`, block, txIdx, logIdx, pair, reserve0, reserve1, err.toString()) }
     }
 
     async crawlSyncLogs(fromBlock, toBlock = 'latest', sleepMs = 0) {
