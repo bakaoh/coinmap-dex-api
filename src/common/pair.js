@@ -1,4 +1,5 @@
 const fs = require('fs');
+const LineByLine = require('line-by-line');
 const { web3 } = require('../utils/bsc');
 const { getLastLine } = require('../utils/io');
 
@@ -12,6 +13,20 @@ const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 class PairModel {
     constructor() {
         this.writer = fs.createWriteStream(PAIR_DETAIL_FILE, opts);
+        this.pools = {};
+    }
+
+    getPools(token) {
+        return this.pools[token];
+    }
+
+    load() {
+        const lr = new LineByLine(PAIR_DETAIL_FILE);
+        lr.on('line', (line) => {
+            const [block, txIdx, logIdx, factory, token0, token1, pair, idx] = line.split(',');
+            addPool(block, txIdx, logIdx, factory, token0, token1, pair, idx);
+        });
+        return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }
 
     async run() {
@@ -35,10 +50,16 @@ class PairModel {
         }, 3000)
     }
 
-    async writePairCreatedLog(block, txIdx, logIdx, factory, token0, token1, pair, idx) {
-        try {
-            this.writer.write(`${block},${txIdx},${logIdx},${factory},${token0},${token1},${pair},${idx}\n`);
-        } catch (err) { console.log(`Error`, block, txIdx, logIdx, factory, token0, token1, pair, idx, err.toString()) }
+    addPool(block, txIdx, logIdx, factory, token0, token1, pair, idx) {
+        if (!this.pools[token0]) this.pools[token0] = [];
+        this.pools[token0].push({ token: token1, pair });
+        if (!this.pools[token1]) this.pools[token1] = [];
+        this.pools[token1].push({ token: token0, pair });
+    }
+
+    writePairCreatedLog(block, txIdx, logIdx, factory, token0, token1, pair, idx) {
+        this.writer.write(`${block},${txIdx},${logIdx},${factory},${token0},${token1},${pair},${idx}\n`);
+        this.addPool(block, txIdx, logIdx, factory, token0, token1, pair, idx);
     }
 
     async crawlPairCreatedLogs(fromBlock, toBlock = 'latest', sleepMs = 0) {
@@ -56,7 +77,7 @@ class PairModel {
                 const values = web3.eth.abi.decodeParameters(['address', 'uint256'], log.data)
                 const token0 = web3.eth.abi.decodeParameters(['address'], log.topics[1])
                 const token1 = web3.eth.abi.decodeParameters(['address'], log.topics[2])
-                await this.writePairCreatedLog(log.blockNumber, log.transactionIndex, log.logIndex, log.address, token0[0], token1[0], values[0], values[1].toString(10));
+                this.writePairCreatedLog(log.blockNumber, log.transactionIndex, log.logIndex, log.address, token0[0], token1[0], values[0], values[1].toString(10));
             } catch (err) { console.log(`Write log error`, log, err) }
         }
 

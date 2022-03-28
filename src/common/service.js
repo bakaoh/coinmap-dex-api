@@ -110,6 +110,12 @@ app.get('/price/now', async (req, res) => {
     res.json({ address: req.query.a, price, bnbPrice });
 })
 
+app.get('/pools/:token', async (req, res) => {
+    const token = getAddress(req.params.token);
+    const pools = pairModel.getPools(token);
+    res.json(pools);
+})
+
 async function start(port) {
     const startMs = Date.now();
 
@@ -121,6 +127,8 @@ async function start(port) {
 
     await syncModel.warmup();
     await syncModel.run();
+
+    await pairModel.load();
     await pairModel.run();
 
     app.listen(port);
