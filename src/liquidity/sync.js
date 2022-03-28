@@ -56,7 +56,7 @@ class SyncModel {
                 });
             } catch (err) {
                 if (!err.toString().includes('no such file')) { }
-                const block = i * 100000;
+                const block = idx * 100000;
                 while (block > parseInt(checkpoints[cid])) {
                     rs.push(["0", "0"]);
                     cid++;
