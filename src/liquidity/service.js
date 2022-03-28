@@ -48,7 +48,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     let pricePool;
     for (let pool of pools) {
         pool.history = await syncModel.getReservesHistory(pool.pair, block, pool.token0 == token);
-        if (isUSD(pool.token1) && pool.history[n - 1][1].length > 20) pricePool = pool;
+        if (isUSD(pool.token1) && pool.history[n - 2][1].length > 20) pricePool = pool;
     }
     const data = ts.map((date, i) => {
         let totalToken = toBN(0);
@@ -63,12 +63,12 @@ app.get('/api/v1/pool/:token', async (req, res) => {
 
     let topPools = [];
     for (let pool of pools) {
-        const [reserve0, reserve1] = pool.history[n - 1];
+        const [reserve0, reserve1] = pool.history[n - 2];
         topPools.push({ address: pool.pair, reserve0: getNumber(reserve0), reserve1: getNumber(reserve1) })
     }
     topPools = topPools.sort((a, b) => b.reserve0 - a.reserve0).slice(0, 3).map(pool => ({
         name: token + "/" + pool.address,
-        liquidity: pool.reserve0 * data[n - 1].price,
+        liquidity: pool.reserve0 * data[n - 2].price,
         reserve0: pool.reserve0,
         reserve1: pool.reserve1,
     }))
