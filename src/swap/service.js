@@ -19,7 +19,7 @@ const COMMON_BASE = 'http://localhost:9610';
 app.get('/api/v1/ticker', async (req, res) => {
     const tokens = req.query.symbol.split("-");
     const base = getAddress(tokens[0]);
-    const quote = token[1] == "0" ? ContractAddress.BUSD : getAddress(tokens[1]);
+    const quote = tokens[1] == "0" ? ContractAddress.BUSD : getAddress(tokens[1]);
     console.log(base, quote, req.query.countback);
 
     const bars500 = await getCache(`ticker-1d-${base}-${quote}`, async () => {
