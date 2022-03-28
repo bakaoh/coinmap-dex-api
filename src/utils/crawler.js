@@ -1,0 +1,76 @@
+const fs = require('fs');
+const { web3 } = require('./bsc');
+const { getLastLine } = require('./io');
+
+const opts = { flags: "a" };
+const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
+class Crawler {
+    constructor(name, topic, blockFile, onLog, batchSize = 50) {
+        this.name = name;
+        this.topic = topic;
+        this.blockFile = blockFile;
+        this.onLog = onLog;
+        this.batchSize = batchSize;
+    }
+
+    async getReserves(pair) {
+        if (!this.reserves[pair]) {
+            this.reserves[pair] = getReserveFromLogs(pair);
+        }
+        return this.reserves[pair];
+    }
+
+    async run() {
+        const batchSize = this.batchSize;
+        const lastLine = await getLastLine(this.blockFile);
+        let fromBlock = lastLine ? parseInt(lastLine) + 1 : 0;
+        const latest = await web3.eth.getBlockNumber();
+        console.log(`${this.name} start running from block ${fromBlock}, latest ${latest}`);
+
+        this.blockWriter = fs.createWriteStream(this.blockFile, opts);
+        while (fromBlock < latest) {
+            try {
+                fromBlock = await this.crawlLogs(fromBlock, fromBlock + batchSize - 1, 2000) + 1;
+            } catch (err) { console.log(`Error ${fromBlock}:`, err); await sleep(2000); }
+        }
+
+        this.interval = setInterval(async () => {
+            try {
+                fromBlock = await this.crawlLogs(fromBlock) + 1;
+            } catch (err) { console.log(`Error ${fromBlock}:`, err); }
+        }, 3000)
+    }
+
+    async crawlLogs(fromBlock, toBlock = 'latest', sleepMs = 0) {
+        const startMs = Date.now();
+        const pastLogs = await web3.eth.getPastLogs({
+            fromBlock,
+            toBlock,
+            topics: [this.topic],
+        })
+
+        let lastBlock = 0;
+        for (let log of pastLogs) {
+            lastBlock = log.blockNumber;
+            try {
+                await this.onLog(log);
+            } catch (err) { console.log(`Process log error`, log, err) }
+        }
+
+        if (lastBlock != 0) {
+            this.blockWriter.write(`${lastBlock}\n`);
+        } else if (toBlock != 'latest') {
+            lastBlock = toBlock;
+        } else {
+            lastBlock = fromBlock - 1;
+        }
+
+        const ms = Date.now() - startMs;
+        console.log(`Crawl ${this.name} logs [${fromBlock}-${toBlock}]: ${pastLogs.length} (${ms}ms)`)
+        if (ms < sleepMs) await sleep(sleepMs - ms);
+        return lastBlock;
+    }
+}
+
+module.exports = Crawler;
