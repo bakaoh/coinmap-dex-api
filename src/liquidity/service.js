@@ -51,7 +51,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
         if (isUSD(pool.token0) || isUSD(pool.token1)) pricePool = pool;
     }
     const data = ts.map((date, i) => {
-        const totalToken = toBN(0);
+        let totalToken = toBN(0);
         for (let pool of pools) {
             if (pool.token0 == token) totalToken = totalToken.add(toBN(pool.history[i][0]));
             else if (pool.token1 == token) totalToken = totalToken.add(toBN(pool.history[i][1]));
