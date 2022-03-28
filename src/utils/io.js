@@ -1,5 +1,6 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
+const opts = { flags: "a" };
 
 function getLastLine(file, minLen = 3) {
     const lr = new LineByLine(file);
