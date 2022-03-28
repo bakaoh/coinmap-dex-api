@@ -48,7 +48,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
         let pricePool;
         for (let pool of pools) {
             pool.history = await syncModel.getReservesHistory(pool.pair, block, pool.token0 == token);
-            if (isUSD(pool.token1) && pool.history[n - 1][1].length > 20) pricePool = pool;
+            if (isUSD(pool.token1) && pool.history[n - 2][1].length > 20) pricePool = pool;
         }
         return ts.map((date, i) => {
             let totalToken = toBN(0);
