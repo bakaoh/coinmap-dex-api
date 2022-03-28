@@ -113,10 +113,13 @@ app.get('/price/now', async (req, res) => {
 app.get('/pools/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const pools = pairModel.getPools(token);
+    const rs = [];
     for (let pool of pools) {
-        pool.reserves = await syncModel.getReserves(pool.pair);
+        const reserves = await syncModel.getReserves(pool.pair);
+        if (reserves[0] == "0" || reserves[1] == "0") continue;
+        rs.push({ reserves, ...pool });
     }
-    res.json(pools);
+    res.json(rs);
 })
 
 async function start(port) {

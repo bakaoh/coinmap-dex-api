@@ -30,8 +30,8 @@ const getReserveFromLogs = async (pair) => {
         if (lastFile == '') return ["0", "0"];;
         const lastLine = await getLastLine(`logs/lpsync/${pair}/${lastFile}`);
         const p = lastLine.split(',');
-        if (p.length != 6) return ["0", "0"];
-        return [p[5], p[6]];
+        if (p.length != 5) return ["0", "0"];
+        return [p[4], p[5]];
     } catch (err) {
         return ["0", "0"];
     }
