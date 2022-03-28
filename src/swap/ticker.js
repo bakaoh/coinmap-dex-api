@@ -1,6 +1,7 @@
 const axios = require('axios');
 
 async function get1D(base, quote, countback = 500) {
+    console.log(base, quote, countback);
     let query = `
 {
     ethereum(network: bsc) {

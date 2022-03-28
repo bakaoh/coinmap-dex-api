@@ -20,14 +20,20 @@ app.get('/api/v1/ticker', async (req, res) => {
     const tokens = req.query.symbol.split("-");
     const base = getAddress(tokens[0]);
     const quote = token[1] == "0" ? ContractAddress.BUSD : getAddress(tokens[1]);
+    console.log(base, quote, req.query.countback);
+
     const bars500 = await getCache(`ticker-1d-${base}-${quote}`, async () => {
         return await get1D(base, quote);
     });
+    console.log(bars500);
+    
     let from = parseInt(req.query.from);
     const to = parseInt(req.query.to) || Math.round(Date.now() / 1000);
     if (req.query.countback) {
         from = to - parseInt(req.query.countback) * 86400000;
     }
+    console.log(from, to);
+
     const t = [], c = [], o = [], h = [], l = [], v = [];
     for (let i = bars500.t.length - 1; i > 0; i--) {
         if (bars500.t[i] >= from && bars500.t[i] < to) {
