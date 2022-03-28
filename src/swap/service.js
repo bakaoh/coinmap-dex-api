@@ -37,7 +37,7 @@ app.get('/api/v1/ticker', async (req, res) => {
             l.push(bars500.l[i]);
             v.push(bars500.v[i]);
         }
-        if (t.length > parseInt(countback)) break;
+        if (t.length >= parseInt(countback)) break;
     }
     res.json({ s: "ok", t, c, o, h, l, v });
 })
