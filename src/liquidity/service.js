@@ -23,7 +23,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
         let pricePool;
         for (let pair in pools) {
             pools[pair].history = await syncModel.getReservesHistory(pair, block, pools[pair].token0 == token);
-            if (pool.token1 == ContractAddress.BUSD) pricePool = pools[pair];
+            if (pools[pair].token1 == ContractAddress.BUSD) pricePool = pools[pair];
         }
         return ts.map((date, i) => {
             let totalToken = toBN(0);
