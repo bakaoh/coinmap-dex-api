@@ -41,7 +41,7 @@ class PairModel {
         const lastLine = await getLastLine(BLOCK_FILE);
         let fromBlock = lastLine ? parseInt(lastLine) + 1 : 0;
         const latest = await web3.eth.getBlockNumber();
-        console.log(`SyncModel start running from block ${fromBlock}, latest ${latest}`);
+        console.log(`PairModel start running from block ${fromBlock}, latest ${latest}`);
 
         this.blockWriter = fs.createWriteStream(BLOCK_FILE, opts);
         while (fromBlock < latest) {

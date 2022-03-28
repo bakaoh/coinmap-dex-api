@@ -24,6 +24,19 @@ const getAmountIn = (amountOut, reserveIn, reserveOut) => {
     return numerator.div(denominator).add(1);
 }
 
+const getReserveFromLogs = async (pair) => {
+    try {
+        const lastFile = getLastFile(`logs/lpsync/${pair}`);
+        if (lastFile == '') return ["0", "0"];;
+        const lastLine = await getLastLine(`logs/lpsync/${pair}/${lastFile}`);
+        const p = lastLine.split(',');
+        if (p.length != 6) return ["0", "0"];
+        return [p[5], p[6]];
+    } catch (err) {
+        return ["0", "0"];
+    }
+}
+
 class SyncModel {
     constructor() {
         this.reserves = {};
@@ -35,12 +48,7 @@ class SyncModel {
 
     async getReserves(pair) {
         if (!this.reserves[pair]) {
-            const lastFile = getLastFile(`logs/lpsync/${pair}`);
-            if (lastFile == '') return [0, 0];
-            const lastLine = await getLastLine(`logs/lpsync/${pair}/${lastFile}`);
-            const p = lastLine.split(',');
-            if (p.length != 6) return [0, 0];
-            this.reserves[pair] = [p[5], p[6]];
+            this.reserves[pair] = getReserveFromLogs(pair);
         }
         return this.reserves[pair];
     }
