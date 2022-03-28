@@ -40,10 +40,10 @@ class PairModel {
 
     addPool(block, txIdx, logIdx, factory, token0, token1, pair, idx) {
         if (factory != ContractAddress.PANCAKE_FACTORY) return; // only support Pancake for now
-        if (!this.pools[token0]) this.pools[token0] = [];
-        this.pools[token0].push({ token0, token1, pair });
-        if (!this.pools[token1]) this.pools[token1] = [];
-        this.pools[token1].push({ token0, token1, pair });
+        if (!this.pools[token0]) this.pools[token0] = {};
+        this.pools[token0][pair] = { token0, token1, pair };
+        if (!this.pools[token1]) this.pools[token1] = {};
+        this.pools[token1][pair] = { token0, token1, pair };
     }
 
     writePairCreatedLog(block, txIdx, logIdx, factory, token0, token1, pair, idx) {
