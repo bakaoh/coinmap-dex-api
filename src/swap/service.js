@@ -23,16 +23,13 @@ app.get('/api/v1/ticker', async (req, res) => {
     const bars500 = await getCache(`ticker-1d-${base}-${quote}`, async () => {
         return await get1D(base, quote);
     });
-    
     let from = parseInt(req.query.from);
     const to = parseInt(req.query.to) || Math.round(Date.now() / 1000);
-    if (req.query.countback) {
-        from = to - parseInt(req.query.countback) * 86400;
-    }
+    const countback = req.query.countback;
 
     const t = [], c = [], o = [], h = [], l = [], v = [];
     for (let i = bars500.t.length - 1; i > 0; i--) {
-        if (bars500.t[i] >= from && bars500.t[i] < to) {
+        if ((countback || bars500.t[i] >= from) && bars500.t[i] < to) {
             t.push(bars500.t[i]);
             c.push(bars500.c[i]);
             o.push(bars500.o[i]);
@@ -40,6 +37,7 @@ app.get('/api/v1/ticker', async (req, res) => {
             l.push(bars500.l[i]);
             v.push(bars500.v[i]);
         }
+        if (t.length > parseInt(countback)) break;
     }
     res.json({ s: "ok", t, c, o, h, l, v });
 })
