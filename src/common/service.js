@@ -117,7 +117,7 @@ app.get('/pools/:token', async (req, res) => {
     for (let pool of pools) {
         const reserves = await syncModel.getReserves(pool.pair);
         if (reserves[0] == "0" || reserves[1] == "0") continue;
-        rs.push({ reserves, ...pool });
+        rs.push({ ...pool, reserves });
     }
     res.json(rs);
 })

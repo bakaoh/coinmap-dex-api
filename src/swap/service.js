@@ -5,6 +5,7 @@ const Web3 = require("web3");
 const TokenModel = require("../common/token");
 const SwapModel = require("./swap");
 const { getCache } = require("../cache");
+const { get1D } = require("./ticker");
 const { ContractAddress, getAddress, isUSD } = require('../utils/bsc');
 const { getNumber } = require('../utils/format');
 
@@ -14,6 +15,32 @@ const swapModel = new SwapModel(tokenModel);
 app.use(express.json());
 
 const COMMON_BASE = 'http://localhost:9610';
+
+app.get('/api/v1/ticker', async (req, res) => {
+    const tokens = req.query.symbol.split("~");
+    const base = getAddress(tokens[0]);
+    const quote = token[1] == "0" ? ContractAddress.BUSD : getAddress(token[1]);
+    const bars500 = await getCache(`ticker-1d-${base}-${quote}`, async () => {
+        return await get1D(base, quote);
+    });
+    let from = parseInt(req.query.from);
+    const to = parseInt(req.query.to) || Math.round(Date.now() / 1000);
+    if (req.query.countback) {
+        from = to - parseInt(req.query.countback) * 86400000;
+    }
+    const t = [], c = [], o = [], h = [], l = [], v = [];
+    for (let i = bars500.t.length - 1; i > 0; i--) {
+        if (bars500.t[i] >= from && bars500.t[i] < to) {
+            t.push(bars500.t[i]);
+            c.push(bars500.c[i]);
+            o.push(bars500.o[i]);
+            h.push(bars500.h[i]);
+            l.push(bars500.l[i]);
+            v.push(bars500.v[i]);
+        }
+    }
+    res.json({ s: "ok", t, c, o, h, l, v });
+})
 
 app.get('/api/v1/volume/:token', async (req, res) => {
     const token = getAddress(req.params.token);
