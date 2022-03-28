@@ -21,14 +21,14 @@ app.get('/api/v1/pool/:token', async (req, res) => {
         const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=${n}`)).data;
         const pools = pairModel.getPools(token);
         let pricePool;
-        for (let pool of pools) {
-            pool.history = await syncModel.getReservesHistory(pool.pair, block, pool.token0 == token);
-            if (pool.token1 == ContractAddress.BUSD) pricePool = pool;
+        for (let pair in pools) {
+            pools[pair].history = await syncModel.getReservesHistory(pair, block, pools[pair].token0 == token);
+            if (pool.token1 == ContractAddress.BUSD) pricePool = pools[pair];
         }
         return ts.map((date, i) => {
             let totalToken = toBN(0);
-            for (let pool of pools) {
-                totalToken = totalToken.add(toBN(pool.history[i][0]));
+            for (let pair in pools) {
+                totalToken = totalToken.add(toBN(pools[pair].history[i][0]));
             }
             const [reserve0, reserve1] = pricePool.history[i];
             const price = reserve0 == "0" ? toBN(0) : toBN(reserve1).muln(100000).div(toBN(reserve0))
@@ -38,10 +38,10 @@ app.get('/api/v1/pool/:token', async (req, res) => {
 
     const allPools = pairModel.getPools(token);
     let pools = []
-    for (let pool of allPools) {
-        const reserves = await syncModel.getReserves(pool.pair);
-        const [reserve0, reserve1] = pool.token0 == token ? reserves : reserves.reverse();
-        pools.push({ pair: pool.pair, reserve0: getNumber(reserve0), reserve1: getNumber(reserve1) });
+    for (let pair in allPools) {
+        const reserves = await syncModel.getReserves(pair);
+        const [reserve0, reserve1] = allPools[pair].token0 == token ? reserves : reserves.reverse();
+        pools.push({ pair, reserve0: getNumber(reserve0), reserve1: getNumber(reserve1) });
     }
     pools = pools.sort((a, b) => b.reserve0 - a.reserve0).slice(0, 3).map(pool => ({
         name: pool.pair,
