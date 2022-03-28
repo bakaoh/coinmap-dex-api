@@ -20,11 +20,18 @@ class PairModel {
         return this.pools[token];
     }
 
+    addPool(block, txIdx, logIdx, factory, token0, token1, pair, idx) {
+        if (!this.pools[token0]) this.pools[token0] = [];
+        this.pools[token0].push({ token: token1, pair });
+        if (!this.pools[token1]) this.pools[token1] = [];
+        this.pools[token1].push({ token: token0, pair });
+    }
+
     load() {
         const lr = new LineByLine(PAIR_DETAIL_FILE);
         lr.on('line', (line) => {
             const [block, txIdx, logIdx, factory, token0, token1, pair, idx] = line.split(',');
-            addPool(block, txIdx, logIdx, factory, token0, token1, pair, idx);
+            this.addPool(block, txIdx, logIdx, factory, token0, token1, pair, idx);
         });
         return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }
@@ -48,13 +55,6 @@ class PairModel {
                 fromBlock = await this.crawlPairCreatedLogs(fromBlock) + 1;
             } catch (err) { console.log(`Error ${fromBlock}:`, err); }
         }, 3000)
-    }
-
-    addPool(block, txIdx, logIdx, factory, token0, token1, pair, idx) {
-        if (!this.pools[token0]) this.pools[token0] = [];
-        this.pools[token0].push({ token: token1, pair });
-        if (!this.pools[token1]) this.pools[token1] = [];
-        this.pools[token1].push({ token: token0, pair });
     }
 
     writePairCreatedLog(block, txIdx, logIdx, factory, token0, token1, pair, idx) {
