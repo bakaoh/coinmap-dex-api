@@ -40,7 +40,7 @@ class SyncModel {
         return this.reserves[pair];
     }
 
-    async getReservesHistory(pair, checkpoints) {
+    async getReservesHistory(pair, checkpoints, isToken0 = true) {
         let cid = 0;
         const fromIdx = Math.floor(checkpoints[0] / 100000);
         const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / 100000);
@@ -48,9 +48,8 @@ class SyncModel {
         for (let idx = fromIdx; idx <= toIdx; idx++) {
             try {
                 await this.partitioner.loadLog(pair, idx, ([block, , , reserve0, reserve1]) => {
-                    if (reserve0 == "0" || reserve1 == "0") return;
                     while (block > parseInt(checkpoints[cid])) {
-                        rs.push([reserve0, reserve1]);
+                        rs.push(isToken0 ? [reserve0, reserve1] : [reserve1, reserve0]);
                         cid++;
                     }
                 });

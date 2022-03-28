@@ -47,8 +47,8 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     const pools = pairModel.getPools(token);
     let pricePool;
     for (let pool of pools) {
-        pool.history = await syncModel.getReservesHistory(pool.pair, block);
-        if (isUSD(pool.token0) || isUSD(pool.token1)) pricePool = pool;
+        pool.history = await syncModel.getReservesHistory(pool.pair, block, pool.token0 == token);
+        if (isUSD(pool.token1) && pool.history[n - 1][1].length > 20) pricePool = pool;
     }
     const data = ts.map((date, i) => {
         let totalToken = toBN(0);
@@ -56,14 +56,14 @@ app.get('/api/v1/pool/:token', async (req, res) => {
             if (pool.token0 == token) totalToken = totalToken.add(toBN(pool.history[i][0]));
             else if (pool.token1 == token) totalToken = totalToken.add(toBN(pool.history[i][1]));
         }
-        const [reserve0, reserve1] = isUSD(pricePool.token1) ? pricePool.history[i] : pricePool.history[i].reverse();
-        const price = toBN(reserve1).muln(100000).div(toBN(reserve0))
+        const [reserve0, reserve1] = pricePool.history[i];
+        const price = reserve0 == "0" ? toBN(0) : toBN(reserve1).muln(100000).div(toBN(reserve0))
         return { date, price: parseInt(price.toString(10)) / 100000, totalAmount: getNumber(totalToken.mul(price).divn(100000).toString(10)) };
     });
 
     let topPools = [];
     for (let pool of pools) {
-        const [reserve0, reserve1] = pool.token0 == token ? pool.history[n - 1] : pool.history[n - 1].reverse();
+        const [reserve0, reserve1] = pool.history[n - 1];
         topPools.push({ address: pool.pair, reserve0: getNumber(reserve0), reserve1: getNumber(reserve1) })
     }
     topPools = topPools.sort((a, b) => b.reserve0 - a.reserve0).slice(0, 3).map(pool => ({
