@@ -43,7 +43,7 @@ class SyncModel {
     async getReservesHistory(pair, checkpoints, isToken0 = true) {
         let cid = 0;
         const fromIdx = Math.floor(checkpoints[0] / 100000);
-        const toIdx = Math.ceil(checkpoints[checkpoints.length - 1] / 100000);
+        const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / 100000);
         const rs = [];
         for (let idx = fromIdx; idx <= toIdx; idx++) {
             try {
@@ -55,7 +55,7 @@ class SyncModel {
                 });
             } catch (err) {
                 if (!err.toString().includes('no such file')) { }
-                const block = idx * 100000;
+                const block = (idx + 1) * 100000;
                 while (block > parseInt(checkpoints[cid])) {
                     rs.push(["0", "0"]);
                     cid++;
