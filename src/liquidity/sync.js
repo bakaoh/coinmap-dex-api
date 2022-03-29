@@ -46,7 +46,7 @@ class SyncModel {
             const [reserve0, reserve1] = await this.getReserves(pair);
             pools.push({ pair, token0: pool.token0, token1: pool.token1, reserve0: toBN(reserve0), reserve1: toBN(reserve1) });
         }
-        pools.sort((a, b) => (b.token0 == token ? b.reserve0 : b.reserve1).gt(a.token0 == token ? a.reserve0 : a.reserve1));
+        pools.sort((a, b) => (b.token0 == token ? b.reserve0 : b.reserve1).gt(a.token0 == token ? a.reserve0 : a.reserve1) ? 1 : -1);
         let tokenPrice = 0;
         for (let pool of pools) {
             if (isUSD(pool.token1)) tokenPrice = parseInt(pool.reserve1.muln(100000).div(pool.reserve0)) / 100000;
