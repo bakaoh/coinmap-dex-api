@@ -2,6 +2,7 @@ const express = require("express");
 const axios = require("axios");
 
 const SyncModel = require("./sync");
+const SwapModel = require("./swap");
 const PairModel = require("./pair");
 const { getCache } = require("../cache");
 const { getAddress, ContractAddress, toBN } = require('../utils/bsc');
@@ -11,6 +12,7 @@ const COMMON_BASE = 'http://128.199.189.253:9610';
 
 const app = express();
 const syncModel = new SyncModel();
+const swapModel = new SwapModel();
 const pairModel = new PairModel();
 app.use(express.json());
 
@@ -68,7 +70,7 @@ async function start(port) {
     const startMs = Date.now();
 
     await syncModel.runCrawler();
-
+    await swapModel.runCrawler();
     await pairModel.warmup();
     await pairModel.runCrawler();
 

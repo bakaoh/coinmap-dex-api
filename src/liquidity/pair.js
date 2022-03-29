@@ -28,8 +28,7 @@ class PairModel {
     warmup() {
         const lr = new LineByLine(PAIR_DETAIL_FILE);
         lr.on('line', (line) => {
-            const [block, txIdx, logIdx, factory, token0, token1, pair, idx] = line.split(',');
-            this.addPool(block, txIdx, logIdx, factory, token0, token1, pair, idx);
+            this.addPool(line.split(','));
         });
         return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }
@@ -38,7 +37,7 @@ class PairModel {
         return this.pools[token];
     }
 
-    addPool(block, txIdx, logIdx, factory, token0, token1, pair, idx) {
+    addPool([block, txIdx, logIdx, factory, token0, token1, pair, idx]) {
         if (factory != ContractAddress.PANCAKE_FACTORY) return; // only support Pancake for now
         if (!this.pools[token0]) this.pools[token0] = {};
         this.pools[token0][pair] = { token0, token1, pair };
@@ -48,7 +47,7 @@ class PairModel {
 
     writePairCreatedLog(block, txIdx, logIdx, factory, token0, token1, pair, idx) {
         this.writer.write(`${block},${txIdx},${logIdx},${factory},${token0},${token1},${pair},${idx}\n`);
-        this.addPool(block, txIdx, logIdx, factory, token0, token1, pair, idx);
+        this.addPool([block, txIdx, logIdx, factory, token0, token1, pair, idx]);
     }
 }
 

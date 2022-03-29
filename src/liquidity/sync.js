@@ -4,7 +4,7 @@ const { Partitioner, getLastLine, getLastFile } = require('../utils/io');
 
 const SYNC_TOPIC = '0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1';
 const BLOCK_FILE = 'logs/sync.block';
-const DATA_FOLDER = 'logs/lpsync';
+const DATA_FOLDER = 'db/lpsync';
 
 const getReserveFromLogs = async (pair) => {
     try {
