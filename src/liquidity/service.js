@@ -42,18 +42,6 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     res.json({ data, pools });
 })
 
-app.get('/pools/:token', async (req, res) => {
-    const token = getAddress(req.params.token);
-    const pools = pairModel.getPools(token);
-    const rs = [];
-    for (let pool of pools) {
-        const reserves = await syncModel.getReserves(pool.pair);
-        if (reserves[0] == "0" || reserves[1] == "0") continue;
-        rs.push({ ...pool, reserves });
-    }
-    res.json(rs);
-})
-
 async function start(port) {
     const startMs = Date.now();
 
