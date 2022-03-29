@@ -56,8 +56,8 @@ class SyncModel {
             if (tokenPrice) break;
         }
         return pools.map(pool => {
-            const reserve0 = getNumber(pool.reserve0);
-            const reserve1 = getNumber(pool.reserve1);
+            const reserve0 = getNumber(pool.reserve0.toString(10));
+            const reserve1 = getNumber(pool.reserve1.toString(10));
             return {
                 name: pool.pair,
                 liquidity: (pool.token0 == token ? reserve0 : reserve1) * tokenPrice,
