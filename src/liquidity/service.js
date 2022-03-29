@@ -39,11 +39,11 @@ app.get('/api/v1/pool/:token', async (req, res) => {
 
     res.json({
         data,
-        pools: pools.slice(0, 3).map(pool => ({
+        pools: pools.slice(0, 3).map(p => ({
             name: pool.pair,
-            liquidity: getNumber(pool.token0 == token ? reserve0 : reserve1) * tokenPrice,
-            reserve0: getNumber(pool.reserve0),
-            reserve1: getNumber(pool.reserve1)
+            liquidity: getNumber(p.token0 == token ? p.reserve0 : p.reserve1) * tokenPrice,
+            reserve0: getNumber(p.reserve0),
+            reserve1: getNumber(p.reserve1)
         }))
     });
 })
