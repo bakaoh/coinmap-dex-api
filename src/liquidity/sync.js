@@ -34,9 +34,13 @@ class SyncModel {
         await this.crawler.run();
     }
 
-    async getBNBPrice() {
-        const [reserve0, reserve1] = await this.getReserves(ContractAddress.PAIR_WBNB_BUSD);
+    calcPrice([reserve0, reserve1]) {
+        if (reserve0 == "0") return 0;
         return parseInt(toBN(reserve1).muln(100000).div(toBN(reserve0))) / 100000;
+    }
+
+    async getBNBPrice() {
+        return this.calcPrice(await this.getReserves(ContractAddress.PAIR_WBNB_BUSD));
     }
 
     async getPools(token, pairs) {
@@ -44,26 +48,18 @@ class SyncModel {
         for (let pair in pairs) {
             const pool = pairs[pair];
             const [reserve0, reserve1] = await this.getReserves(pair);
-            pools.push({ pair, token0: pool.token0, token1: pool.token1, reserve0: toBN(reserve0), reserve1: toBN(reserve1) });
+            pools.push({ pair, token0: pool.token0, token1: pool.token1, reserve0, reserve1 });
         }
-        pools.sort((a, b) => (b.token0 == token ? b.reserve0 : b.reserve1).gt(a.token0 == token ? a.reserve0 : a.reserve1) ? 1 : -1);
+        pools.sort((a, b) => toBN(b.token0 == token ? b.reserve0 : b.reserve1).gt(toBN(a.token0 == token ? a.reserve0 : a.reserve1)) ? 1 : -1);
         let tokenPrice = 0;
         for (let pool of pools) {
-            if (isUSD(pool.token1)) tokenPrice = parseInt(pool.reserve1.muln(100000).div(pool.reserve0)) / 100000;
-            else if (isUSD(pool.token0)) tokenPrice = parseInt(pool.reserve0.muln(100000).div(pool.reserve1)) / 100000;
-            else if (pool.token1 == ContractAddress.WBNB) tokenPrice = await this.getBNBPrice() * parseInt(pool.reserve1.muln(100000).div(pool.reserve0)) / 100000;
-            else if (pool.token0 == ContractAddress.WBNB) tokenPrice = await this.getBNBPrice() * parseInt(pool.reserve0.muln(100000).div(pool.reserve1)) / 100000;
+            if (isUSD(pool.token1)) tokenPrice = this.calcPrice([pool.reserve0, pool.reserve1]);
+            else if (isUSD(pool.token0)) tokenPrice = this.calcPrice([pool.reserve1, pool.reserve0]);
+            else if (pool.token1 == ContractAddress.WBNB) tokenPrice = await this.getBNBPrice() * this.calcPrice([pool.reserve0, pool.reserve1]);
+            else if (pool.token0 == ContractAddress.WBNB) tokenPrice = await this.getBNBPrice() * this.calcPrice([pool.reserve1, pool.reserve0]);
             if (tokenPrice) break;
         }
-        return pools.map(pool => {
-            const reserve0 = getNumber(pool.reserve0.toString(10));
-            const reserve1 = getNumber(pool.reserve1.toString(10));
-            return {
-                name: pool.pair,
-                liquidity: (pool.token0 == token ? reserve0 : reserve1) * tokenPrice,
-                reserve0, reserve1, tokenPrice
-            }
-        });
+        return { tokenPrice, pools };
     }
 
     async getReserves(pair) {
