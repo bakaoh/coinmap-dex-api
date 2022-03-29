@@ -38,19 +38,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
         });
     });
 
-    const allPools = pairModel.getPools(token);
-    let pools = []
-    for (let pair in allPools) {
-        const reserves = await syncModel.getReserves(pair);
-        const [reserve0, reserve1] = allPools[pair].token0 == token ? reserves : [reserves[1], reserves[0]];
-        pools.push({ pair, reserve0: getNumber(reserve0), reserve1: getNumber(reserve1) });
-    }
-    pools = pools.sort((a, b) => b.reserve0 - a.reserve0).slice(0, 3).map(pool => ({
-        name: pool.pair,
-        liquidity: pool.reserve0 * data[data.length - 1].price,
-        reserve0: pool.reserve0,
-        reserve1: pool.reserve1,
-    }))
+    const pools = (await syncModel.getPools(token, pairModel.getPools(token))).slice(0, 3);
     res.json({ data, pools });
 })
 
