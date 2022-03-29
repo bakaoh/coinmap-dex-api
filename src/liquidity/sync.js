@@ -1,5 +1,5 @@
 const Crawler = require("../utils/crawler");
-const { web3, ContractAddress, isUSD } = require('../utils/bsc');
+const { web3, ContractAddress, isUSD, toBN } = require('../utils/bsc');
 const { Partitioner, getLastLine, getLastFile } = require('../utils/io');
 const { getNumber } = require('../utils/format');
 
