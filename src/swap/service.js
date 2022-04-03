@@ -108,7 +108,7 @@ async function start(port) {
     // await tokenModel.loadLpDetailFile();
     // await tokenModel.loadTokenDetailFile();
 
-    await swapModel.run();
+    // await swapModel.run();
 
     app.listen(port);
     const ms = Date.now() - startMs;
