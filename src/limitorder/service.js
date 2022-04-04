@@ -1,24 +1,29 @@
 const express = require("express");
-var cors = require('cors')
+const OrderModel = require("./order");
+const cors = require('cors')
+
+const orderModel = new OrderModel();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-const all = [];
-
 app.post('/api/v1/limitorder/create', async (req, res) => {
-    console.log(req.body)
-    all.push(req.body);
+    orderModel.newOrder(req.body); // TODO: verify sig
     res.json({ rs: "ok" });
 })
 
 app.get('/api/v1/limitorder', async (req, res) => {
-    res.json(all);
+    const account = req.query.account;
+    const rs = orderModel.getOrdersByAccount(account);
+    res.json(rs);
 })
 
 async function start(port) {
     const startMs = Date.now();
+
+    await orderModel.warmup();
+    orderModel.run();
 
     app.listen(port);
     const ms = Date.now() - startMs;
