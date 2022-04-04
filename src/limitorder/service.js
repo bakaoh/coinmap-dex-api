@@ -8,7 +8,7 @@ app.use(express.json());
 
 const all = [];
 
-app.get('/api/v1/limitorder/create', async (req, res) => {
+app.post('/api/v1/limitorder/create', async (req, res) => {
     console.log(req.body)
     all.push(req.body);
     res.json({ rs: "ok" });
