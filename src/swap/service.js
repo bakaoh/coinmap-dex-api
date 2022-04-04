@@ -16,7 +16,7 @@ app.use(express.json());
 
 const COMMON_BASE = 'http://localhost:9610';
 
-app.get('/api/v1/ticker', async (req, res) => {
+app.get('/api/v1/tradingview/history', async (req, res) => {
     const tokens = req.query.symbol.split("~");
     const base = getAddress(tokens[0]);
     const quote = tokens[1] == "0" ? ContractAddress.BUSD : getAddress(tokens[1]);
