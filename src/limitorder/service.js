@@ -3,18 +3,18 @@ var cors = require('cors')
 
 const app = express();
 app.use(express.json());
-app.options("*", cors({ origin: 'http://localhost:3000', optionsSuccessStatus: 200 }));
-app.use(cors({ origin: "http://localhost:3000", optionsSuccessStatus: 200 }));
+// app.options("*", cors({ origin: 'http://localhost:3000', optionsSuccessStatus: 200 }));
+// app.use(cors({ origin: "http://localhost:3000", optionsSuccessStatus: 200 }));
 
 const all = [];
 
-app.post('/limitorder/create', async (req, res) => {
+app.post('/api/v1/limitorder/create', async (req, res) => {
     console.log(req.body)
     all.push(req.body);
     res.json({ rs: "ok" });
 })
 
-app.get('/limitorder', async (req, res) => {
+app.get('/api/v1/limitorder', async (req, res) => {
     res.json(all);
 })
 
