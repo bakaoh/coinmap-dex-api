@@ -16,6 +16,33 @@ app.use(express.json());
 
 const COMMON_BASE = 'http://localhost:9610';
 
+app.get('/api/v1/tradingview/symbols', async (req, res) => {
+    const tokens = req.query.symbol.split("~");
+    const base = getAddress(tokens[0]);
+    const rs = {
+        "name": base,
+        "exchange-traded": base,
+        "exchange-listed": base,
+        "timezone": "America/New_York",
+        "minmov": 1,
+        "minmov2": 0,
+        "pointvalue": 1,
+        "session": "0930-1630",
+        "has_intraday": false,
+        "has_no_volume": false,
+        "description": base,
+        "type": "token",
+        "supported_resolutions": [
+            "D",
+            "2D",
+            "3D"
+        ],
+        "pricescale": 100,
+        "ticker": base
+    }
+    res.json(rs);
+})
+
 app.get('/api/v1/tradingview/history', async (req, res) => {
     const tokens = req.query.symbol.split("~");
     const base = getAddress(tokens[0]);
