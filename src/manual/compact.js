@@ -14,7 +14,7 @@ async function run() {
     const tokens = fs.readdirSync(OLD_DATA_FOLDER);
     console.log(`Total LP token: ${tokens.length}`);
 
-    for (let idx = 160; idx < 166; idx++) {
+    for (let idx = 3; idx < 166; idx++) {
         const startMs = Date.now();
         const tx = {};
         let c = 0;
@@ -35,6 +35,7 @@ async function run() {
             }
         }
         console.log(`Scan ${l} lines logs [${idx}] (${Date.now() - startMs}ms)`)
+        let t = 0;
         for (let block in tx) {
             for (let txIdx in tx[block]) {
                 const swap = tx[block][txIdx];
@@ -52,11 +53,12 @@ async function run() {
                 const tokenOut = swapOut[6] != "0" ? pairOut.token0 : pairOut.token1;
                 const amountOut = swapIn[6] != "0" ? swapOut[6] : swapOut[7];
 
+                t++;
                 writer.getWriter(tokenIn, idx).write(`${block},${txIdx},SELL,${from},${tokenOut},${amountIn},${amountOut}\n`);
                 writer.getWriter(tokenOut, idx).write(`${block},${txIdx},BUY,${from},${tokenIn},${amountOut},${amountIn}\n`);
             }
         }
-        console.log(`Combine logs [${idx}] (${Date.now() - startMs}ms)`)
+        console.log(`Combine ${t} tx logs [${idx}] (${Date.now() - startMs}ms)`)
     }
 }
 
