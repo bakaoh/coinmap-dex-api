@@ -19,7 +19,7 @@ async function run() {
         const tx = {};
         let c = 0;
         for (let token of tokens) {
-            if (c++ % 10000 == 0) console.log(`Process [${idx}] ${c}/${tokens.length / 10000}`)
+            if (++c % 10000 == 0) console.log(`Process [${idx}] ${c}/${tokens.length / 10000}`)
             try {
                 await reader.loadLog(token, idx, ([block, txIdx, logIdx, pair, from, to, in0, in1, out0, out1]) => {
                     if (!tx[block]) tx[block] = {};
@@ -36,11 +36,13 @@ async function run() {
 
                 const swapIn = swap[swap.length - 1];
                 const pairIn = pairModel.getTokens(swapIn[1]);
+                if (!pairIn) continue;
                 const tokenIn = swapIn[4] != "0" ? pairIn.token0 : pairIn.token1;
                 const amountIn = swapIn[4] != "0" ? swapIn[4] : swapIn[5];
 
                 const swapOut = swap[0];
                 const pairOut = pairModel.getTokens(swapOut[1]);
+                if (!pairOut) continue;
                 const tokenOut = swapOut[6] != "0" ? pairOut.token0 : pairOut.token1;
                 const amountOut = swapIn[6] != "0" ? swapOut[6] : swapOut[7];
 
