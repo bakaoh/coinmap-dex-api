@@ -42,16 +42,16 @@ class OrderModel {
     }
 
     getOrdersByAccount(account) {
-        return this.orders.filter(i => i.account == account);
+        return this.orders.filter(i => i.maker == account);
     }
 
-    addOrder([account, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig]) {
-        this.orders.push({ account, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig })
+    addOrder([maker, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig]) {
+        this.orders.push({ maker, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig })
     }
 
-    newOrder({ account, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig }) {
-        this.writer.write(`${account},${payToken},${buyToken},${payAmount},${buyAmount},${deadline},${salt},${sig}\n`);
-        this.orders.push({ account, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig })
+    newOrder({ maker, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig }) {
+        this.writer.write(`${maker},${payToken},${buyToken},${payAmount},${buyAmount},${deadline},${salt},${sig}\n`);
+        this.orders.push({ maker, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig })
     }
 }
 
