@@ -26,7 +26,7 @@ class OrderModel {
         this.interval = setInterval(async () => {
             try {
                 for (let order of this.orders) {
-                    const data = (await axios.get(`${COMMON_BASE}/route/${order.payToken}/${order.buyToken}?in=${order.pay}`)).data;
+                    const data = (await axios.get(`${COMMON_BASE}/route/${order.payToken}/${order.buyToken}?in=${order.payAmount}`)).data;
                     console.log(order, data)
                 }
             } catch (err) { console.log(`Error:`, err); }
@@ -45,13 +45,13 @@ class OrderModel {
         return this.orders.filter(i => i.account == account);
     }
 
-    addOrder([account, payToken, buyToken, pay, buy, deadline, salt, sig]) {
-        this.orders.push({ account, payToken, buyToken, pay, buy, deadline, salt, sig })
+    addOrder([account, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig]) {
+        this.orders.push({ account, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig })
     }
 
-    newOrder({ account, payToken, buyToken, pay, buy, deadline, salt, sig }) {
-        this.writer.write(`${account},${payToken},${buyToken},${pay},${buy},${deadline},${salt},${sig}\n`);
-        this.orders.push({ account, payToken, buyToken, pay, buy, deadline, salt, sig })
+    newOrder({ account, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig }) {
+        this.writer.write(`${account},${payToken},${buyToken},${payAmount},${buyAmount},${deadline},${salt},${sig}\n`);
+        this.orders.push({ account, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig })
     }
 }
 
