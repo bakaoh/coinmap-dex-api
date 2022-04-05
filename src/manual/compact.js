@@ -26,7 +26,11 @@ async function run() {
                     if (!tx[block][txIdx]) tx[block][txIdx] = [];
                     tx[block][txIdx].push([logIdx, pair, from, to, in0, in1, out0, out1]);
                 });
-            } catch (err) { console.log(err) }
+            } catch (err) {
+                if (!err.toString().includes('no such file')) {
+                    console.log(err)
+                }
+            }
         }
         console.log(`Scan logs [${idx}] (${Date.now() - startMs}ms)`)
         for (let block in tx) {
