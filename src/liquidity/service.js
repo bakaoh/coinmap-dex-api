@@ -19,7 +19,7 @@ app.use(express.json());
 app.get('/route/:tokenA/:tokenB', async (req, res) => {
     const tokenA = getAddress(req.params.tokenA);
     const tokenB = getAddress(req.params.tokenB);
-    const rs = syncModel.getPath(
+    const rs = await syncModel.getPath(
         tokenA, tokenB,
         pairModel.getPools(tokenA), pairModel.getPools(tokenB),
         req.query.in);
