@@ -33,7 +33,7 @@ class Manager {
         try {
             const data = (await axios.get(`${COMMON_BASE}/route/${order.payToken}/${order.buyToken}?in=${order.payAmount}`)).data;
             console.log(data, order)
-            if (toBn(data.amountOut).gt(toBn(order.buyAmount))) {
+            if (toBN(data.amountOut).gt(toBN(order.buyAmount))) {
                 const sig = order.sig;
                 delete order.status;
                 delete order.sig;
