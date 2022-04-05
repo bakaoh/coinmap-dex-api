@@ -34,6 +34,7 @@ class Crawler {
                 fromBlock = await this.crawlLogs(fromBlock, fromBlock + batchSize - 1, 2000) + 1;
             } catch (err) { console.log(`Error ${fromBlock}:`, err); await sleep(2000); }
         }
+        if (fromBlock > latest) fromBlock = latest;
 
         this.interval = setInterval(async () => {
             try {
