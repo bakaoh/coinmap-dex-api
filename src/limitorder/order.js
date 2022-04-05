@@ -1,5 +1,4 @@
 const fs = require('fs');
-const axios = require("axios");
 
 const LineByLine = require('line-by-line');
 const Crawler = require("../utils/crawler");
@@ -11,8 +10,6 @@ const ORDER_DETAIL_FILE = 'db/order.detail';
 const ORDER_STATUS_FILE = 'db/order.status';
 
 const opts = { flags: "a" };
-
-const COMMON_BASE = 'http://128.199.189.253:9610';
 
 class OrderModel {
     constructor() {
@@ -29,17 +26,6 @@ class OrderModel {
             this.writeStatus([log.blockNumber, maker[0], values[0], values[1].toString(10)]);
         }, 2000);
         await this.crawler.run();
-    }
-
-    run() {
-        this.interval = setInterval(async () => {
-            try {
-                for (let order of this.orders) {
-                    const data = (await axios.get(`${COMMON_BASE}/route/${order.payToken}/${order.buyToken}?in=${order.payAmount}`)).data;
-                    console.log(order, data)
-                }
-            } catch (err) { console.log(`Error:`, err); }
-        }, 3000)
     }
 
     async warmup() {
@@ -65,7 +51,11 @@ class OrderModel {
     }
 
     getOrdersByAccount(account) {
-        return this.orders.filter(i => i.maker == account).map(i => ({ ...i, status: this.status[i.salt] }));
+        return this.orders.filter(i => i.maker == account).map(i => ({ ...i, status: this.status[i.salt] || 0 }));
+    }
+
+    getAllOrders() {
+        return this.orders.map(i => ({ ...i, status: this.status[i.salt] || 0 }));
     }
 
     addOrder([maker, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig]) {

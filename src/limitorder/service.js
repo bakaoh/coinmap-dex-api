@@ -7,7 +7,7 @@ const Manager = require("./manager");
 const cors = require('cors')
 
 const orderModel = new OrderModel();
-// const manager = new Manager(process.env.MASTER_SEED, 1);
+const manager = new Manager(process.env.MASTER_SEED, 1);
 
 const app = express();
 app.use(express.json());
@@ -29,7 +29,15 @@ async function start(port) {
 
     await orderModel.warmup();
     await orderModel.runCrawler();
-    orderModel.run();
+
+    setInterval(async () => {
+        try {
+            const orders = orderModel.getAllOrders();
+            for (let order of orders) {
+                await manager.process(order);
+            }
+        } catch (err) { console.log(`Error:`, err); }
+    }, 3000)
 
     app.listen(port);
     const ms = Date.now() - startMs;

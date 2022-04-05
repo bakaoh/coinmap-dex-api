@@ -1,5 +1,9 @@
+const axios = require("axios");
 const { hdkey } = require("ethereumjs-wallet");
+const { toBN } = require("../utils/bsc");
 const Executor = require("./executor");
+
+const COMMON_BASE = 'http://128.199.189.253:9610';
 
 class Manager {
     constructor(seed, nAccount = 1) {
@@ -8,9 +12,6 @@ class Manager {
         this.parent = this.master.derivePath("m/44'/60'/0'/0");
         this.accounts = [];
         this.nAccount = nAccount;
-
-        this.run = this.run.bind(this);
-        this.run0 = this.run0.bind(this);
         this.init();
     }
 
@@ -21,13 +22,12 @@ class Manager {
             this.accounts[i] = new Executor(wallet.getAddressString(), wallet.getPrivateKey());
             console.log(`Account[${i}] ${this.accounts[i].address}`)
         }
-        this.looper = setInterval(this.run, 5 * 1e3);
     }
 
-    async run() { await this.run0().catch(console.err); }
-
-    async run0() {
-
+    async process(order) {
+        const data = (await axios.get(`${COMMON_BASE}/route/${order.payToken}/${order.buyToken}?in=${order.payAmount}`)).data;
+        const price = parseInt(toBN(order.buyAmount).muln(100000).div(toBN(order.payAmount))) / 100000;
+        console.log(order, data, price);
     }
 }
 
