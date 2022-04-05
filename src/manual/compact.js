@@ -14,12 +14,12 @@ async function run() {
     const tokens = fs.readdirSync(OLD_DATA_FOLDER);
     console.log(`Total LP token: ${tokens.length}`);
 
-    for (let idx = 0; idx < 166; idx++) {
+    for (let idx = 3; idx < 166; idx++) {
         const startMs = Date.now();
         const tx = {};
         let c = 0;
         for (let token of tokens) {
-            if (++c % 10000 == 0) console.log(`Process [${idx}] ${c}/${tokens.length / 10000}`)
+            if (++c % 10000 == 0) console.log(`Process [${idx}] ${c}/${tokens.length}`)
             try {
                 await reader.loadLog(token, idx, ([block, txIdx, logIdx, pair, from, to, in0, in1, out0, out1]) => {
                     if (!tx[block]) tx[block] = {};
