@@ -26,7 +26,7 @@ class OrderModel {
         this.crawler = new Crawler("Order", ORDER_TOPIC, BLOCK_FILE, async (log) => {
             const values = web3.eth.abi.decodeParameters(['bytes32', 'uint8'], log.data)
             const maker = web3.eth.abi.decodeParameters(['address'], log.topics[1])
-            this.writeStatus([log.blockNumber, maker, values[0], values[1].toString(10)]);
+            this.writeStatus([log.blockNumber, maker[0], values[0], values[1].toString(10)]);
         }, 2000);
         await this.crawler.run();
     }
