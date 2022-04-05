@@ -15,7 +15,7 @@ async function run() {
     const tokens = fs.readdirSync(OLD_DATA_FOLDER);
     console.log(`Total LP token: ${tokens.length}`);
 
-    for (let idx = 3; idx < 166; idx++) {
+    for (let idx = 166; idx > 3; idx--) {
         const startMs = Date.now();
         const tx = {};
         let c = 0;
