@@ -32,7 +32,6 @@ class Manager {
         this.processing[order.salt] = true;
         try {
             const data = (await axios.get(`${COMMON_BASE}/route/${order.payToken}/${order.buyToken}?in=${order.payAmount}`)).data;
-            console.log(data, order)
             if (toBN(data.amountOut).gt(toBN(order.buyAmount))) {
                 const sig = order.sig;
                 delete order.status;
