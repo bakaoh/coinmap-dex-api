@@ -14,15 +14,19 @@ async function run() {
     const tokens = fs.readdirSync(OLD_DATA_FOLDER);
     console.log(`Total LP token: ${tokens.length}`);
 
-    let tx = {};
     for (let idx = 0; idx < 166; idx++) {
         const startMs = Date.now();
+        const tx = {};
+        let c = 0;
         for (let token of tokens) {
-            await reader.loadLog(token, idx, ([block, txIdx, logIdx, pair, from, to, in0, in1, out0, out1]) => {
-                if (!tx[block]) tx[block] = {};
-                if (!tx[block][txIdx]) tx[block][txIdx] = [];
-                tx[block][txIdx].push([logIdx, pair, from, to, in0, in1, out0, out1]);
-            });
+            if (c++ % 10000 == 0) console.log(`Process [${idx}] ${c}/${tokens.length / 10000}`)
+            try {
+                await reader.loadLog(token, idx, ([block, txIdx, logIdx, pair, from, to, in0, in1, out0, out1]) => {
+                    if (!tx[block]) tx[block] = {};
+                    if (!tx[block][txIdx]) tx[block][txIdx] = [];
+                    tx[block][txIdx].push([logIdx, pair, from, to, in0, in1, out0, out1]);
+                });
+            } catch (err) { }
         }
         console.log(`Scan logs [${idx}] (${Date.now() - startMs}ms)`)
         for (let block in tx) {
@@ -44,9 +48,7 @@ async function run() {
                 writer.getWriter(tokenOut, idx).write(`${block},${txIdx},BUY,${from},${tokenIn},${amountOut},${amountIn}\n`);
             }
         }
-
         console.log(`Combine logs [${idx}] (${Date.now() - startMs}ms)`)
-        tx = {};
     }
 }
 
