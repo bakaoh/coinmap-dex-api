@@ -14,14 +14,16 @@ async function run() {
     const tokens = fs.readdirSync(OLD_DATA_FOLDER);
     console.log(`Total LP token: ${tokens.length}`);
 
-    for (let idx = 3; idx < 166; idx++) {
+    for (let idx = 160; idx < 166; idx++) {
         const startMs = Date.now();
         const tx = {};
         let c = 0;
+        let l = 0;
         for (let pair of tokens) {
             if (++c % 10000 == 0) console.log(`Process [${idx}] ${c}/${tokens.length}`)
             try {
                 await reader.loadLog(pair, idx, ([block, txIdx, logIdx, from, to, in0, in1, out0, out1]) => {
+                    l++;
                     if (!tx[block]) tx[block] = {};
                     if (!tx[block][txIdx]) tx[block][txIdx] = [];
                     tx[block][txIdx].push([logIdx, pair, from, to, in0, in1, out0, out1]);
@@ -32,7 +34,7 @@ async function run() {
                 }
             }
         }
-        console.log(`Scan logs [${idx}] (${Date.now() - startMs}ms)`)
+        console.log(`Scan ${l} lines logs [${idx}] (${Date.now() - startMs}ms)`)
         for (let block in tx) {
             for (let txIdx in tx[block]) {
                 const swap = tx[block][txIdx];
