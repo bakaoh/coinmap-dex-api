@@ -16,6 +16,16 @@ const swapModel = new SwapModel();
 const pairModel = new PairModel();
 app.use(express.json());
 
+app.get('/route/:tokenA/:tokenB', async (req, res) => {
+    const tokenA = getAddress(req.params.tokenA);
+    const tokenB = getAddress(req.params.tokenB);
+    const rs = syncModel.getPath(
+        tokenA, tokenB,
+        pairModel.getPools(tokenA), pairModel.getPools(tokenB),
+        req.query.in);
+    res.json(rs);
+})
+
 app.get('/api/v1/pool/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const { tokenPrice, pools } = (await syncModel.getPools(token, pairModel.getPools(token)));

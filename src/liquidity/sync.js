@@ -7,6 +7,19 @@ const SYNC_TOPIC = '0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9ff
 const BLOCK_FILE = 'logs/sync.block';
 const DATA_FOLDER = 'db/lpsync';
 
+const getAmountOut = (amountIn, reserveIn, reserveOut) => {
+    const amountInWithFee = amountIn.muln(9975);
+    const numerator = amountInWithFee.mul(reserveOut);
+    const denominator = reserveIn.muln(10000).add(amountInWithFee);
+    return numerator.div(denominator);
+}
+
+const getAmountIn = (amountOut, reserveIn, reserveOut) => {
+    const numerator = reserveIn.mul(amountOut).muln(10000);
+    const denominator = reserveOut.sub(amountOut).muln(9975);
+    return numerator.div(denominator).add(1);
+}
+
 const getReserveFromLogs = async (pair) => {
     try {
         const lastFile = getLastFile(`${DATA_FOLDER}/${pair}`);
@@ -62,11 +75,12 @@ class SyncModel {
         return { tokenPrice, pools };
     }
 
-    async getReserves(pair) {
+    async getReserves(pair, isToken0 = true) {
         if (!this.reserves[pair]) {
             this.reserves[pair] = getReserveFromLogs(pair);
         }
-        return this.reserves[pair];
+        const [reserve0, reserve1] = this.reserves[pair];
+        return isToken0 ? [reserve0, reserve1] : [reserve1, reserve0];
     }
 
     async getReservesHistory(pair, checkpoints, isToken0 = true) {
@@ -94,21 +108,57 @@ class SyncModel {
         return rs;
     }
 
+    async getPath(tokenA, tokenB, pairsA, pairsB, amountIn = "1000000000000000000") {
+        amountIn = toBN(amountIn);
+        const lpA = {};
+        for (let pair in pairsA) {
+            if (pairsA[pair].token0 == tokenA) {
+                lpA[pairsA[pair].token1] = { pair, isToken0: true };
+            } else {
+                lpA[pairsA[pair].token0] = { pair, isToken0: false };
+            }
+        }
+        const lpB = {};
+        for (let pair in pairsB) {
+            if (pairsB[pair].token0 == tokenB) {
+                lpB[pairsB[pair].token1] = { pair, isToken0: true };
+            } else {
+                lpB[pairsB[pair].token0] = { pair, isToken0: false };
+            }
+        }
+
+        let feePaths = [];
+        if (lpA[ContractAddress.BUSD]) {
+            feePaths = [tokenA, ContractAddress.BUSD];
+        } else if (lpA[ContractAddress.WBNB]) {
+            feePaths = [tokenA, ContractAddress.WBNB];
+        } else if (lpA[ContractAddress.USDT]) {
+            feePaths = [tokenA, ContractAddress.USDT];
+        }
+
+        if (lpA[tokenB]) {
+            const [reserveA, reserveB] = await this.getReserves(lpA[tokenB].pair, lpA[tokenB].isToken0);
+            if (reserveA != '0' && reserveB != '0') {
+                const amountOut = getAmountOut(amountIn, toBN(reserveB), toBN(reserveA)).toString(10);
+                return { paths: [tokenA, tokenB], amountOut, feePaths };
+            }
+        }
+        for (let tokenC in lpA) {
+            if (!lpB[tokenC]) continue;
+            const [reserveAC, reserveCA] = await this.getReserves(lpA[tokenC].pair, lpA[tokenC].isToken0);
+            const [reserveBC, reserveCB] = await this.getReserves(lpB[tokenC].pair, lpB[tokenC].isToken0);
+            if (reserveBC == '0' || reserveCB == '0' || reserveAC == '0' || reserveCA == '0') continue;
+            const amountOut0 = getAmountOut(amountIn, toBN(reserveAC), toBN(reserveCA));
+            const amountOut = getAmountOut(amountOut0, toBN(reserveCB), toBN(reserveBC)).toString(10);
+            return { paths: [tokenA, tokenC, tokenB], amountOut, feePaths };
+        }
+        return { paths: [], amountOut: '0', feePaths };
+    }
+
     async writeSyncLog(block, txIdx, logIdx, pair, reserve0, reserve1) {
         const idx = Math.floor(block / 100000);
         this.partitioner.getWriter(pair, idx).write(`${block},${txIdx},${logIdx},${reserve0},${reserve1}\n`);
         this.reserves[pair] = [reserve0, reserve1];
-    }
-
-    updatePrice(token, othertoken, reserve0, reserve1) {
-        // if (reserve0 == "0" || reserve1 == "0") return;
-        // if (isUSD(othertoken)) {
-        //     const priceInUsd = toBN(reserve1).muln(100000).div(toBN(reserve0))
-        //     this.price[token] = parseInt(priceInUsd.toString(10)) / 100000;
-        // } else if (othertoken == ContractAddress.WBNB) {
-        //     const priceInBnB = toBN(reserve1).muln(100000).div(toBN(reserve0))
-        //     this.price[token] = this.price[ContractAddress.WBNB] * parseInt(priceInBnB.toString(10)) / 100000
-        // }
     }
 }
 
