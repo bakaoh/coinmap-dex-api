@@ -77,7 +77,7 @@ class SyncModel {
 
     async getReserves(pair, isToken0 = true) {
         if (!this.reserves[pair]) {
-            this.reserves[pair] = getReserveFromLogs(pair);
+            this.reserves[pair] = await getReserveFromLogs(pair);
         }
         const [reserve0, reserve1] = this.reserves[pair];
         return isToken0 ? [reserve0, reserve1] : [reserve1, reserve0];
