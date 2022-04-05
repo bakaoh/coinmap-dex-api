@@ -8,7 +8,7 @@ const COMMON_BASE = 'http://128.199.189.253:9610';
 class Manager {
     constructor(seed, nAccount = 1) {
         const seedBuffer = Buffer.from(seed, "hex");
-        this.master = new hdkey.fromMasterSeed(seedBuffer);
+        this.master = hdkey.fromMasterSeed(seedBuffer);
         this.parent = this.master.derivePath("m/44'/60'/0'/0");
         this.accounts = [];
         this.nAccount = nAccount;
