@@ -13,6 +13,7 @@ class PairModel {
     constructor() {
         this.writer = fs.createWriteStream(PAIR_DETAIL_FILE, opts);
         this.pools = {};
+        this.pairs = {};
     }
 
     async runCrawler() {
@@ -37,8 +38,13 @@ class PairModel {
         return this.pools[token];
     }
 
+    getTokens(pair) {
+        return this.pairs[pair];
+    }
+
     addPool([block, txIdx, logIdx, factory, token0, token1, pair, idx]) {
         if (factory != ContractAddress.PANCAKE_FACTORY) return; // only support Pancake for now
+        this.pairs[pair] = { token0, token1 };
         if (!this.pools[token0]) this.pools[token0] = {};
         this.pools[token0][pair] = { token0, token1 };
         if (!this.pools[token1]) this.pools[token1] = {};
