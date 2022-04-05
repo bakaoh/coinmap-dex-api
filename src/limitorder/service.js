@@ -1,8 +1,13 @@
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
 const express = require("express");
 const OrderModel = require("./order");
+const Manager = require("./manager");
 const cors = require('cors')
 
 const orderModel = new OrderModel();
+// const manager = new Manager(process.env.MASTER_SEED, 1);
 
 const app = express();
 app.use(express.json());
@@ -23,6 +28,7 @@ async function start(port) {
     const startMs = Date.now();
 
     await orderModel.warmup();
+    await orderModel.runCrawler();
     orderModel.run();
 
     app.listen(port);

@@ -10,7 +10,7 @@ const common = Common.default.forCustomChain('mainnet', {
     chainId: 56,
 }, 'istanbul');
 
-const COINMAPDEX_ADDRESS = "0x97C39Fa2c26eDCD922E901e4550C04d939FbB84c";
+const COINMAPDEX_ADDRESS = "0xa7e44aE03307de5192944520251e95e89A56A953";
 const web3 = new Web3("https://bsc-dataseed.binance.org");
 const CoinmapDexContract = new web3.eth.Contract(CoinmapDexAbi, COINMAPDEX_ADDRESS);
 
@@ -20,12 +20,13 @@ class Executor {
         this.key = key;
     }
 
-    async executeOrder(signer, order, signature, paths) {
+    async executeOrder(signer, order, signature, paths, feePaths) {
         const data = CoinmapDexContract.methods.executeOrder(
             web3.utils.toChecksumAddress(signer),
             order,
             signature,
-            paths.map(p => web3.utils.toChecksumAddress(p))
+            paths.map(p => web3.utils.toChecksumAddress(p)),
+            feePaths.map(p => web3.utils.toChecksumAddress(p))
         ).encodeABI();
         return this.sendTx(COINMAPDEX_ADDRESS, data);
     }
