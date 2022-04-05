@@ -18,10 +18,10 @@ async function run() {
         const startMs = Date.now();
         const tx = {};
         let c = 0;
-        for (let token of tokens) {
+        for (let pair of tokens) {
             if (++c % 10000 == 0) console.log(`Process [${idx}] ${c}/${tokens.length}`)
             try {
-                await reader.loadLog(token, idx, ([block, txIdx, logIdx, pair, from, to, in0, in1, out0, out1]) => {
+                await reader.loadLog(pair, idx, ([block, txIdx, logIdx, from, to, in0, in1, out0, out1]) => {
                     if (!tx[block]) tx[block] = {};
                     if (!tx[block][txIdx]) tx[block][txIdx] = [];
                     tx[block][txIdx].push([logIdx, pair, from, to, in0, in1, out0, out1]);
