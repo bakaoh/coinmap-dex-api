@@ -42,6 +42,7 @@ class Manager {
                 return;
             }
         } catch (err) {
+            console.log(err)
         }
         this.processing[order.salt] = false;
     }
