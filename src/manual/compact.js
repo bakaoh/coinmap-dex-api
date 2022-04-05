@@ -1,6 +1,7 @@
 const fs = require('fs');
 const PairModel = require("../liquidity/pair");
 const { Partitioner } = require('../utils/io');
+const { ContractAddress, isUSD } = require('../utils/bsc');
 const OLD_DATA_FOLDER = 'db/lpswap';
 const NEW_DATA_FOLDER = 'db/cswap';
 
@@ -53,9 +54,25 @@ async function run() {
                 const tokenOut = swapOut[6] != "0" ? pairOut.token0 : pairOut.token1;
                 const amountOut = swapIn[6] != "0" ? swapOut[6] : swapOut[7];
 
+                let usdAmount = '0';
+                let bnbAmount = '0';
+                for (let s of swap) {
+                    const pair = pairModel.getTokens(s[1]);
+                    if (!pair) continue;
+                    if (isUSD(pair.token0)) {
+                        usdAmount = s[4] != "0" ? s[4] : s[6];
+                    } else if (isUSD(pair.token1)) {
+                        usdAmount = s[5] != "0" ? s[5] : s[7];
+                    } else if (pair.token0 == ContractAddress.WBNB) {
+                        bnbAmount = s[4] != "0" ? s[4] : s[6];
+                    } else if (pair.token1 == ContractAddress.WBNB) {
+                        bnbAmount = s[5] != "0" ? s[5] : s[7];
+                    }
+                }
+
                 t++;
-                writer.getWriter(tokenIn, idx).write(`${block},${txIdx},SELL,${from},${tokenOut},${amountIn},${amountOut}\n`);
-                writer.getWriter(tokenOut, idx).write(`${block},${txIdx},BUY,${from},${tokenIn},${amountOut},${amountIn}\n`);
+                writer.getWriter(tokenIn, idx).write(`${block},${txIdx},SELL,${from},${tokenOut},${amountIn},${amountOut},${usdAmount},${bnbAmount}\n`);
+                writer.getWriter(tokenOut, idx).write(`${block},${txIdx},BUY,${from},${tokenIn},${amountOut},${amountIn},${usdAmount},${bnbAmount}\n`);
             }
         }
         console.log(`Combine ${t} tx logs [${idx}] (${Date.now() - startMs}ms)`)
