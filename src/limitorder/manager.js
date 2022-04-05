@@ -3,7 +3,7 @@ const { hdkey } = require("ethereumjs-wallet");
 const { toBN } = require("../utils/bsc");
 const Executor = require("./executor");
 
-const COMMON_BASE = 'http://128.199.189.253:9610';
+const COMMON_BASE = 'http://localhost:9613';
 
 class Manager {
     constructor(seed, nAccount = 1) {
@@ -32,12 +32,11 @@ class Manager {
         this.processing[order.salt] = true;
         try {
             const data = (await axios.get(`${COMMON_BASE}/route/${order.payToken}/${order.buyToken}?in=${order.payAmount}`)).data;
-            const price = parseInt(toBN(order.buyAmount).muln(100000).div(toBN(order.payAmount))) / 100000;
-            if (price < data.aperb) {
+            if (toBn(data.amountOut).gt(toBn(order.buyAmount))) {
                 const sig = order.sig;
                 delete order.status;
                 delete order.sig;
-                const rs = await this.accounts[0].executeOrder(order.maker, order, sig, data.path, []);
+                const rs = await this.accounts[0].executeOrder(order.maker, order, sig, data.paths, data.feePaths);
                 console.log(order, rs);
                 return;
             }
