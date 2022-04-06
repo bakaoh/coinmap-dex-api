@@ -61,7 +61,7 @@ class Crawler {
         }
         if (this.onLogs) try {
             await this.onLogs(pastLogs);
-        } catch (err) { console.log(`Process logs error`, log.length, err) }
+        } catch (err) { console.log(`Process logs error`, pastLogs.length, err) }
 
         if (lastBlock != 0) {
             this.blockWriter.write(`${lastBlock}\n`);
