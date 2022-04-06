@@ -6,11 +6,12 @@ const opts = { flags: "a" };
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
 class Crawler {
-    constructor(name, topic, blockFile, onLog, batchSize = 50) {
+    constructor(name, topic, blockFile, onLog, batchSize = 50, onLogs = undefined) {
         this.name = name;
         this.topic = topic;
         this.blockFile = blockFile;
         this.onLog = onLog;
+        this.onLogs = onLogs;
         this.batchSize = batchSize;
     }
 
@@ -54,17 +55,20 @@ class Crawler {
         let lastBlock = 0;
         for (let log of pastLogs) {
             lastBlock = log.blockNumber;
-            try {
+            if (this.onLog) try {
                 await this.onLog(log);
             } catch (err) { console.log(`Process log error`, log, err) }
         }
+        if (this.onLogs) try {
+            await this.onLogs(pastLogs);
+        } catch (err) { console.log(`Process logs error`, log.length, err) }
 
         if (lastBlock != 0) {
             this.blockWriter.write(`${lastBlock}\n`);
         } else if (toBlock != 'latest') {
             lastBlock = toBlock;
         } else {
-            lastBlock = fromBlock - 1;
+            lastBlock = await web3.eth.getBlockNumber() - 1;
         }
 
         const ms = Date.now() - startMs;

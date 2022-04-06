@@ -11,9 +11,9 @@ const { getNumber } = require('../utils/format');
 const COMMON_BASE = 'http://128.199.189.253:9610';
 
 const app = express();
-const syncModel = new SyncModel();
-const swapModel = new SwapModel();
 const pairModel = new PairModel();
+const syncModel = new SyncModel();
+const swapModel = new SwapModel(pairModel);
 app.use(express.json());
 
 app.get('/route/:tokenA/:tokenB', async (req, res) => {
@@ -61,10 +61,10 @@ app.get('/api/v1/pool/:token', async (req, res) => {
 async function start(port) {
     const startMs = Date.now();
 
-    await syncModel.runCrawler();
-    await swapModel.runCrawler();
     await pairModel.warmup();
     await pairModel.runCrawler();
+    await syncModel.runCrawler();
+    await swapModel.runCrawler();
 
     app.listen(port);
     const ms = Date.now() - startMs;
