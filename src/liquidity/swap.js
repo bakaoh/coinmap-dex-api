@@ -1,5 +1,5 @@
 const Crawler = require("../utils/crawler");
-const { web3, ContractAddress } = require('../utils/bsc');
+const { web3, ContractAddress, isUSD } = require('../utils/bsc');
 const { Partitioner } = require('../utils/io');
 
 const SWAP_TOPIC = '0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822';
