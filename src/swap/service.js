@@ -16,6 +16,35 @@ app.use(express.json());
 
 const COMMON_BASE = 'http://localhost:9610';
 
+app.get('/api/v1/tradingview/config', async (req, res) => {
+    const rs = {
+        "supports_search": false,
+        "supports_group_request": false,
+        "supports_marks": false,
+        "supports_timescale_marks": false,
+        "supports_time": true,
+        "exchanges": [],
+        "symbols_types": [
+            {
+                "name": "All types",
+                "value": ""
+            },
+            {
+                "name": "Token",
+                "value": "token"
+            },
+            {
+                "name": "Index",
+                "value": "index"
+            }
+        ],
+        "supported_resolutions": [
+            "D",
+        ]
+    }
+    res.json(rs);
+})
+
 app.get('/api/v1/tradingview/symbols', async (req, res) => {
     const tokens = req.query.symbol.split("~");
     const base = getAddress(tokens[0]);
