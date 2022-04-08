@@ -6,9 +6,7 @@ const DATA_FOLDER = 'db/cswap';
 const reader = new Partitioner(DATA_FOLDER);
 const writer = new Partitioner(`db/shark`);
 
-const token = '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82';
-
-async function run() {
+async function run(token) {
     const accTotal = {};
     const accToken = {};
     const accUsd = {};
@@ -16,6 +14,7 @@ async function run() {
         const startMs = Date.now();
         try {
             await reader.loadLog(token, idx, ([block, txIdx, sb, from, otherToken, tokenAmount, otherTokenAmount, usdAmount, bnbAmount]) => {
+                if (usdAmount == '0') return;
                 if (!accTotal[from]) accTotal[from] = toBN(0);
                 if (!accToken[from]) accToken[from] = toBN(0);
                 if (!accUsd[from]) accUsd[from] = toBN(0);
@@ -38,9 +37,20 @@ async function run() {
     }
     const w = writer.getWriter(token, 166);
     for (let acc in accTotal) {
-        w.write(`${acc},${accTotal[acc].toString(10)},${accToken[acc].toString(10)},${accUsd[acc].toString(10)}`)
+        w.write(`${acc},${accTotal[acc].toString(10)},${accToken[acc].toString(10)},${accUsd[acc].toString(10)}\n`)
+    }
+}
+
+async function runAll() {
+    const tokens = fs.readdirSync(DATA_FOLDER);
+    console.log(`Total token: ${tokens.length}`);
+    let c = 0;
+    for (let token of tokens) {
+        const startMs = Date.now();
+        await run(token);
+        console.log(`Shark move ${c++} [${token}] (${Date.now() - startMs}ms)`)
     }
     writer.closeAll();
 }
 
-run();
+runAll();
