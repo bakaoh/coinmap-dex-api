@@ -57,15 +57,15 @@ app.get('/api/v1/pool/:token', async (req, res) => {
         });
     });
 
-    res.json({
-        data,
-        pools: pools.slice(0, 3).map(p => ({
-            name: symbol + "/" + (await getSymbol(p.token0 == token ? p.token1 : p.token0)),
-            liquidity: getNumber(p.token0 == token ? p.reserve0 : p.reserve1) * tokenPrice,
-            reserve0: getNumber(p.reserve0),
-            reserve1: getNumber(p.reserve1)
-        }))
-    });
+    const details = pools.slice(0, 3);
+    for (let p of details) {
+        p.name = symbol + "/" + (await getSymbol(p.token0 == token ? p.token1 : p.token0));
+        p.liquidity = getNumber(p.token0 == token ? p.reserve0 : p.reserve1) * tokenPrice;
+        p.reserve0 = getNumber(p.reserve0);
+        p.reserve1 = getNumber(p.reserve1);
+    }
+
+    res.json({ data, pools: details });
 })
 
 async function start(port) {
