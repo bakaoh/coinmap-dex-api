@@ -19,7 +19,7 @@ app.use(express.json());
 const symbolCache = {};
 const getSymbol = async (token) => {
     if (!symbolCache[token]) {
-        const { symbol } = (await axios.get(`${COMMON_BASE}/info/token?a=${token}`)).data;
+        const { symbol } = (await axios.get(`${COMMON_BASE}/info/token?a=${token}`)).data[0];
         symbolCache[token] = symbol;
     }
     return symbolCache[token];
