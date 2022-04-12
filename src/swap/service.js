@@ -75,12 +75,11 @@ app.get('/api/v1/tradingview/config', async (req, res) => {
 })
 
 app.get('/api/v1/tradingview/symbols', async (req, res) => {
-    const tokens = req.query.symbol.split("~");
-    const base = getAddress(tokens[0]);
+    const symbol = req.query.symbol;
     const rs = {
-        "name": base,
-        "exchange-traded": base,
-        "exchange-listed": base,
+        "name": symbol,
+        "exchange-traded": symbol,
+        "exchange-listed": symbol,
         "timezone": "America/New_York",
         "minmov": 1,
         "minmov2": 0,
@@ -88,7 +87,7 @@ app.get('/api/v1/tradingview/symbols', async (req, res) => {
         "session": "0930-1630",
         "has_intraday": false,
         "has_no_volume": false,
-        "description": base,
+        "description": symbol,
         "type": "token",
         "supported_resolutions": [
             "D",
@@ -96,7 +95,7 @@ app.get('/api/v1/tradingview/symbols', async (req, res) => {
             "3D"
         ],
         "pricescale": 100,
-        "ticker": base
+        "ticker": symbol
     }
     res.json(rs);
 })
