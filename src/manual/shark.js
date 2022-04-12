@@ -11,7 +11,6 @@ async function run(token) {
     const accToken = {};
     const accUsd = {};
     for (let idx = 0; idx <= 166; idx++) {
-        const startMs = Date.now();
         try {
             await reader.loadLog(token, idx, ([block, txIdx, sb, from, otherToken, tokenAmount, otherTokenAmount, usdAmount, bnbAmount]) => {
                 if (usdAmount == '0') return;
@@ -32,8 +31,6 @@ async function run(token) {
                 console.log(err)
             }
         }
-
-        console.log(`Shark move [${idx}] (${Date.now() - startMs}ms)`)
     }
     const w = writer.getWriter(token, 166);
     for (let acc in accTotal) {

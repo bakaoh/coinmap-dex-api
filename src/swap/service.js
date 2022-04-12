@@ -18,11 +18,11 @@ const COMMON_BASE = 'http://localhost:9610';
 
 app.get('/api/v1/tradingview/config', async (req, res) => {
     const rs = {
-        "supports_search": false,
+        "supports_search": true,
         "supports_group_request": false,
         "supports_marks": false,
         "supports_timescale_marks": false,
-        "supports_time": true,
+        "supports_time": false,
         "exchanges": [],
         "symbols_types": [
             {
@@ -39,7 +39,7 @@ app.get('/api/v1/tradingview/config', async (req, res) => {
             }
         ],
         "supported_resolutions": [
-            "D",
+            "D"
         ]
     }
     res.json(rs);
@@ -95,7 +95,12 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
         }
         if (t.length >= parseInt(countback)) break;
     }
-    res.json({ s: "ok", t, c, o, h, l, v });
+    if (t.length > 0) {
+        res.json({ s: "ok", t, c, o, h, l, v });
+    } else {
+        const nextTime = bars500.t[0] + 24 * 60 * 60;
+        res.json({ s: "no_data", nextTime });
+    }
 })
 
 app.get('/api/v1/volume/:token', async (req, res) => {
