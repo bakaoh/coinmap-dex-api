@@ -16,6 +16,15 @@ const syncModel = new SyncModel();
 const swapModel = new SwapModel(pairModel);
 app.use(express.json());
 
+const symbolCache = {};
+const getSymbol = async (token) => {
+    if (!symbolCache[token]) {
+        const { symbol } = (await axios.get(`${COMMON_BASE}/info/token?a=${token}`)).data;
+        symbolCache[token] = symbol;
+    }
+    return symbolCache[token];
+};
+
 app.get('/route/:tokenA/:tokenB', async (req, res) => {
     const tokenA = getAddress(req.params.tokenA);
     const tokenB = getAddress(req.params.tokenB);
@@ -29,6 +38,7 @@ app.get('/route/:tokenA/:tokenB', async (req, res) => {
 app.get('/api/v1/pool/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const { tokenPrice, pools } = (await syncModel.getPools(token, pairModel.getPools(token)));
+    const symbol = await getSymbol(token);
 
     const data = await getCache(`poolhistory-${token}`, async () => {
         const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=10`)).data;
@@ -50,7 +60,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     res.json({
         data,
         pools: pools.slice(0, 3).map(p => ({
-            name: p.pair,
+            name: symbol + "/" + (await getSymbol(p.token0 == token ? p.token1 : p.token0)),
             liquidity: getNumber(p.token0 == token ? p.reserve0 : p.reserve1) * tokenPrice,
             reserve0: getNumber(p.reserve0),
             reserve1: getNumber(p.reserve1)
