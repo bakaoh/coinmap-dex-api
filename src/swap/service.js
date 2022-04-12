@@ -4,6 +4,7 @@ const Web3 = require("web3");
 
 const TokenModel = require("../common/token");
 const SwapModel = require("./swap");
+const SharkModel = require("./shark");
 const { getCache } = require("../cache");
 const { get1D } = require("./ticker");
 const { ContractAddress, getAddress, isUSD } = require('../utils/bsc');
@@ -12,9 +13,37 @@ const { getNumber } = require('../utils/format');
 const app = express();
 const tokenModel = new TokenModel(true);
 const swapModel = new SwapModel(tokenModel);
+const sharkModel = new SharkModel();
 app.use(express.json());
 
 const COMMON_BASE = 'http://localhost:9610';
+
+app.get('/api/v1/wallets/profitable-by-percent/:token', async (req, res) => {
+    const token = getAddress(req.params.token);
+    const top = await getCache(`topWallets-${token}`, async () => {
+        return sharkModel.topWallets(token);
+    });
+    const rs = top.topProfitByPercent.map(i => ({ address: i }));
+    res.json(rs);
+});
+
+app.get('/api/v1/wallets/profitable-by-usd/:token', async (req, res) => {
+    const token = getAddress(req.params.token);
+    const top = await getCache(`topWallets-${token}`, async () => {
+        return sharkModel.topWallets(token);
+    });
+    const rs = top.topProfitByUsd.map(i => ({ address: i }));
+    res.json(rs);
+});
+
+app.get('/api/v1/wallets/total-transaction/:token', async (req, res) => {
+    const token = getAddress(req.params.token);
+    const top = await getCache(`topWallets-${token}`, async () => {
+        return sharkModel.topWallets(token);
+    });
+    const rs = top.topTotal.map(i => ({ address: i }));
+    res.json(rs);
+});
 
 app.get('/api/v1/tradingview/config', async (req, res) => {
     const rs = {
