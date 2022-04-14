@@ -2,7 +2,7 @@ const axios = require('axios');
 const { ContractAddress } = require('../utils/bsc');
 
 async function get1D(base, quote, countback = 500) {
-    const exchange = ContractAddress.CAKE == base ? `exchangeName: {is: "Pancake v2"}` : '';
+    const exchange = `exchangeName: {is: "Pancake v2"}`;
     let query = `
 {
     ethereum(network: bsc) {
