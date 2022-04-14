@@ -103,10 +103,16 @@ app.get('/api/v1/tradingview/symbols', async (req, res) => {
 app.get('/api/v1/tradingview/history', async (req, res) => {
     const tokens = req.query.symbol.split("~");
     const base = getAddress(tokens[0]);
-    const quote = tokens[1] == "0" ? ContractAddress.BUSD : getAddress(tokens[1]);
-    const bars500 = await getCache(`ticker-1d-${base}-${quote}`, async () => {
+    let quote = tokens[1] == "0" ? ContractAddress.BUSD : getAddress(tokens[1]);
+    let bars500 = await getCache(`ticker-1d-${base}-${quote}`, async () => {
         return await get1D(base, quote);
     });
+    if (bars500.t.length == 0 && tokens[1] == "0") {
+        quote = ContractAddress.WBNB;
+        bars500 = await getCache(`ticker-1d-${base}-${quote}`, async () => {
+            return await get1D(base, quote);
+        });
+    }
     let from = parseInt(req.query.from);
     const to = parseInt(req.query.to) || Math.round(Date.now() / 1000);
     const countback = req.query.countback;
