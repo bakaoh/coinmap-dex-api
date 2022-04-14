@@ -1,12 +1,14 @@
 const axios = require('axios');
+const { ContractAddress } = require('../utils/bsc');
 
 async function get1D(base, quote, countback = 500) {
+    const exchange = ContractAddress.CAKE == base ? `exchangeName: {is: "Pancake"}` : '';
     let query = `
 {
     ethereum(network: bsc) {
         dexTrades(
             options: {limit: ${countback}, desc: "timeInterval.day"}
-            exchangeName: {is: "Pancake"}
+            ${exchange}
             baseCurrency: {is: "${base}"}
             quoteCurrency: {is: "${quote}"}
         ) {
