@@ -44,6 +44,16 @@ module.exports = {
       max_memory_restart: "2000M",
       watch: false,
       time: true
+    },
+    {
+      name: "balance-indexer",
+      script: "src/balance/run.js",
+      node_args: "--max-old-space-size=10240",
+      instances: 1,
+      exec_mode: "fork",
+      cron_restart: "0 1 * * *",
+      watch: false,
+      autorestart: false
     }
   ]
 };

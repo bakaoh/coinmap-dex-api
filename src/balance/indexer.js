@@ -48,7 +48,6 @@ class Indexer {
         const fromIdx = Math.floor(this.lastCp / 100000);
         const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / 100000);
         for (let i = fromIdx; i <= toIdx; i++) {
-            const startMs = Date.now();
             try {
                 await this.loadLogFile(i);
             } catch (err) {
@@ -62,7 +61,6 @@ class Indexer {
                     console.log(`Indexer load log file [${i}] err: ${err}`);
                 }
             }
-            // console.log(`Indexer load log file [${i}] done (${Date.now() - startMs}ms)`);
         }
     }
 
@@ -157,14 +155,8 @@ class Indexer {
     desc(address, amount) {
         if (address == ADDRESS_ZERO || amount.eqn(0)) return;
         let cur = this.balance[address];
-        if (!cur) {
-            console.log('Invalid balance', address);
-            return;
-        }
+        if (!cur) return;
         cur = cur.sub(amount);
-        if (cur.ltn(0)) {
-            console.log('Invalid balance', address, cur.toString(10));
-        }
         this.balance[address] = cur;
         this.dailyaction[address] = (this.dailyaction[address] || ZERO).add(amount);
     }
