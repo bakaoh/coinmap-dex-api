@@ -112,7 +112,7 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
     const countback = req.query.countback;
 
     const t = [], c = [], o = [], h = [], l = [], v = [];
-    for (let i = bars500.t.length - 1; i > 0; i--) {
+    for (let i = 0; i < bars500.t.length; i++) {
         if ((countback || bars500.t[i] >= from) && bars500.t[i] < to) {
             t.push(bars500.t[i]);
             c.push(bars500.c[i]);
@@ -123,6 +123,7 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
         }
         if (t.length >= parseInt(countback)) break;
     }
+    t.reverse(); c.reverse(); o.reverse(); h.reverse(); l.reverse(); v.reverse();
     if (t.length > 0) {
         res.json({ s: "ok", t, c, o, h, l, v });
     } else {

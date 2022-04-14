@@ -1,32 +1,9 @@
 const { Partitioner } = require('../utils/io');
+const Leaderboard = require('../utils/leaderboard');
 const { toBN } = require('../utils/bsc');
 
 const DATA_FOLDER = 'db/shark';
 const TOP_SIZE = 10;
-
-const sortValue = (a, b) => (a[1].gt(b[1])) ? -1 : 1;
-
-class TopList {
-    constructor(size) {
-        this.size = size;
-        this.list = [];
-    }
-
-    push(key, value) {
-        if (this.list.length < this.size) {
-            this.list.push([key, value]);
-            this.list.sort(sortValue);
-        } else if (value.gt(this.list[this.size - 1][1])) {
-            this.list.pop();
-            this.list.push([key, value]);
-            this.list.sort(sortValue);
-        }
-    }
-
-    getKeys() {
-        return this.list.map(i => i[0]);
-    }
-}
 
 class SharkModel {
     constructor() {
@@ -34,9 +11,9 @@ class SharkModel {
     }
 
     async topWallets(token) {
-        const topTotal = new TopList(TOP_SIZE);
-        const topProfitByPercent = new TopList(TOP_SIZE);
-        const topProfitByUsd = new TopList(TOP_SIZE);
+        const topTotal = new Leaderboard(TOP_SIZE);
+        const topProfitByPercent = new Leaderboard(TOP_SIZE);
+        const topProfitByUsd = new Leaderboard(TOP_SIZE);
         await this.partitioner.loadLog(token, 166, ([acc, accTotal, accToken, accUsd]) => {
             if (accTotal == '0') return;
             topTotal.push(acc, toBN(accTotal));
