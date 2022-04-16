@@ -2,7 +2,7 @@ const axios = require('axios');
 const { ContractAddress } = require('../utils/bsc');
 
 async function get1D(base, quote, resolution, countback = 500) {
-    const interval = resolution == "1D" ? "day" : "minutes";
+    const interval = resolution == "1D" ? "day" : "minute";
     const count = resolution == "1D" ? 1 : 60;
     const exchange = `exchangeName: {is: "Pancake v2"}`;
     let query = `
@@ -29,6 +29,7 @@ async function get1D(base, quote, resolution, countback = 500) {
     }
 }
 `;
+    console.log(query);
     let variables = {};
     const res = await axios({
         url: "https://graphql.bitquery.io",
