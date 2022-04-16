@@ -68,6 +68,7 @@ app.get('/api/v1/tradingview/config', async (req, res) => {
             }
         ],
         "supported_resolutions": [
+            "h",
             "D"
         ]
     }
@@ -101,16 +102,17 @@ app.get('/api/v1/tradingview/symbols', async (req, res) => {
 })
 
 app.get('/api/v1/tradingview/history', async (req, res) => {
+    const resolution = req.query.resolution;
     const tokens = req.query.symbol.split("~");
     const base = getAddress(tokens[0]);
     let quote = tokens[1] == "0" ? ContractAddress.BUSD : getAddress(tokens[1]);
-    let bars500 = await getCache(`ticker-1d-${base}-${quote}`, async () => {
-        return await get1D(base, quote);
+    let bars500 = await getCache(`ticker-${resolution}-${base}-${quote}`, async () => {
+        return await get1D(base, quote, resolution);
     });
     if (bars500.t.length == 0 && tokens[1] == "0") {
         quote = ContractAddress.WBNB;
-        bars500 = await getCache(`ticker-1d-${base}-${quote}`, async () => {
-            return await get1D(base, quote);
+        bars500 = await getCache(`ticker-${resolution}-${base}-${quote}`, async () => {
+            return await get1D(base, quote, resolution);
         });
     }
     let from = parseInt(req.query.from);
@@ -133,7 +135,7 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
     if (t.length > 0) {
         res.json({ s: "ok", t, c, o, h, l, v });
     } else {
-        const nextTime = bars500.t[0] + 24 * 60 * 60;
+        const nextTime = bars500.t[0] + (resolution == "1D" ? 24 * 60 * 60 : 60 * 60);
         res.json({ s: "no_data", nextTime });
     }
 })

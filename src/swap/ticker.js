@@ -1,13 +1,14 @@
 const axios = require('axios');
 const { ContractAddress } = require('../utils/bsc');
 
-async function get1D(base, quote, countback = 500) {
+async function get1D(base, quote, resolution, countback = 500) {
+    const interval = resolution == "1D" ? "day" : "hour";
     const exchange = `exchangeName: {is: "Pancake v2"}`;
     let query = `
 {
     ethereum(network: bsc) {
         dexTrades(
-            options: {limit: ${countback}, desc: "timeInterval.day"}
+            options: {limit: ${countback}, desc: "timeInterval.${interval}"}
             ${exchange}
             baseCurrency: {is: "${base}"}
             quoteCurrency: {is: "${quote}"}
@@ -21,7 +22,7 @@ async function get1D(base, quote, countback = 500) {
             close_price: maximum(of: block, get: quote_price)
             baseAmount
             timeInterval {
-                day(count: 1)
+                ${interval}(count: 1)
             }
         }
     }
