@@ -2,7 +2,8 @@ const axios = require('axios');
 const { ContractAddress } = require('../utils/bsc');
 
 async function get1D(base, quote, resolution, countback = 500) {
-    const interval = resolution == "1D" ? "day" : "hour";
+    const interval = resolution == "1D" ? "day" : "minutes";
+    const count = resolution == "1D" ? 1 : 60;
     const exchange = `exchangeName: {is: "Pancake v2"}`;
     let query = `
 {
@@ -22,7 +23,7 @@ async function get1D(base, quote, resolution, countback = 500) {
             close_price: maximum(of: block, get: quote_price)
             baseAmount
             timeInterval {
-                ${interval}(count: 1)
+                ${interval}(count: ${count})
             }
         }
     }
