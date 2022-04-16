@@ -9,7 +9,7 @@ async function get1D(base, quote, resolution, countback = 500) {
 {
     ethereum(network: bsc) {
         dexTrades(
-            options: {limit: ${countback}, desc: "timeInterval.${interval}"}
+            options: {limit: ${countback}, desc: "timeInterval.day"}
             ${exchange}
             baseCurrency: {is: "${base}"}
             quoteCurrency: {is: "${quote}"}
