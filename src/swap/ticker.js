@@ -9,7 +9,7 @@ async function get1D(base, quote, resolution, countback = 500) {
 {
     ethereum(network: bsc) {
         dexTrades(
-            options: {limit: ${countback}, desc: "timeInterval.day"}
+            options: {limit: ${countback}, desc: "timeInterval.${minute}"}
             ${exchange}
             baseCurrency: {is: "${base}"}
             quoteCurrency: {is: "${quote}"}
@@ -53,3 +53,4 @@ async function get1D(base, quote, resolution, countback = 500) {
 }
 
 module.exports = { get1D };
+
