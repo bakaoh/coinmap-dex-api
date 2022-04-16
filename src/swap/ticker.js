@@ -40,7 +40,7 @@ async function get1D(base, quote, resolution, countback = 500) {
     });
     const t = [], c = [], o = [], h = [], l = [], v = [];
     res.data.data.ethereum.dexTrades.forEach(item => {
-        t.push(Math.round(new Date(item.timeInterval.day) / 1000));
+        t.push(Math.round(new Date(item.timeInterval[interval]) / 1000));
         c.push(item.close_price);
         o.push(item.open_price);
         h.push(item.maximum_price);
