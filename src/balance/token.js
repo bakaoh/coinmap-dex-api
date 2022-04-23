@@ -24,7 +24,7 @@ class Indexer {
         const prefix1 = symbol.toLowerCase().substr(0, 2);
         this.indexing(prefix1, { address, symbol, name });
         const prefix2 = name.toLowerCase().substr(0, 2);
-        if (prefix1 != prefix2) this.indexing(prefix2, { address, symbol, name, logo: `https://assets-cdn.trustwallet.com/blockchains/smartchain/assets/${address}/logo.png` });
+        if (prefix1 != prefix2) this.indexing(prefix2, { address, symbol, name });
     }
 
     search(text) {

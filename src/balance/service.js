@@ -38,7 +38,8 @@ app.get('/api/v1/search', async (req, res) => {
     const rs = tokenModel.searchToken(req.query.q);
     for (let t of rs) {
         try {
-            t.holder = (await balanceModel.getTotalHolders(token, 1))[0].total;
+            t.logo = `https://assets-cdn.trustwallet.com/blockchains/smartchain/assets/${t.address}/logo.png`;
+            t.holder = (await balanceModel.getTotalHolders(t.address, 1))[0].total;
         } catch (err) { }
     }
     res.json(rs);
