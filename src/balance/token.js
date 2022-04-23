@@ -49,7 +49,7 @@ class TokenModel {
     }
 
     searchToken(text) {
-        if (text.length < 2) return [];
+        if (text.length < 3) return [];
         return this.indexer.search(text);
     }
 
