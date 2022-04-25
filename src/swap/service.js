@@ -136,7 +136,10 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
     if (t.length > 0) {
         res.json({ s: "ok", t, c, o, h, l, v });
     } else {
-        const nextTime = bars500.t[0] + (resolution == "1D" ? 24 * 60 * 60 : 60 * 60);
+        let nextTime = bars500.t[0] + (resolution == "1D" ? 24 * 60 * 60 : 60 * 60);
+        if (parseInt(req.query.to) < bars500.t[bars500.t.length - 1]) {
+            nextTime = bars500.t[bars500.t.length - 1];
+        }
         res.json({ s: "no_data", nextTime });
     }
 })
