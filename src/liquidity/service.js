@@ -89,6 +89,7 @@ app.get('/api/v1/transaction/:token', async (req, res) => {
     const bnbPriceBN = toBN(Math.round(await syncModel.getBNBPrice()));
     let price;
     lastTx.forEach(tx => {
+        if (tx.amount0 == "0") return;
         const amount0BN = toBN(tx.amount0);
         let txTotal;
         if (tx.amountUSD != "0") {

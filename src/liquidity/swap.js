@@ -45,7 +45,7 @@ class SwapModel {
                     const pairOut = this.pairModel.getTokens(swapOut[1]);
                     if (!pairOut) continue;
                     const tokenOut = swapOut[6] != "0" ? pairOut.token0 : pairOut.token1;
-                    const amountOut = swapIn[6] != "0" ? swapOut[6] : swapOut[7];
+                    const amountOut = swapOut[6] != "0" ? swapOut[6] : swapOut[7];
 
                     let usdAmount = '0';
                     let bnbAmount = '0';
