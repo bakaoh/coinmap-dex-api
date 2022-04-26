@@ -70,6 +70,35 @@ class SwapModel {
         });
         await this.crawler.run();
     }
+
+    async getVolumeHistory(token0, checkpoints) {
+        let cid = 0;
+        const fromIdx = Math.floor(checkpoints[0] / 100000);
+        const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / 100000);
+        const rs = [];
+        let totalTransaction = toBN(0);
+        let totalAmountSell = toBN(0);
+        let totalAmountBuyByNewWallet = toBN(0);
+        for (let idx = fromIdx; idx <= toIdx; idx++) {
+            try {
+                await this.partitioner.loadLog(token0, idx, ([block, , bs, , , amount0]) => {
+                    const amount0BN = toBN(amount0);
+                    totalTransaction = totalTransaction.add(amount0BN);
+                    if (bs == "SELL") totalAmountSell = totalAmountSell.add(amount0BN);
+                    if (block > checkpoints[cid]) {
+                        // TODO: totalAmountBuyByNewWallet
+                        totalAmountBuyByNewWallet = totalTransaction.muln(16).divn(100);
+                        rs.push([checkpoints[cid], totalTransaction.toString(10), totalAmountSell.toString(10), totalAmountBuyByNewWallet.toString(10)]);
+                        totalTransaction = toBN(0);
+                        totalAmountSell = toBN(0);
+                        totalAmountBuyByNewWallet = toBN(0);
+                        while (block > checkpoints[cid]) cid++;
+                    }
+                });
+            } catch (err) { console.log(err) }
+        }
+        return rs;
+    }
 }
 
 module.exports = SwapModel;

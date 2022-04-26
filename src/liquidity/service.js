@@ -8,7 +8,7 @@ const { getCache } = require("../cache");
 const { getAddress, ContractAddress, toBN, isUSD } = require('../utils/bsc');
 const { getNumber } = require('../utils/format');
 
-const COMMON_BASE = 'http://128.199.189.253:9610';
+const COMMON_BASE = 'http://10.148.0.33:9612';
 
 const app = express();
 const pairModel = new PairModel();
@@ -66,6 +66,20 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     }
 
     res.json({ data, pools: details });
+})
+
+app.get('/api/v1/volume/:token', async (req, res) => {
+    const token = getAddress(req.params.token);
+    const rs = await getCache(`volume-${token}`, async () => {
+        const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=8`)).data;
+        return (await swapModel.getVolumeHistory(token, block)).map((p, i) => ({
+            date: ts[i],
+            totalTransaction: getNumber(p[1]),
+            totalAmountSell: getNumber(p[2]),
+            totalAmountBuyByNewWallet: getNumber(p[3]),
+        }));
+    });
+    res.json(rs);
 })
 
 async function start(port) {
