@@ -53,7 +53,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
                 totalToken = totalToken.add(toBN(pool.history[i][0]));
             }
             const price = syncModel.calcPrice(pricePool.history[i]);
-            return { date: Math.round(date / 1000), price, totalAmount: getNumber(totalToken.toString(10)) * price };
+            return { date, price, totalAmount: getNumber(totalToken.toString(10)) * price };
         });
     });
 

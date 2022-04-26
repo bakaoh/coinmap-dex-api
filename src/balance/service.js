@@ -1,6 +1,5 @@
 const express = require("express");
 const axios = require("axios");
-const Web3 = require("web3");
 
 const BalanceModel = require("./balance");
 const BlockModel = require("./block");
@@ -17,20 +16,19 @@ const tokenModel = new TokenModel();
 
 app.use(express.json());
 
-const COMMON_BASE = 'http://128.199.189.253:9610';
-const SWAP_BASE = 'http://128.199.189.253:9611';
+const LIQUIDITY_BASE = 'http://10.148.0.34:9613';
 
 function getStartTsOfDay(n) {
     const start = new Date();
     start.setUTCHours(0, 0, 0, 0);
     let ts = [];
-    let t = start.getTime();
+    let t = Math.round(start.getTime() / 1000);
     for (let i = 0; i < n; i++) {
         ts.push(t);
-        t -= 60 * 60 * 24 * 1000;
+        t -= 60 * 60 * 24;
     }
     ts = ts.reverse();
-    const block = ts.map(ms => blockModel.estimateBlock(ms));
+    const block = ts.map(s => blockModel.estimateBlock(s));
     return { ts, block }
 }
 
@@ -48,7 +46,7 @@ app.get('/api/v1/search', async (req, res) => {
 app.get('/api/v1/holder/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const rs = await getCache(`holder-${token}`, async () => {
-        const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=30`)).data;
+        const { ts, block } = getStartTsOfDay(30);
         return (await balanceModel.getTotalHolders(token, 30)).map((p, i) => ({
             date: ts[i],
             num: parseInt(p.total),
@@ -60,14 +58,14 @@ app.get('/api/v1/holder/:token', async (req, res) => {
 app.get('/api/v1/shark/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const rs = await getCache(`shark-${token}`, async () => {
-        const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=8`)).data;
+        const { ts, block } = getStartTsOfDay(8);
         const data = await balanceModel.getSharkHistory(token, block);
-        const swapData = (await axios.get(`${SWAP_BASE}/api/v1/shark/${token}`)).data;
-        return swapData.map((p, i) => ({
+        const bigtx = (await axios.get(`${LIQUIDITY_BASE}/api/v1/bigtx/${token}`)).data;
+        return bigtx.map((p, i) => ({
             date: ts[i],
             totalBalance: getNumber(data[i].totalToken.toString(10)),
             totalTransaction: getNumber(data[i].totalAction.toString(10)),
-            totalTransactionHighValue: p.totalTransactionHighValue,
+            totalTransactionHighValue: p.total,
         }));
     });
     res.json(rs);

@@ -39,8 +39,7 @@ class BlockModel {
         fileLog.end();
     }
 
-    estimateBlock(ms) {
-        const ts = Math.round(ms / 1000);
+    estimateBlock(ts) {
         for (let i = 0; i < this.block.length; i++) {
             if (this.block[i][1] >= ts) {
                 return this.block[i][0] - Math.round((this.block[i][1] - ts) / 3);
