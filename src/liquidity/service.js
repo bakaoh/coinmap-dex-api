@@ -82,6 +82,33 @@ app.get('/api/v1/volume/:token', async (req, res) => {
     res.json(rs);
 })
 
+app.get('/api/v1/transaction/:token', async (req, res) => {
+    const token = getAddress(req.params.token);
+    const buyOrder = [], sellOrder = [], transaction = [];
+    const lastTx = await swapModel.getLastTx(token, 30);
+    const bnbPriceBN = toBN(Math.round(await syncModel.getBNBPrice()));
+    let price;
+    lastTx.forEach(tx => {
+        const amount0BN = toBN(tx.amount0);
+        let txTotal;
+        if (tx.amountUSD != "0") {
+            txTotal = toBN(tx.amountUSD);
+        } else if (tx.amountBNB != "0") {
+            txTotal = toBN(tx.amountBNB).mul(bnbPriceBN);
+        } else return;
+        price = parseInt(txTotal.muln(100000).div(amount0BN).toString(10)) / 100000;
+        const item = {
+            price,
+            total: getNumber(txTotal.toString(10), 5),
+            amount: getNumber(tx.amount0, 5),
+            type: tx.bs,
+        }
+        transaction.push(item);
+        (tx.bs == "SELL" ? sellOrder : buyOrder).push(item);
+    });
+    res.json({ buyOrder, sellOrder, transaction, price });
+})
+
 async function start(port) {
     const startMs = Date.now();
 

@@ -1,6 +1,7 @@
 const Crawler = require("../utils/crawler");
 const { web3, ContractAddress, isUSD, toBN } = require('../utils/bsc');
-const { Partitioner } = require('../utils/io');
+const { Partitioner, getLastLine, getLastFile } = require('../utils/io');
+const readLastLines = require('read-last-lines');
 
 const SWAP_TOPIC = '0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822';
 const BLOCK_FILE = 'logs/cswap.block';
@@ -69,6 +70,21 @@ class SwapModel {
             }
         });
         await this.crawler.run();
+    }
+
+    async getLastTx(token, n) {
+        const rs = [];
+        if (token.length != 42) return rs;
+        try {
+            const lastFile = getLastFile(`${DATA_FOLDER}/${token}`);
+            if (lastFile == '') return rs;
+            const lastLines = await readLastLines.read(`${DATA_FOLDER}/${token}/${lastFile}`, n);
+            lastLines.trim().split('\n').forEach(line => {
+                const [block, , bs, , , amount0, , amountUSD, amountBNB] = line.split(',');
+                rs.push({ block, bs, amount0, amountUSD, amountBNB });
+            });
+        } catch (err) { }
+        return rs;
     }
 
     async getVolumeHistory(token0, checkpoints) {
