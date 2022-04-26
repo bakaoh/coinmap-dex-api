@@ -111,7 +111,34 @@ class SwapModel {
                         while (block > checkpoints[cid]) cid++;
                     }
                 });
-            } catch (err) { console.log(err) }
+            } catch (err) { }
+        }
+        return rs;
+    }
+
+    async getBigTransaction(token0, checkpoints) {
+        let cid = 0;
+        const fromIdx = Math.floor(checkpoints[0] / 100000);
+        const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / 100000);
+        const rs = [];
+        let total = toBN(0);
+        const lastPrice = {};
+        for (let idx = fromIdx; idx <= toIdx; idx++) {
+            try {
+                await this.partitioner.loadLog(token0, idx, ([block, , , , othertoken, amount0, amount1]) => {
+                    if (amount0 == '0' || amount1 == '0') return;
+                    const price = parseInt(toBN(amount1).muln(100000).div(toBN(amount0)) / 100000);
+                    if (lastPrice[othertoken] && Math.abs(lastPrice[othertoken] - price) > (lastPrice[othertoken] / 100)) {
+                        total = total.add(toBN(amount0));
+                    }
+                    lastPrice[othertoken] = price;
+                    if (block > checkpoints[cid]) {
+                        rs.push([checkpoints[cid], total.toString(10)]);
+                        total = toBN(0);
+                        while (block > checkpoints[cid]) cid++;
+                    }
+                });
+            } catch (err) { }
         }
         return rs;
     }

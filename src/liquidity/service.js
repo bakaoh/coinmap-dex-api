@@ -110,6 +110,18 @@ app.get('/api/v1/transaction/:token', async (req, res) => {
     res.json({ buyOrder, sellOrder, transaction, price });
 })
 
+app.get('/api/v1/bigtx/:token', async (req, res) => {
+    const token = getAddress(req.params.token);
+    const rs = await getCache(`shark-${token}`, async () => {
+        const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=8`)).data;
+        return (await swapModel.getBigTransaction(token, block)).map((p, i) => ({
+            date: ts[i],
+            total: getNumber(p[1]),
+        }));
+    });
+    res.json(rs);
+})
+
 async function start(port) {
     const startMs = Date.now();
 
