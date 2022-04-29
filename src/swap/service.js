@@ -78,7 +78,7 @@ app.get('/api/v1/tradingview/symbols', async (req, res) => {
         "minmov2": 0,
         "pointvalue": 1,
         "session": "0930-1630",
-        "has_intraday": false,
+        "has_intraday": true,
         "has_no_volume": false,
         "description": symbol,
         "type": "token",
