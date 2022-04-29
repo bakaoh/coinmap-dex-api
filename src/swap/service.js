@@ -60,7 +60,7 @@ app.get('/api/v1/tradingview/config', async (req, res) => {
             }
         ],
         "supported_resolutions": [
-            "h",
+            "60",
             "D"
         ]
     }
@@ -83,10 +83,8 @@ app.get('/api/v1/tradingview/symbols', async (req, res) => {
         "description": symbol,
         "type": "token",
         "supported_resolutions": [
-            "h",
-            "D",
-            "2D",
-            "3D"
+            "60",
+            "D"
         ],
         "pricescale": 100,
         "ticker": symbol
