@@ -1,5 +1,6 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
+const Leaderboard = require('../utils/leaderboard');
 
 const { toBN } = require('../utils/bsc');
 const { getLastFile } = require('../utils/io');
@@ -19,6 +20,7 @@ class Indexer {
         this.balance = {};
         this.dailyaction = {};
         this.newholders = [];
+        this.mint = toBN(0);
         this.cid = 0;
         this.lastCp = 0;
         this.lastBlock = 0;
@@ -80,38 +82,36 @@ class Indexer {
 
     createCacheFile(block) {
         let count = 0;
-        const toplist = [];
+        const top = new Leaderboard(TOP_SIZE);
         const holders = fs.createWriteStream(`cache/holders/${this.token}/${block}.log`, opts);
         for (let address in this.balance) {
             const balance = this.balance[address];
             if (balance.gtn(0)) count++;
             holders.write(`${address},${balance}\n`);
-            if (toplist.length < TOP_SIZE) {
-                toplist.push([address, balance]);
-                toplist.sort(sortBalance);
-            } else if (balance.gt(toplist[TOP_SIZE - 1][1])) {
-                toplist.pop();
-                toplist.push([address, balance]);
-                toplist.sort(sortBalance);
-            }
+            top.push(address, balance);
         }
         holders.end();
 
-        const total = fs.createWriteStream(`cache/summary/${this.token}/total-holder.log`, opts);
-        total.write(`${block},${count}\n`);
-        total.end();
+        const totalHolder = fs.createWriteStream(`cache/summary/${this.token}/total-holder.log`, opts);
+        totalHolder.write(`${block},${count}\n`);
+        totalHolder.end();
 
-        const topholders = fs.createWriteStream(`cache/topholders/${this.token}/${block}.log`, opts);
-        toplist.forEach((v) => { topholders.write(`${v[0]},${v[1]},${this.dailyaction[v[0]] || ZERO}\n`); });
-        topholders.end();
+        const topHolders = fs.createWriteStream(`cache/topholders/${this.token}/${block}.log`, opts);
+        top.getList().forEach((v) => { topHolders.write(`${v[0]},${v[1]},${this.dailyaction[v[0]] || ZERO}\n`); });
+        topHolders.end();
 
-        const newholders = fs.createWriteStream(`cache/newholders/${this.token}/${block}.log`, opts);
-        this.newholders.forEach((v) => { newholders.write(`${v}\n`); });
-        newholders.end();
+        const newHolders = fs.createWriteStream(`cache/newholders/${this.token}/${block}.log`, opts);
+        this.newholders.forEach((v) => { newHolders.write(`${v}\n`); });
+        newHolders.end();
+
+        const totalMint = fs.createWriteStream(`cache/summary/${this.token}/total-mint.log`, opts);
+        totalMint.write(`${block},${this.mint}\n`);
+        totalMint.end();
 
         this.newholders = [];
         this.dailyaction = {};
         this.first = false;
+        this.mint = toBN(0);
     }
 
     loadLogFile(idx) {
@@ -138,6 +138,9 @@ class Indexer {
             }
             this.desc(from, value);
             this.inc(to, value);
+            if (from == ADDRESS_ZERO) {
+                this.mint = this.mint.add(value);
+            }
         });
         return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }

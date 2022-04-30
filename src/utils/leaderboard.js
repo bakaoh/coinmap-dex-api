@@ -24,6 +24,10 @@ class Leaderboard {
     getKeys() {
         return this.list.map(i => i[0]);
     }
+
+    getList() {
+        return this.list;
+    }
 }
 
 module.exports = Leaderboard;
