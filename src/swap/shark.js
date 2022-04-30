@@ -21,7 +21,7 @@ class SharkModel {
         lr.on('line', (line) => {
             const [token, value] = line.split(',');
             if (value == "0") return;
-            this.topPools.push(token, toBN(Math.floor(value)));
+            this.topPools.push(token, toBN(parseInt(value)));
         });
         return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }
