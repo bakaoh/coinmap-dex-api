@@ -11,6 +11,12 @@ app.use(express.json());
 
 const RESOLUTION_NEXTTIME = { "1": 60, "5": 5 * 60, "15": 15 * 60, "60": 60 * 60, "1D": 24 * 60 * 60, "1W": 7 * 24 * 60 * 60 };
 
+app.get('/api/v1/rating/pool/:token', async (req, res) => {
+    const token = getAddress(req.params.token);
+    const rs = sharkModel.getPoolRate(token) || 100000;
+    res.json(rs);
+});
+
 app.get('/api/v1/wallets/profitable-by-percent/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const top = await getCache(`topWallets-${token}`, async () => {
@@ -140,6 +146,9 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
 
 async function start(port) {
     const startMs = Date.now();
+
+    await sharkModel.loadTopPools();
+
     app.listen(port);
     const ms = Date.now() - startMs;
     console.log(`Service start at port ${port} (${ms}ms)`)

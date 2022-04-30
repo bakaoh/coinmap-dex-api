@@ -17,6 +17,10 @@ class Leaderboard {
         }
     }
 
+    getRank(key) {
+        return this.list.findIndex(el => el[0] == key);
+    }
+
     getKeys() {
         return this.list.map(i => i[0]);
     }

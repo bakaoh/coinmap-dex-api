@@ -1,3 +1,4 @@
+const LineByLine = require('line-by-line');
 const { Partitioner } = require('../utils/io');
 const Leaderboard = require('../utils/leaderboard');
 const { toBN } = require('../utils/bsc');
@@ -8,6 +9,21 @@ const TOP_SIZE = 10;
 class SharkModel {
     constructor() {
         this.partitioner = new Partitioner(DATA_FOLDER);
+        this.topPools = new Leaderboard(100000);
+    }
+
+    getPoolRate(token) {
+        return this.topPools.getRank(token);
+    }
+
+    loadTopPools() {
+        const lr = new LineByLine(`db/pools.total`);
+        lr.on('line', (line) => {
+            const [token, value] = line.split(',');
+            if (value == "0") return;
+            this.topPools.push(token, toBN(Math.floor(value)));
+        });
+        return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }
 
     async topWallets(token) {
