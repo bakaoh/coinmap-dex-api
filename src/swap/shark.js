@@ -22,7 +22,7 @@ class SharkModel {
         lr.on('line', (line) => {
             const [token, value] = line.split(',');
             if (value == "0") return;
-            this.topPools.push(token, parseInt(value));
+            this.topPools.push([token, parseInt(value)]);
         });
         return new Promise((res, rej) => lr.on('end', () => {
             console.log(`Load pools (${Date.now() - startMs}ms)`)
