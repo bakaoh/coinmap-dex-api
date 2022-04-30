@@ -11,6 +11,7 @@ async function runAll() {
     const tokens = fs.readdirSync('db/cswap');
     console.log(`Total token: ${tokens.length}`);
     let c = 0;
+    await pairModel.warmup();
     for (let token of tokens) {
         const startMs = Date.now();
         const { tokenPrice, pools } = (await syncModel.getPools(token, pairModel.getPools(token)));
