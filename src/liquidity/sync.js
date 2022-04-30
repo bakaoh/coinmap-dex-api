@@ -49,6 +49,7 @@ class SyncModel {
 
     calcPrice([reserve0, reserve1]) {
         if (reserve0 == "0") return 0;
+        if (reserve1.length < 20) return 0;
         return parseInt(toBN(reserve1).muln(100000).div(toBN(reserve0))) / 100000;
     }
 
