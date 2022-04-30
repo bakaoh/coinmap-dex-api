@@ -9,21 +9,27 @@ const TOP_SIZE = 10;
 class SharkModel {
     constructor() {
         this.partitioner = new Partitioner(DATA_FOLDER);
-        this.topPools = new Leaderboard(100000);
+        this.topPools = [];
     }
 
     getPoolRate(token) {
-        return this.topPools.getRank(token);
+        return this.topPools.findIndex(el => el[0] == token);
     }
 
     loadTopPools() {
+        const startMs = Date.now();
         const lr = new LineByLine(`db/pools.total`);
         lr.on('line', (line) => {
             const [token, value] = line.split(',');
             if (value == "0") return;
-            this.topPools.push(token, toBN(parseInt(value)));
+            this.topPools.push(token, parseInt(value));
         });
-        return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
+        return new Promise((res, rej) => lr.on('end', () => {
+            console.log(`Load pools (${Date.now() - startMs}ms)`)
+            this.topPools.sort((a, b) => (a[1] > b[1]) ? -1 : 1);
+            console.log(`Sort pools (${Date.now() - startMs}ms)`)
+            res()
+        }).on('error', err => rej(err)));
     }
 
     async topWallets(token) {

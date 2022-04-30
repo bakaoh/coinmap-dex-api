@@ -147,7 +147,7 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
 async function start(port) {
     const startMs = Date.now();
 
-    await sharkModel.loadTopPools();
+    sharkModel.loadTopPools();
 
     app.listen(port);
     const ms = Date.now() - startMs;
