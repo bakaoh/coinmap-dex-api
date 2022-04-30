@@ -1,10 +1,12 @@
 const axios = require('axios');
-const { ContractAddress } = require('../utils/bsc');
 
-async function get1D(base, quote, resolution, countback = 500) {
-    const interval = resolution == "1D" ? "day" : "minute";
-    const count = resolution == "1D" ? 1 : 60;
-    const exchange = `exchangeName: {is: "Pancake v2"}`;
+const RESOLUTION_INTERVAL = { "1": "minute", "5": "minute", "15": "minute", "60": "minute", "1D": "day", "1W": "day" };
+const RESOLUTION_COUNT = { "1": 1, "5": 5, "15": 15, "60": 60, "1D": 1, "1W": 7 };
+
+async function getDexTrades(base, quote, resolution, countback = 500) {
+    const interval = RESOLUTION_INTERVAL[resolution] || "minute";
+    const count = RESOLUTION_COUNT[resolution] || 1;
+    const exchange = `exchangeAddress: {is: "0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73"}`;
     let query = `
 {
     ethereum(network: bsc) {
@@ -29,7 +31,6 @@ async function get1D(base, quote, resolution, countback = 500) {
     }
 }
 `;
-    console.log(query);
     let variables = {};
     const res = await axios({
         url: "https://graphql.bitquery.io",
@@ -52,5 +53,5 @@ async function get1D(base, quote, resolution, countback = 500) {
     return { s: "ok", t, c, o, h, l, v };
 }
 
-module.exports = { get1D };
+module.exports = { getDexTrades };
 

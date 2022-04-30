@@ -1,14 +1,15 @@
 const express = require("express");
 
 const SharkModel = require("./shark");
-const { getCache } = require("../cache");
-const { get1D } = require("./ticker");
+const { getCache, getSymbol } = require("../cache");
+const { getDexTrades } = require("./ticker");
 const { ContractAddress, getAddress, isUSD } = require('../utils/bsc');
-const { getNumber } = require('../utils/format');
 
 const app = express();
 const sharkModel = new SharkModel();
 app.use(express.json());
+
+const RESOLUTION_NEXTTIME = { "1": 60, "5": 5 * 60, "15": 15 * 60, "60": 60 * 60, "1D": 24 * 60 * 60, "1W": 7 * 24 * 60 * 60 };
 
 app.get('/api/v1/wallets/profitable-by-percent/:token', async (req, res) => {
     const token = getAddress(req.params.token);
@@ -60,8 +61,7 @@ app.get('/api/v1/tradingview/config', async (req, res) => {
             }
         ],
         "supported_resolutions": [
-            "60",
-            "D"
+            "1", "5", "15", "60", "1D", "1W"
         ]
     }
     res.json(rs);
@@ -69,22 +69,26 @@ app.get('/api/v1/tradingview/config', async (req, res) => {
 
 app.get('/api/v1/tradingview/symbols', async (req, res) => {
     const symbol = req.query.symbol;
+    const tokens = req.query.symbol.split("~");
+    const base = getAddress(tokens[0]);
+    const name = await getSymbol(base);
     const rs = {
-        "name": symbol,
-        "exchange-traded": symbol,
-        "exchange-listed": symbol,
-        "timezone": "America/New_York",
+        "name": name,
+        "exchange-traded": "Pancake v2",
+        "exchange-listed": "Pancake v2",
+        "timezone": "Etc/UTC",
         "minmov": 1,
         "minmov2": 0,
         "pointvalue": 1,
-        "session": "0930-1630",
+        "session": "24x7",
         "has_intraday": true,
+        "intraday_multipliers": ['1', '5', '15', '30', '60'],
+        "has_empty_bars": true,
         "has_no_volume": false,
-        "description": symbol,
+        "description": name,
         "type": "token",
         "supported_resolutions": [
-            "60",
-            "D"
+            "1", "5", "15", "60", "1D", "1W"
         ],
         "pricescale": 100,
         "ticker": symbol
@@ -98,12 +102,12 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
     const base = getAddress(tokens[0]);
     let quote = tokens[1] == "0" ? ContractAddress.BUSD : getAddress(tokens[1]);
     let bars500 = await getCache(`ticker-${resolution}-${base}-${quote}`, async () => {
-        return await get1D(base, quote, resolution);
+        return await getDexTrades(base, quote, resolution);
     });
     if (bars500.t.length == 0 && tokens[1] == "0") {
         quote = ContractAddress.WBNB;
         bars500 = await getCache(`ticker-${resolution}-${base}-${quote}`, async () => {
-            return await get1D(base, quote, resolution);
+            return await getDexTrades(base, quote, resolution);
         });
     }
     let from = parseInt(req.query.from);
@@ -126,7 +130,7 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
     if (t.length > 0) {
         res.json({ s: "ok", t, c, o, h, l, v });
     } else {
-        let nextTime = bars500.t[0] + (resolution == "1D" ? 24 * 60 * 60 : 60 * 60);
+        let nextTime = bars500.t[0] + RESOLUTION_NEXTTIME[resolution];
         if (parseInt(req.query.to) < bars500.t[bars500.t.length - 1]) {
             nextTime = bars500.t[bars500.t.length - 1];
         }
