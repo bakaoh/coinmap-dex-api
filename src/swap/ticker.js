@@ -6,7 +6,7 @@ const RESOLUTION_COUNT = { "1": 1, "5": 5, "15": 15, "60": 60, "1D": 1, "1W": 7 
 async function getDexTrades(base, quote, resolution, countback = 500) {
     const interval = RESOLUTION_INTERVAL[resolution] || "minute";
     const count = RESOLUTION_COUNT[resolution] || 1;
-    const exchange = `exchangeAddress: {is: "0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73"}`;
+    const exchange = `exchangeName: {is: "Pancake v2"}`;
     let query = `
 {
     ethereum(network: bsc) {
@@ -15,7 +15,7 @@ async function getDexTrades(base, quote, resolution, countback = 500) {
             ${exchange}
             baseCurrency: {is: "${base}"}
             quoteCurrency: {is: "${quote}"}
-            tradeAmountUsd: {gt: 10}
+            tradeAmountUsd: {gt: 1}
         ) {
             quoteAmount
             trades: count

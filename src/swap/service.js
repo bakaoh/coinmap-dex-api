@@ -106,12 +106,12 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
     const resolution = req.query.resolution || "1D";
     const tokens = req.query.symbol.split("~");
     const base = getAddress(tokens[0]);
-    let quote = tokens[1] == "0" ? ContractAddress.WBNB : getAddress(tokens[1]);
+    let quote = tokens[1] == "0" ? ContractAddress.BUSD : getAddress(tokens[1]);
     let bars500 = await getCache(`ticker-${resolution}-${base}-${quote}`, async () => {
         return await getDexTrades(base, quote, resolution);
     });
     if (bars500.t.length == 0 && tokens[1] == "0") {
-        quote = ContractAddress.BUSD;
+        quote = ContractAddress.WBNB;
         bars500 = await getCache(`ticker-${resolution}-${base}-${quote}`, async () => {
             return await getDexTrades(base, quote, resolution);
         });
