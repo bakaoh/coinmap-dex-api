@@ -1,6 +1,6 @@
 const axios = require("axios");
 const Indexer = require('./indexer');
-const TokenModel = require('../common/token');
+const TokenModel = require('./token');
 
 const COMMON_BASE = 'http://10.148.0.33:9612';
 
@@ -13,8 +13,7 @@ const IGNORE = [
 ];
 
 async function run() {
-    const tokenModel = new TokenModel(true);
-    await tokenModel.loadLpDetailFile();
+    const tokenModel = new TokenModel();
     await tokenModel.loadTokenDetailFile();
 
     const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=30`)).data;
@@ -31,7 +30,6 @@ async function run() {
     console.log(`Total token: ${Object.keys(tokenModel.token).length}`);
     for (let token in tokenModel.token) {
         if (IGNORE.includes(token)) continue;
-        if (tokenModel.lp[token]) continue;
         const startMs = Date.now();
         console.log(`Indexing token [${++c}] ${token}`);
         const indexer = new Indexer(token);
