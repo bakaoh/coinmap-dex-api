@@ -15,7 +15,7 @@ async function getDexTrades(base, quote, resolution, countback = 500) {
             ${exchange}
             baseCurrency: {is: "${base}"}
             quoteCurrency: {is: "${quote}"}
-            tradeAmountUsd: {gt: 10}
+            tradeAmountUsd: {gt: 1}
         ) {
             quoteAmount
             trades: count
