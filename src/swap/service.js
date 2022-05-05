@@ -89,7 +89,7 @@ app.get('/api/v1/tradingview/symbols', async (req, res) => {
         "session": "24x7",
         "has_intraday": true,
         "intraday_multipliers": ['1', '5', '15', '30', '60'],
-        "has_empty_bars": true,
+        "has_empty_bars": false,
         "has_no_volume": false,
         "description": name,
         "type": "token",
