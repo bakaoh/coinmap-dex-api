@@ -25,7 +25,7 @@ async function updateDetailFile() {
     let idx = 0;
     while (idx < tokens.length) {
         const startMs = Date.now();
-        const addresses = tokens.slice[idx, idx + 100];
+        const addresses = tokens.slice(idx, idx + 100);
         const { names, symbols, decimals } = await getTokenMetadata(addresses);
         for (let i = 0; i < addresses.length; i++) {
             if (symbols[i] == '') continue;
