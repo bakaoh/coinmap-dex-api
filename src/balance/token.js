@@ -1,8 +1,8 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
-const { getTokenInfo } = require('../multicall');
+const { getTokenMetadata } = require('../multicall');
 
-const TOKEN_DETAIL_FILE = `db/token-detail.log`;
+const TOKEN_DETAIL_FILE = `db/token-detail-v2.log`;
 const opts = { flags: "a" };
 
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
@@ -19,12 +19,12 @@ class Indexer {
         this.data[prefix] = list;
     }
 
-    add(address, symbol, name) {
+    add(address, decimals, symbol, name) {
         if (symbol == 'Cake-LP') return;
         const prefix1 = symbol.toLowerCase().substr(0, 2);
         this.indexing(prefix1, { address, symbol, name });
         const prefix2 = name.toLowerCase().substr(0, 2);
-        if (prefix1 != prefix2) this.indexing(prefix2, { address, symbol, name });
+        if (prefix1 != prefix2) this.indexing(prefix2, { address, decimals, symbol, name });
     }
 
     search(text) {
@@ -55,7 +55,7 @@ class TokenModel {
 
     getTokenSync(address) {
         if (this.token[address]) {
-            return { address, symbol: this.token[address][0], name: this.token[address][1] };
+            return { address, decimals: this.token[address][0], symbol: this.token[address][1], name: this.token[address][2] };
         }
         return { address }
     }
@@ -65,12 +65,12 @@ class TokenModel {
         if (!this.token[address]) {
             const startMs = Date.now();
             try {
-                const tokens = await getTokenInfo([address])
-                this.token[tokens[0][0]] = [tokens[0][1], tokens[0][2]];
-                this.indexer.add(tokens[0][0], tokens[0][1], tokens[0][2]);
+                const tokens = await getTokenMetadata([address])
+                this.token[tokens[0][0]] = [tokens[0][3], tokens[0][2], tokens[0][1]];
+                this.indexer.add(tokens[0][0], tokens[0][3], tokens[0][2], tokens[0][1]);
                 if (!this.readonly) {
                     const writer = fs.createWriteStream(TOKEN_DETAIL_FILE, opts);
-                    writer.write(`${tokens[0][0]},${tokens[0][1]},${tokens[0][2]}\n`);
+                    writer.write(`${tokens[0][0]},${tokens[0][3]},${tokens[0][2]},${tokens[0][1]}\n`);
                     writer.end();
                 }
             } catch (err) {
@@ -81,16 +81,16 @@ class TokenModel {
             const ms = Date.now() - startMs;
             if (ms < 2000) await sleep(2000 - ms);
         }
-        return { address, symbol: this.token[address][0], name: this.token[address][1] };
+        return { address, decimals: this.token[address][0], symbol: this.token[address][1], name: this.token[address][2] };
     }
 
     loadTokenDetailFile() {
         const lr = new LineByLine(TOKEN_DETAIL_FILE);
         lr.on('line', (line) => {
-            const p = line.split(',', 3);
-            if (p.length != 3) return;
-            this.token[p[0]] = [p[1], p[2]];
-            this.indexer.add(p[0], p[1], p[2]);
+            const p = line.split(',', 4);
+            if (p.length != 4) return;
+            this.token[p[0]] = [p[1], p[2], p[3]];
+            this.indexer.add(p[0], p[1], p[2], p[3]);
         });
         return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }
