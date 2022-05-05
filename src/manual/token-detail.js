@@ -25,14 +25,13 @@ async function updateDetailFile() {
     let idx = 0;
     while (idx < tokens.length) {
         const startMs = Date.now();
-        const addresses = tokens.slice(idx, idx + 100);
-        const { names, symbols, decimals } = await getTokenMetadata(addresses);
-        for (let i = 0; i < addresses.length; i++) {
-            if (symbols[i] == '') continue;
-            writer.write(`${addresses[i]},${decimals[i]},${symbols[i]},${names[i]}\n`);
+        const rs = await getTokenMetadata(tokens.slice(idx, idx + 100));
+        for (let i = 0; i < rs.length; i++) {
+            if (rs[i][2] == '') continue;
+            writer.write(`${rs[i][0]},${rs[i][3]},${rs[i][2]},${rs[i][1]}\n`);
         }
         idx = idx + 100;
-        console.log(`Get metadata [${idx}](${Date.now() - startMs})`);x
+        console.log(`Get metadata [${idx}](${Date.now() - startMs})`);
     }
     writer.end();
 }
