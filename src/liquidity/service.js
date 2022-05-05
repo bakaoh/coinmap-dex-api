@@ -60,7 +60,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     const details = pools.slice(0, 3);
     for (let p of details) {
         p.name = symbol + "/" + (await getToken(p.token0 == token ? p.token1 : p.token0)).symbol;
-        p.liquidity = getNumber(p.token0 == token ? p.reserve0 : p.reserve1) * tokenPrice;
+        p.liquidity = getNumber(p.token0 == token ? p.reserve0 : p.reserve1, 0, decimals) * tokenPrice;
         p.reserve0 = getNumber(p.reserve0);
         p.reserve1 = getNumber(p.reserve1);
     }
