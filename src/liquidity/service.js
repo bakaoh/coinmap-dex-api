@@ -20,6 +20,7 @@ const tokenCache = {};
 const getToken = async (token) => {
     if (!tokenCache[token]) {
         tokenCache[token] = (await axios.get(`${COMMON_BASE}/info/token?a=${token}`)).data[0];
+        tokenCache[token].decimals = parseInt(tokenCache[token].decimals);
     }
     return tokenCache[token];
 };
@@ -36,8 +37,7 @@ app.get('/route/:tokenA/:tokenB', async (req, res) => {
 
 app.get('/api/v1/pool/:token', async (req, res) => {
     const token = getAddress(req.params.token);
-    let { symbol, decimals } = (await getToken(token));
-    decimals = parseInt(decimals);
+    const { symbol, decimals } = (await getToken(token));
     const { tokenPrice, pools } = (await syncModel.getPools(token, pairModel.getPools(token), decimals));
 
     const data = await getCache(`poolhistory-${token}`, async () => {
@@ -70,13 +70,14 @@ app.get('/api/v1/pool/:token', async (req, res) => {
 
 app.get('/api/v1/volume/:token', async (req, res) => {
     const token = getAddress(req.params.token);
+    const { decimals } = await getToken(token);
     const rs = await getCache(`volume-${token}`, async () => {
         const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=8`)).data;
         return (await swapModel.getVolumeHistory(token, block)).map((p, i) => ({
             date: ts[i],
-            totalTransaction: getNumber(p[1]),
-            totalAmountSell: getNumber(p[2]),
-            totalAmountBuyByNewWallet: getNumber(p[3]),
+            totalTransaction: getNumber(p[1], 0, decimals),
+            totalAmountSell: getNumber(p[2], 0, decimals),
+            totalAmountBuyByNewWallet: getNumber(p[3], 0, decimals),
         }));
     });
     res.json(rs);
@@ -88,9 +89,8 @@ app.get('/api/v1/transaction/:token', async (req, res) => {
     const lastTx = await swapModel.getLastTx(token, 30);
     const bnbPriceBN = toBN(Math.round(await syncModel.getBNBPrice()));
     let price;
-    let { decimals } = await getToken(token);
-    decimals = parseInt(decimals);
-    let dd = toBN(10).pow(toBN(18 - decimals));
+    const { decimals } = await getToken(token);
+    const dd = toBN(10).pow(toBN(18 - decimals));
     lastTx.forEach(tx => {
         if (tx.amount0 == "0") return;
         const amount0BN = toBN(tx.amount0);
