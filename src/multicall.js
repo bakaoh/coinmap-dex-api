@@ -4,10 +4,12 @@ const Web3 = require("web3");
 const Erc20Abi = require('./abi/Erc20.json');
 const PancakePairAbi = require('./abi/PancakePair.json');
 const MulticallAbi = require('./abi/Multicall2.json');
+const GetErc20Abi = require('./abi/GetERC20Metadata.json');
 
 const endpoint = "https://bsc-dataseed.binance.org";
 const web3 = new Web3(endpoint);
 const multicall = new web3.eth.Contract(MulticallAbi, '0x17e939b6fedFd86127c4F79B2180de5feE3a772d');
+const multiget = new web3.eth.Contract(GetErc20Abi, '0x6AC92802fa2ad602b9b9C77014B0f016CC3774DF');
 
 async function aggregate(calldata, abi) {
     const iface = new Interface(abi);
@@ -47,4 +49,13 @@ async function getTokenInfo(addresses) {
     return rs;
 }
 
-module.exports = { aggregate, getLPToken01, getTokenInfo };
+async function getTokenMetadata(addresses) {
+    const { names, symbols, decimals } = await multiget.methods.getMulti(addresses).call();
+    const rs = [];
+    for (let i = 0; i < addresses.length; i++) {
+        rs.push([addresses[i], names[i], symbols[i], decimals[i]]);
+    }
+    return rs;
+}
+
+module.exports = { aggregate, getLPToken01, getTokenInfo, getTokenMetadata };
