@@ -36,8 +36,9 @@ app.get('/route/:tokenA/:tokenB', async (req, res) => {
 
 app.get('/api/v1/pool/:token', async (req, res) => {
     const token = getAddress(req.params.token);
-    const { tokenPrice, pools } = (await syncModel.getPools(token, pairModel.getPools(token)));
-    const symbol = (await getToken(token)).symbol;
+    let { symbol, decimals } = (await getToken(token));
+    decimals = parseInt(decimals);
+    const { tokenPrice, pools } = (await syncModel.getPools(token, pairModel.getPools(token), decimals));
 
     const data = await getCache(`poolhistory-${token}`, async () => {
         const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=10`)).data;
@@ -51,14 +52,14 @@ app.get('/api/v1/pool/:token', async (req, res) => {
             for (let pool of pools) {
                 totalToken = totalToken.add(toBN(pool.history[i][0]));
             }
-            const price = syncModel.calcPrice(pricePool.history[i]);
-            return { date, price, totalAmount: getNumber(totalToken.toString(10)) * price };
+            const price = syncModel.calcPrice(pricePool.history[i], decimals);
+            return { date, price, totalAmount: getNumber(totalToken.toString(10), decimals) * price };
         });
     });
 
     const details = pools.slice(0, 3);
     for (let p of details) {
-        p.name = symbol + "/" + (await getSymbol(p.token0 == token ? p.token1 : p.token0)).symbol;
+        p.name = symbol + "/" + (await getToken(p.token0 == token ? p.token1 : p.token0)).symbol;
         p.liquidity = getNumber(p.token0 == token ? p.reserve0 : p.reserve1) * tokenPrice;
         p.reserve0 = getNumber(p.reserve0);
         p.reserve1 = getNumber(p.reserve1);

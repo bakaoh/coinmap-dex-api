@@ -47,17 +47,18 @@ class SyncModel {
         await this.crawler.run();
     }
 
-    calcPrice([reserve0, reserve1]) {
+    calcPrice([reserve0, reserve1], decimals = 18) {
         if (reserve0 == "0") return 0;
         if (reserve1.length < 20) return 0;
-        return parseInt(toBN(reserve1).muln(100000).div(toBN(reserve0))) / 100000;
+        let dd = toBN(10).pow(toBN(18 - decimals));
+        return parseInt(toBN(reserve1).muln(100000).div(toBN(reserve0)).div(dd)) / 100000;
     }
 
     async getBNBPrice() {
         return this.calcPrice(await this.getReserves(ContractAddress.PAIR_WBNB_BUSD));
     }
 
-    async getPools(token, pairs) {
+    async getPools(token, pairs, decimals = 18) {
         const pools = [];
         for (let pair in pairs) {
             const pool = pairs[pair];
@@ -67,10 +68,10 @@ class SyncModel {
         pools.sort((a, b) => toBN(b.token0 == token ? b.reserve0 : b.reserve1).gt(toBN(a.token0 == token ? a.reserve0 : a.reserve1)) ? 1 : -1);
         let tokenPrice = 0;
         for (let pool of pools) {
-            if (isUSD(pool.token1)) tokenPrice = this.calcPrice([pool.reserve0, pool.reserve1]);
-            else if (isUSD(pool.token0)) tokenPrice = this.calcPrice([pool.reserve1, pool.reserve0]);
-            else if (pool.token1 == ContractAddress.WBNB) tokenPrice = await this.getBNBPrice() * this.calcPrice([pool.reserve0, pool.reserve1]);
-            else if (pool.token0 == ContractAddress.WBNB) tokenPrice = await this.getBNBPrice() * this.calcPrice([pool.reserve1, pool.reserve0]);
+            if (isUSD(pool.token1)) tokenPrice = this.calcPrice([pool.reserve0, pool.reserve1], decimals);
+            else if (isUSD(pool.token0)) tokenPrice = this.calcPrice([pool.reserve1, pool.reserve0], decimals);
+            else if (pool.token1 == ContractAddress.WBNB) tokenPrice = await this.getBNBPrice() * this.calcPrice([pool.reserve0, pool.reserve1], decimals);
+            else if (pool.token0 == ContractAddress.WBNB) tokenPrice = await this.getBNBPrice() * this.calcPrice([pool.reserve1, pool.reserve0], decimals);
             if (tokenPrice) break;
         }
         return { tokenPrice, pools };
