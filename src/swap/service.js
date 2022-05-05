@@ -1,4 +1,5 @@
 const express = require("express");
+const axios = require("axios");
 
 const SharkModel = require("./shark");
 const { getCache, getSymbol } = require("../cache");
@@ -9,6 +10,7 @@ const app = express();
 const sharkModel = new SharkModel();
 app.use(express.json());
 
+const LIQUIDITY_BASE = 'http://10.148.0.33:9613';
 const RESOLUTION_NEXTTIME = { "1": 60, "5": 5 * 60, "15": 15 * 60, "60": 60 * 60, "1D": 24 * 60 * 60, "1W": 7 * 24 * 60 * 60 };
 
 app.get('/api/v1/rating/pool/:token', async (req, res) => {
@@ -106,17 +108,17 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
     const resolution = req.query.resolution || "1D";
     const tokens = req.query.symbol.split("~");
     const base = getAddress(tokens[0]);
-    let quote = tokens[1] == "0" ? ContractAddress.BUSD : getAddress(tokens[1]);
-    let bars500 = await getCache(`ticker-${resolution}-${base}-${quote}`, async () => {
+    let quote = tokens[1];
+    if (quote == "0") {
+        const { pools } = (await axios.get(`${LIQUIDITY_BASE}/api/v1/pool/${base}`)).data;
+        quote = pools[0].token0 == base ? pools[0].token1 : pools[0].token0;
+    } else {
+        quote = getAddress(quote);
+    }
+    const bars500 = await getCache(`ticker-${resolution}-${base}-${quote}`, async () => {
         return await getDexTrades(base, quote, resolution);
     });
-    if (bars500.t.length == 0 && tokens[1] == "0") {
-        quote = ContractAddress.WBNB;
-        bars500 = await getCache(`ticker-${resolution}-${base}-${quote}`, async () => {
-            return await getDexTrades(base, quote, resolution);
-        });
-    }
-    let from = parseInt(req.query.from);
+    const from = parseInt(req.query.from);
     const to = parseInt(req.query.to) || Math.round(Date.now() / 1000);
     const countback = req.query.countback;
 
