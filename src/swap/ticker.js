@@ -12,6 +12,7 @@ async function getDexTrades(base, quote, resolution, countback = 300) {
     ethereum(network: bsc) {
         dexTrades(
             options: {limit: ${countback}, desc: "t.${interval}"}
+            ${exchange}
             baseCurrency: {is: "${base}"}
             quoteCurrency: {is: "${quote}"}
             tradeAmountUsd: {gt: 10}
