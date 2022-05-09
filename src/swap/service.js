@@ -55,18 +55,9 @@ app.get('/api/v1/tradingview/config', async (req, res) => {
         "supports_time": false,
         "exchanges": [],
         "symbols_types": [
-            {
-                "name": "All types",
-                "value": ""
-            },
-            {
-                "name": "Token",
-                "value": "token"
-            },
-            {
-                "name": "Index",
-                "value": "index"
-            }
+            { "name": "All types", "value": "" },
+            { "name": "Token", "value": "token" },
+            { "name": "Index", "value": "index" }
         ],
         "supported_resolutions": [
             "1", "5", "15", "60", "1D", "1W"
@@ -91,8 +82,8 @@ app.get('/api/v1/tradingview/symbols', async (req, res) => {
         "session": "24x7",
         "has_intraday": true,
         "intraday_multipliers": ['1', '5', '15', '30', '60'],
-        "has_empty_bars": true,
-        "has_no_volume": true,
+        "has_empty_bars": false,
+        "has_no_volume": false,
         "description": name,
         "type": "token",
         "supported_resolutions": [
