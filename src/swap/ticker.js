@@ -3,10 +3,10 @@ const axios = require('axios');
 const RESOLUTION_INTERVAL = { "1": "minute", "5": "minute", "15": "minute", "60": "minute", "1D": "day", "1W": "day" };
 const RESOLUTION_COUNT = { "1": 1, "5": 5, "15": 15, "60": 60, "1D": 1, "1W": 7 };
 
-async function getDexTrades(base, quote, resolution, countback = 300) {
+async function getDexTrades(base, quote, resolution, exchangeName = "Pancake v2", countback = 300) {
     const interval = RESOLUTION_INTERVAL[resolution] || "minute";
     const count = RESOLUTION_COUNT[resolution] || 1;
-    const exchange = `exchangeName: {is: "Pancake v2"}`;
+    const exchange = `exchangeName: {is: "${exchangeName}"}`;
     let query = `
 {
     ethereum(network: bsc) {

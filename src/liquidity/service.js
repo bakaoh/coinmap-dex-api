@@ -5,7 +5,7 @@ const SyncModel = require("./sync");
 const SwapModel = require("./swap");
 const PairModel = require("./pair");
 const { getCache } = require("../cache");
-const { getAddress, ContractAddress, toBN, isUSD } = require('../utils/bsc');
+const { getAddress, ContractAddress, toBN, isUSD, getFactoryName } = require('../utils/bsc');
 const { getNumber } = require('../utils/format');
 
 const COMMON_BASE = 'http://10.148.0.33:9612';
@@ -63,6 +63,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
         p.liquidity = getNumber(p.token0 == token ? p.reserve0 : p.reserve1, 0, decimals) * tokenPrice;
         p.reserve0 = getNumber(p.reserve0);
         p.reserve1 = getNumber(p.reserve1);
+        p.exchange = getFactoryName(p.factory);
     }
 
     res.json({ data, pools: details });

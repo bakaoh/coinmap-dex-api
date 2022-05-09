@@ -4,7 +4,7 @@ const axios = require("axios");
 const SharkModel = require("./shark");
 const { getCache, getSymbol } = require("../cache");
 const { getDexTrades } = require("./ticker");
-const { ContractAddress, getAddress, isUSD } = require('../utils/bsc');
+const { ContractAddress, getAddress } = require('../utils/bsc');
 
 const app = express();
 const sharkModel = new SharkModel();
@@ -101,9 +101,11 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
     const base = getAddress(tokens[0]);
     let quote = tokens[1];
     let barsBnb;
+    let exchangeName = undefined;
     if (quote == "0") {
         const { pools } = (await axios.get(`${LIQUIDITY_BASE}/api/v1/pool/${base}`)).data;
         quote = pools[0].token0 == base ? pools[0].token1 : pools[0].token0;
+        exchangeName = pools[0].exchange;
         if (quote == ContractAddress.WBNB) {
             barsBnb = await getCache(`ticker-${resolution}-${ContractAddress.WBNB}-${ContractAddress.BUSD}`, async () => {
                 return await getDexTrades(ContractAddress.WBNB, ContractAddress.BUSD, resolution);
@@ -113,7 +115,7 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
         quote = getAddress(quote);
     }
     const bars = await getCache(`ticker-${resolution}-${base}-${quote}`, async () => {
-        return await getDexTrades(base, quote, resolution);
+        return await getDexTrades(base, quote, resolution, exchangeName);
     });
     const from = parseInt(req.query.from);
     const to = parseInt(req.query.to) || Math.round(Date.now() / 1000);

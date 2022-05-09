@@ -1,7 +1,7 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
 const Crawler = require("../utils/crawler");
-const { web3, ContractAddress } = require('../utils/bsc');
+const { web3, ContractAddress, isSupportFactory } = require('../utils/bsc');
 
 const PAIR_CREATED_TOPIC = '0x0d3648bd0f6ba80134a33ba9275ac585d9d315f0ad8355cddefde31afa28d0e9';
 const BLOCK_FILE = 'logs/pair.block';
@@ -43,12 +43,12 @@ class PairModel {
     }
 
     addPool([block, txIdx, logIdx, factory, token0, token1, pair, idx]) {
-        if (factory != ContractAddress.PANCAKE_FACTORY) return; // only support Pancake for now
-        this.pairs[pair] = { token0, token1 };
+        if (!isSupportFactory(factory)) return;
+        this.pairs[pair] = { token0, token1, factory };
         if (!this.pools[token0]) this.pools[token0] = {};
-        this.pools[token0][pair] = { token0, token1 };
+        this.pools[token0][pair] = { token0, token1, factory };
         if (!this.pools[token1]) this.pools[token1] = {};
-        this.pools[token1][pair] = { token0, token1 };
+        this.pools[token1][pair] = { token0, token1, factory };
     }
 
     writePairCreatedLog(block, txIdx, logIdx, factory, token0, token1, pair, idx) {
