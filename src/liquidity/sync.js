@@ -63,7 +63,7 @@ class SyncModel {
         for (let pair in pairs) {
             const pool = pairs[pair];
             const [reserve0, reserve1] = await this.getReserves(pair);
-            pools.push({ pair, token0: pool.token0, token1: pool.token1, reserve0, reserve1 });
+            pools.push({ pair, token0: pool.token0, token1: pool.token1, reserve0, reserve1, factory: pair.factory });
         }
         pools.sort((a, b) => toBN(b.token0 == token ? b.reserve0 : b.reserve1).gt(toBN(a.token0 == token ? a.reserve0 : a.reserve1)) ? 1 : -1);
         let tokenPrice = 0;
