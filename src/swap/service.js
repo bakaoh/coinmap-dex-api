@@ -83,13 +83,13 @@ app.get('/api/v1/tradingview/symbols', async (req, res) => {
         "has_intraday": true,
         "intraday_multipliers": ['1', '5', '15', '30', '60'],
         "has_empty_bars": false,
-        "has_no_volume": false,
+        "has_no_volume": true,
         "description": name,
         "type": "token",
         "supported_resolutions": [
             "1", "5", "15", "60", "1D", "1W"
         ],
-        "pricescale": 100,
+        "pricescale": 1000,
         "ticker": symbol
     }
     res.json(rs);
