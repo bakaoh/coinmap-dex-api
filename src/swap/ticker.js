@@ -42,11 +42,11 @@ async function getDexTrades(base, quote, resolution, countback = 300) {
     const t = [], c = [], o = [], h = [], l = [], v = [];
     res.data.data.ethereum.dexTrades.forEach(item => {
         t.push(Math.round(new Date(item.t[interval]) / 1000));
-        c.push(item.c);
-        o.push(item.o);
-        h.push(item.h);
-        l.push(item.l);
-        v.push(item.v);
+        c.push(parseFloat(item.c));
+        o.push(parseFloat(item.o));
+        h.push(parseFloat(item.h));
+        l.push(parseFloat(item.l));
+        v.push(parseFloat(item.v));
     });
     return { s: "ok", t, c, o, h, l, v };
 }

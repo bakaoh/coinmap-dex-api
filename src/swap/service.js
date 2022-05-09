@@ -100,13 +100,19 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
     const tokens = req.query.symbol.split("~");
     const base = getAddress(tokens[0]);
     let quote = tokens[1];
+    let barsBnb;
     if (quote == "0") {
         const { pools } = (await axios.get(`${LIQUIDITY_BASE}/api/v1/pool/${base}`)).data;
         quote = pools[0].token0 == base ? pools[0].token1 : pools[0].token0;
+        if (quote == ContractAddress.WBNB) {
+            barsBnb = await getCache(`ticker-${resolution}-${ContractAddress.WBNB}-${ContractAddress.BUSD}`, async () => {
+                return await getDexTrades(ContractAddress.WBNB, ContractAddress.BUSD, resolution);
+            });
+        }
     } else {
         quote = getAddress(quote);
     }
-    const bars500 = await getCache(`ticker-${resolution}-${base}-${quote}`, async () => {
+    const bars = await getCache(`ticker-${resolution}-${base}-${quote}`, async () => {
         return await getDexTrades(base, quote, resolution);
     });
     const from = parseInt(req.query.from);
@@ -114,14 +120,23 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
     const countback = req.query.countback;
 
     const t = [], c = [], o = [], h = [], l = [], v = [];
-    for (let i = 0; i < bars500.t.length; i++) {
-        if ((countback || bars500.t[i] >= from) && bars500.t[i] < to) {
-            t.push(bars500.t[i]);
-            c.push(bars500.c[i]);
-            o.push(bars500.o[i]);
-            h.push(bars500.h[i]);
-            l.push(bars500.l[i]);
-            v.push(bars500.v[i]);
+    for (let i = 0; i < bars.t.length; i++) {
+        if ((countback || bars.t[i] >= from) && bars.t[i] < to) {
+            if (quote == ContractAddress.WBNB) {
+                t.push(bars.t[i]);
+                c.push(bars.c[i] * barsBnb.c[i]);
+                o.push(bars.o[i] * barsBnb.o[i]);
+                h.push(bars.h[i] * barsBnb.h[i]);
+                l.push(bars.l[i] * barsBnb.l[i]);
+                v.push(bars.v[i] * barsBnb.v[i]);
+            } else {
+                t.push(bars.t[i]);
+                c.push(bars.c[i]);
+                o.push(bars.o[i]);
+                h.push(bars.h[i]);
+                l.push(bars.l[i]);
+                v.push(bars.v[i]);
+            }
         }
         if (t.length >= parseInt(countback)) break;
     }
@@ -129,9 +144,9 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
     if (t.length > 0) {
         res.json({ s: "ok", t, c, o, h, l, v });
     } else {
-        let nextTime = bars500.t[0] + RESOLUTION_NEXTTIME[resolution];
-        if (parseInt(req.query.to) < bars500.t[bars500.t.length - 1]) {
-            nextTime = bars500.t[bars500.t.length - 1];
+        let nextTime = bars.t[0] + RESOLUTION_NEXTTIME[resolution];
+        if (parseInt(req.query.to) < bars.t[bars.t.length - 1]) {
+            nextTime = bars.t[bars.t.length - 1];
         }
         res.json({ s: "no_data", nextTime });
     }
