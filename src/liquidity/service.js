@@ -46,10 +46,10 @@ app.get('/api/v1/pool/:token', async (req, res) => {
         let quotePrice = 1;
         for (let pool of pools) {
             pool.history = await syncModel.getReservesHistory(pool.pair, block, pool.token0 == token);
-            if ((!pricePool || pricePool.token1 == ContractAddress.WBNB) && (isUSD(pool.token1))) pricePool = pool;
-            if (!pricePool && pool.token1 == ContractAddress.WBNB) pricePool = pool;
+            if ((!pricePool || pricePool.token1 == ContractAddress.WBNB) && (isUSD(pool.token0) || isUSD(pool.token1))) pricePool = pool;
+            if (token != ContractAddress.WBNB && !pricePool && (pool.token0 == ContractAddress.WBNB || pool.token1 == ContractAddress.WBNB)) pricePool = pool;
         }
-        if (pricePool.token1 == ContractAddress.WBNB) quotePrice = await syncModel.getBNBPrice()
+        if (token != ContractAddress.WBNB && (pricePool.token0 == ContractAddress.WBNB || pricePool.token1 == ContractAddress.WBNB)) quotePrice = await syncModel.getBNBPrice()
         return ts.map((date, i) => {
             let totalToken = toBN(0);
             for (let pool of pools) {
