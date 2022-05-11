@@ -38,18 +38,15 @@ app.get('/route/:tokenA/:tokenB', async (req, res) => {
 app.get('/api/v1/pool/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const { symbol, decimals } = (await getToken(token));
-    const { tokenPrice, pools } = (await syncModel.getPools(token, pairModel.getPools(token), decimals));
+    const { tokenPrice, pools, pricePool } = (await syncModel.getPools(token, pairModel.getPools(token), decimals));
 
     const data = await getCache(`poolhistory-${token}`, async () => {
         const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=10`)).data;
-        let pricePool;
-        let quotePrice = 1;
         for (let pool of pools) {
             pool.history = await syncModel.getReservesHistory(pool.pair, block, pool.token0 == token);
-            if ((!pricePool || pricePool.token1 == ContractAddress.WBNB) && (isUSD(pool.token0) || isUSD(pool.token1))) pricePool = pool;
-            if (token != ContractAddress.WBNB && !pricePool && (pool.token0 == ContractAddress.WBNB || pool.token1 == ContractAddress.WBNB)) pricePool = pool;
         }
-        if (token != ContractAddress.WBNB && (pricePool.token0 == ContractAddress.WBNB || pricePool.token1 == ContractAddress.WBNB)) quotePrice = await syncModel.getBNBPrice()
+        let quotePrice = 1;
+        if (pricePool && token != ContractAddress.WBNB && (pricePool.token0 == ContractAddress.WBNB || pricePool.token1 == ContractAddress.WBNB)) quotePrice = await syncModel.getBNBPrice()
         return ts.map((date, i) => {
             let totalToken = toBN(0);
             for (let pool of pools) {
