@@ -43,16 +43,19 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     const data = await getCache(`poolhistory-${token}`, async () => {
         const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=10`)).data;
         let pricePool;
+        let quotePrice = 1;
         for (let pool of pools) {
             pool.history = await syncModel.getReservesHistory(pool.pair, block, pool.token0 == token);
-            if (!pricePool && (isUSD(pool.token1))) pricePool = pool;
+            if ((!pricePool || pricePool.token1 == ContractAddress.WBNB) && (isUSD(pool.token1))) pricePool = pool;
+            if (!pricePool && pool.token1 == ContractAddress.WBNB) pricePool = pool;
         }
+        if (pricePool.token1 == ContractAddress.WBNB) quotePrice = await syncModel.getBNBPrice()
         return ts.map((date, i) => {
             let totalToken = toBN(0);
             for (let pool of pools) {
                 totalToken = totalToken.add(toBN(pool.history[i][0]));
             }
-            const price = syncModel.calcPrice(pricePool.history[i], decimals);
+            const price = syncModel.calcPrice(pricePool.history[i], decimals) * quotePrice;
             return { date, price, totalAmount: getNumber(totalToken.toString(10), 0, decimals) * price };
         });
     });
