@@ -160,7 +160,7 @@ class SwapModel {
             try {
                 await this.partitioner.loadLog(token0, idx, ([block, , bs, , , amount0, , amountUSD, amountBNB]) => {
                     if (parseInt(block) > lastBlock + 20) {
-                        rs.push({ block, o, h, l, c, v });
+                        rs.push({ block, o, h, l, c, v: v.toString(10) });
                         lastBlock = parseInt(block);
                         o = h = l = undefined;
                         v = toBN(0);
