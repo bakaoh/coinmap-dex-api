@@ -1,12 +1,38 @@
 const axios = require('axios');
 
+const SwapModel = require("../liquidity/swap");
+const swapModel = new SwapModel();
+
+const COMMON_BASE = 'http://10.148.0.33:9612';
 const RESOLUTION_INTERVAL = { "1": "minute", "5": "minute", "15": "minute", "60": "minute", "1D": "day", "1W": "day" };
 const RESOLUTION_COUNT = { "1": 1, "5": 5, "15": 15, "60": 60, "1D": 1, "1W": 7 };
+
+async function getDexTradesLocal(token, countback, count) {
+    const cur = new Date();
+    cur.setMilliseconds(0);
+    const toTs = Math.round(cur.getTime() / 1000);
+    const toBlock = (await axios.get(`${COMMON_BASE}/block/estimate?ts=${toTs}`)).data;
+    const fromTs = toTs - countback * count * 60;
+    const fromBlock = toBlock - countback * count * 20;
+    const rs = await swapModel.getTicker(token, fromBlock, toBlock, fromTs, count);
+    const t = [], c = [], o = [], h = [], l = [], v = [];
+    rs.forEach(item => {
+        t.push(item.t);
+        c.push(item.c);
+        o.push(item.o);
+        h.push(item.h);
+        l.push(item.l);
+        v.push(item.v);
+    });
+    return { s: "ok", t, c, o, h, l, v };
+}
 
 async function getDexTrades(base, quote, resolution, exchangeName = "Pancake v2", countback = 300) {
     const interval = RESOLUTION_INTERVAL[resolution] || "minute";
     const count = RESOLUTION_COUNT[resolution] || 1;
     const exchange = `exchangeName: {is: "${exchangeName}"}`;
+    if (interval == "minute") return getDexTradesLocal(base, countback, count);
+
     let query = `
 {
     ethereum(network: bsc) {
