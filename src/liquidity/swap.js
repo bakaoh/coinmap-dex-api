@@ -150,20 +150,28 @@ class SwapModel {
         return parseInt(toBN(reserve1).muln(100000).div(toBN(reserve0)).div(dd)) / 100000;
     }
 
-    async getTicker(token0, fromBlock, toBlock) {
+    async getTicker(token0, fromBlock, toBlock, startTs) {
         const fromIdx = Math.floor(fromBlock / 100000);
         const toIdx = Math.floor(toBlock / 100000);
         const rs = [];
         let lastBlock = fromBlock;
+        let t = startTs;
         let o, h, l, c, v = toBN(0);
         for (let idx = fromIdx; idx <= toIdx; idx++) {
             try {
-                await this.partitioner.loadLog(token0, idx, ([block, , bs, , , amount0, , amountUSD, amountBNB]) => {
-                    if (parseInt(block) > lastBlock + 20) {
-                        rs.push({ block, o, h, l, c, v: v.toString(10) });
-                        lastBlock = parseInt(block);
-                        o = h = l = undefined;
-                        v = toBN(0);
+                await this.partitioner.loadLog(token0, idx, ([block, , , , , amount0, , amountUSD, amountBNB]) => {
+                    block = parseInt(block);
+                    if (block < lastBlock) return;
+                    if (block > lastBlock + 20) {
+                        while (block > lastBlock + 20) {
+                            lastBlock = lastBlock + 20;
+                            t = t + 60;
+                        }
+                        if (o && h && l && c) {
+                            rs.push({ t, block, o, h, l, c, v: v.toString(10) });
+                            o = h = l = undefined;
+                            v = toBN(0);
+                        }
                     }
 
                     v = v.add(toBN(amount0));
