@@ -77,5 +77,5 @@ async function getDexTrades(base, quote, resolution, exchangeName = "Pancake v2"
     return { s: "ok", t, c, o, h, l, v };
 }
 
-module.exports = { getDexTrades };
+module.exports = { getDexTrades, getDexTradesLocal };
 
