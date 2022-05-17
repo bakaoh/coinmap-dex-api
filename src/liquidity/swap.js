@@ -142,6 +142,39 @@ class SwapModel {
         }
         return rs;
     }
+
+    calcPrice([reserve0, reserve1], decimals = 18) {
+        if (reserve0 == "0") return 0;
+        if (reserve1.length < 20) return 0;
+        let dd = toBN(10).pow(toBN(18 - decimals));
+        return parseInt(toBN(reserve1).muln(100000).div(toBN(reserve0)).div(dd)) / 100000;
+    }
+
+    async getTicker(token0, fromBlock, toBlock) {
+        const fromIdx = Math.floor(fromBlock / 100000);
+        const toIdx = Math.floor(toBlock / 100000);
+        const rs = [];
+        let lastBlock = fromBlock;
+        let o, h, l, c, v = toBN(0);
+        for (let idx = fromIdx; idx <= toIdx; idx++) {
+            try {
+                await this.partitioner.loadLog(token0, idx, ([block, , bs, , , amount0, , amountUSD, amountBNB]) => {
+                    v = v.add(toBN(amount0));
+                    const price = calcPrice([amount0, amountUSD]);
+                    if (!o) o = price;
+                    if (!h || price > h) h = price;
+                    if (!l || price < l) l = price;
+                    if (parseInt(block) > lastBlock + 20) {
+                        rs.push({ o, h, l, c: price, v });
+                        lastBlock = parseInt(block);
+                        o = h = l = undefined;
+                        v = toBN(0);
+                    }
+                });
+            } catch (err) { }
+        }
+        return rs;
+    }
 }
 
 module.exports = SwapModel;

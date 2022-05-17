@@ -144,6 +144,8 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
     }
     t.reverse(); c.reverse(); o.reverse(); h.reverse(); l.reverse(); v.reverse();
     if (t.length > 0) {
+        const { price } = (await axios.get(`${LIQUIDITY_BASE}/api/v1/transaction/${base}`)).data;
+        c[c.length - 1] = price;
         res.json({ s: "ok", t, c, o, h, l, v });
     } else {
         let nextTime = bars.t[0] + RESOLUTION_NEXTTIME[resolution];

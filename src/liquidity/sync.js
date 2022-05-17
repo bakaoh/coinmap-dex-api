@@ -67,14 +67,18 @@ class SyncModel {
         }
         pools.sort((a, b) => toBN(b.token0 == token ? b.reserve0 : b.reserve1).gt(toBN(a.token0 == token ? a.reserve0 : a.reserve1)) ? 1 : -1);
         let tokenPrice = 0;
+        let pricePool = undefined;
         for (let pool of pools) {
             if (isUSD(pool.token1)) tokenPrice = this.calcPrice([pool.reserve0, pool.reserve1], decimals);
             else if (isUSD(pool.token0)) tokenPrice = this.calcPrice([pool.reserve1, pool.reserve0], decimals);
             else if (pool.token1 == ContractAddress.WBNB) tokenPrice = await this.getBNBPrice() * this.calcPrice([pool.reserve0, pool.reserve1], decimals);
             else if (pool.token0 == ContractAddress.WBNB) tokenPrice = await this.getBNBPrice() * this.calcPrice([pool.reserve1, pool.reserve0], decimals);
-            if (tokenPrice) break;
+            if (tokenPrice) {
+                pricePool = pool;
+                break;
+            }
         }
-        return { tokenPrice, pools };
+        return { tokenPrice, pools, pricePool };
     }
 
     async getReserves(pair, isToken0 = true) {
