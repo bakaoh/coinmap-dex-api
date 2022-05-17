@@ -6,6 +6,7 @@ const swapModel = new SwapModel();
 const COMMON_BASE = 'http://10.148.0.33:9612';
 const RESOLUTION_INTERVAL = { "1": "minute", "5": "minute", "15": "minute", "60": "minute", "1D": "day", "1W": "day" };
 const RESOLUTION_COUNT = { "1": 1, "5": 5, "15": 15, "60": 60, "1D": 1, "1W": 7 };
+const RESOLUTION_NEXTTIME = { "1": 60, "5": 5 * 60, "15": 15 * 60, "60": 60 * 60, "1D": 24 * 60 * 60, "1W": 7 * 24 * 60 * 60 };
 
 async function getDexTradesLocal(token, countback, count) {
     const cur = new Date();
@@ -31,8 +32,6 @@ async function getDexTrades(base, quote, resolution, exchangeName = "Pancake v2"
     const interval = RESOLUTION_INTERVAL[resolution] || "minute";
     const count = RESOLUTION_COUNT[resolution] || 1;
     const exchange = `exchangeName: {is: "${exchangeName}"}`;
-    if (interval == "minute") return getDexTradesLocal(base, countback, count);
-
     let query = `
 {
     ethereum(network: bsc) {
@@ -77,5 +76,5 @@ async function getDexTrades(base, quote, resolution, exchangeName = "Pancake v2"
     return { s: "ok", t, c, o, h, l, v };
 }
 
-module.exports = { getDexTrades, getDexTradesLocal };
+module.exports = { getDexTrades, getDexTradesLocal, RESOLUTION_INTERVAL, RESOLUTION_COUNT, RESOLUTION_NEXTTIME };
 
