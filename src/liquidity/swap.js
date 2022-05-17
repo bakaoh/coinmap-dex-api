@@ -1,6 +1,7 @@
 const Crawler = require("../utils/crawler");
 const { web3, ContractAddress, isUSD, toBN } = require('../utils/bsc');
 const { Partitioner, getLastLine, getLastFile } = require('../utils/io');
+const { getNumber } = require('../utils/format');
 const readLastLines = require('read-last-lines');
 
 const SWAP_TOPIC = '0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822';
@@ -150,10 +151,11 @@ class SwapModel {
         return parseInt(toBN(reserve1).muln(100000).div(toBN(reserve0)).div(dd)) / 100000;
     }
 
-    async getTicker(token0, fromBlock, toBlock, startTs) {
+    async getTicker(token0, fromBlock, toBlock, startTs, minuteCount = 1, decimals = 18) {
         const fromIdx = Math.floor(fromBlock / 100000);
         const toIdx = Math.floor(toBlock / 100000);
         const rs = [];
+        const blockInterval = 20 * minuteCount;
         let lastBlock = fromBlock;
         let t = startTs;
         let o, h, l, c, v = toBN(0);
@@ -162,20 +164,20 @@ class SwapModel {
                 await this.partitioner.loadLog(token0, idx, ([block, , , , , amount0, , amountUSD, amountBNB]) => {
                     block = parseInt(block);
                     if (block < lastBlock) return;
-                    if (block > lastBlock + 20) {
-                        while (block > lastBlock + 20) {
-                            lastBlock = lastBlock + 20;
-                            t = t + 60;
+                    if (block > lastBlock + blockInterval) {
+                        while (block > lastBlock + blockInterval) {
+                            lastBlock = lastBlock + blockInterval;
+                            t = t + 60 * minuteCount;
                         }
                         if (o && h && l && c) {
-                            rs.push({ t, block, o, h, l, c, v: v.toString(10) });
+                            rs.push({ t, block, o, h, l, c, v: getNumber(v.toString(10), 5, decimals) });
                             o = h = l = undefined;
                             v = toBN(0);
                         }
                     }
 
                     v = v.add(toBN(amount0));
-                    const price = this.calcPrice([amount0, amountUSD]);
+                    const price = this.calcPrice([amount0, amountUSD], decimals);
                     if (price == 0) return;
                     c = price;
                     if (!o) o = price;
