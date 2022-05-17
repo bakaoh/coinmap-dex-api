@@ -160,7 +160,7 @@ class SwapModel {
             try {
                 await this.partitioner.loadLog(token0, idx, ([block, , bs, , , amount0, , amountUSD, amountBNB]) => {
                     v = v.add(toBN(amount0));
-                    const price = calcPrice([amount0, amountUSD]);
+                    const price = this.calcPrice([amount0, amountUSD]);
                     if (!o) o = price;
                     if (!h || price > h) h = price;
                     if (!l || price < l) l = price;
