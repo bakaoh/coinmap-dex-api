@@ -177,7 +177,7 @@ class SwapModel {
                     }
 
                     v = v.add(toBN(amount0));
-                    if (amount0.length < decimals) return;
+                    if (amount0.length < decimals + 2) return;
                     const price = this.calcPrice([amount0, amountUSD], decimals);
                     if (price == 0) return;
                     c = price;
