@@ -159,17 +159,20 @@ class SwapModel {
         for (let idx = fromIdx; idx <= toIdx; idx++) {
             try {
                 await this.partitioner.loadLog(token0, idx, ([block, , bs, , , amount0, , amountUSD, amountBNB]) => {
-                    v = v.add(toBN(amount0));
-                    const price = this.calcPrice([amount0, amountUSD]);
-                    if (!o) o = price;
-                    if (!h || price > h) h = price;
-                    if (!l || price < l) l = price;
                     if (parseInt(block) > lastBlock + 20) {
-                        rs.push({ o, h, l, c: price, v });
+                        rs.push({ block, o, h, l, c, v });
                         lastBlock = parseInt(block);
                         o = h = l = undefined;
                         v = toBN(0);
                     }
+
+                    v = v.add(toBN(amount0));
+                    const price = this.calcPrice([amount0, amountUSD]);
+                    if (price == 0) return;
+                    c = price;
+                    if (!o) o = price;
+                    if (!h || price > h) h = price;
+                    if (!l || price < l) l = price;
                 });
             } catch (err) { }
         }
