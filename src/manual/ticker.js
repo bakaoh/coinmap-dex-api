@@ -1,4 +1,4 @@
-const SwapModel = require("./swap");
+const SwapModel = require("../liquidity/swap");
 const swapModel = new SwapModel();
 
 async function main() {
