@@ -2,7 +2,7 @@ const axios = require("axios");
 const NodeCache = require("node-cache");
 const cache = new NodeCache({ stdTTL: 3 * 60 * 60, useClones: false });
 
-const COMMON_BASE = 'http://10.148.0.33:9612';
+const COMMON_BASE = 'http://10.148.0.39:9612';
 
 const symbolCache = {};
 const getSymbol = async (token) => {

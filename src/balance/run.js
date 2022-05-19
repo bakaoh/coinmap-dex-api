@@ -2,7 +2,7 @@ const axios = require("axios");
 const Indexer = require('./indexer');
 const TokenModel = require('./token');
 
-const COMMON_BASE = 'http://10.148.0.33:9612';
+const COMMON_BASE = 'http://10.148.0.39:9612';
 
 const IGNORE = [
     '0xD35f9AB96d04aDB02Fd549Ef6a576Ce4E2C1d935',

@@ -8,7 +8,7 @@ const { getCache } = require("../cache");
 const { getAddress, ContractAddress, toBN, isUSD, getFactoryName } = require('../utils/bsc');
 const { getNumber } = require('../utils/format');
 
-const COMMON_BASE = 'http://10.148.0.33:9612';
+const COMMON_BASE = 'http://10.148.0.39:9612';
 
 const app = express();
 const pairModel = new PairModel();
