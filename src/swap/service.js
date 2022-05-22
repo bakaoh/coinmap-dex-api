@@ -10,7 +10,7 @@ const app = express();
 const sharkModel = new SharkModel();
 app.use(express.json());
 
-const LIQUIDITY_BASE = 'http://localhost:9613';
+const LIQUIDITY_BASE = 'http://10.148.0.34:9613';
 
 app.get('/api/v1/rating/pool/:token', async (req, res) => {
     const token = getAddress(req.params.token);
