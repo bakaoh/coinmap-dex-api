@@ -61,7 +61,8 @@ async function getDexTrades(base, quote, resolution, exchangeName = "Pancake v2"
         data: { query, variables },
         headers: {
             'Content-Type': 'application/json',
-            'X-API-KEY': 'BQYUBYgBU3vXGryzFxzV75CHtCoG8Fxl',
+            'X-API-KEY': 'BQYql5zzPyCngxyM4eNzdi8kLudBW93U',
+            // 'X-API-KEY': 'BQYUBYgBU3vXGryzFxzV75CHtCoG8Fxl',
         }
     });
     const t = [], c = [], o = [], h = [], l = [], v = [];
