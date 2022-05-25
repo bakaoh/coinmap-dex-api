@@ -159,6 +159,7 @@ class SwapModel {
         let lastBlock = fromBlock;
         let t = startTs;
         let o, h, l, c, v = toBN(0);
+        let lastPrice = undefined;
         for (let idx = fromIdx; idx <= toIdx; idx++) {
             try {
                 await this.partitioner.loadLog(token0, idx, ([block, , , , , amount0, , amountUSD, amountBNB]) => {
@@ -177,9 +178,11 @@ class SwapModel {
                     }
 
                     v = v.add(toBN(amount0));
-                    if (amountUSD.length < 21) return;
+                    if (amountUSD.length < 20) return;
                     const price = this.calcPrice([amount0, amountUSD], decimals);
                     if (price == 0) return;
+                    if (lastPrice && Math.abs(lastPrice - price) * 5 > lastPrice) return;
+                    lastPrice = price;
                     c = price;
                     if (!o) o = price;
                     if (!h || price > h) h = price;
