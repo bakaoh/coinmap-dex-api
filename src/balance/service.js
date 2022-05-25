@@ -55,6 +55,15 @@ app.get('/api/v1/holder/:token', async (req, res) => {
     res.json(rs);
 })
 
+app.get('/api/v1/inflation/:token', async (req, res) => {
+    const token = getAddress(req.params.token);
+    const rs = await getCache(`inflation-${token}`, async () => {
+        const rate = (await balanceModel.getInflationary(token));
+        return { inflationary: (rate != '0'), rate };
+    });
+    res.json(rs);
+})
+
 app.get('/api/v1/shark/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const { decimals } = await tokenModel.getToken(token);

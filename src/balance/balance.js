@@ -81,6 +81,22 @@ class Crawler {
         return rs;
     }
 
+    async getInflationary(token) {
+        try {
+            let totalMint = toBN(0);
+            let totalDay = 0;
+            const file = `cache/summary/${token}/total-mint.log`
+            const lastLines = await readLastLines.read(file, 30);
+            lastLines.trim().split('\n').forEach(line => {
+                const [block, mint] = line.split(',');
+                totalDay++;
+                totalMint = totalMint.add(toBN(mint));
+            });
+            return totalMint.div(toBN(totalDay)).toString();
+        } catch (err) { }
+        return '0';
+    }
+
     closeAll() {
         const keys = Object.keys(this.writer);
         keys.forEach(address => { this.writer[address].writer.end(); });
