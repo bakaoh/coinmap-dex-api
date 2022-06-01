@@ -89,8 +89,9 @@ app.get('/api/v1/transaction/:token', async (req, res) => {
     const buyOrder = [], sellOrder = [], transaction = [];
     const lastTx = await swapModel.getLastTx(token, 30);
     const bnbPriceBN = toBN(Math.round(await syncModel.getBNBPrice()));
-    let price;
     const { decimals } = await getToken(token);
+    const { tokenPrice } = (await syncModel.getPools(token, pairModel.getPools(token), decimals));
+    let price = tokenPrice;
     const dd = toBN(10).pow(toBN(18 - decimals));
     lastTx.forEach(tx => {
         if (tx.amount0 == "0") return;
@@ -102,7 +103,7 @@ app.get('/api/v1/transaction/:token', async (req, res) => {
             txTotal = toBN(tx.amountBNB).mul(bnbPriceBN);
         } else return;
         const newprice = parseInt(txTotal.muln(100000).div(amount0BN).div(dd).toString(10)) / 100000;
-        if (price && Math.abs(price - newprice) * 5 > price) return;
+        if (Math.abs(price - newprice) * 5 > price) return;
         price = newprice;
         const item = {
             price,
