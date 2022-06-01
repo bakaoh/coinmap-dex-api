@@ -1,6 +1,6 @@
 const Crawler = require("../utils/crawler");
 const { web3, ContractAddress, isUSD, toBN } = require('../utils/bsc');
-const { Partitioner, getLastLine, getLastFile } = require('../utils/io');
+const { Partitioner, getLastFiles } = require('../utils/io');
 const { getNumber } = require('../utils/format');
 const readLastLines = require('read-last-lines');
 
@@ -77,13 +77,17 @@ class SwapModel {
         const rs = [];
         if (token.length != 42) return rs;
         try {
-            const lastFile = getLastFile(`${DATA_FOLDER}/${token}`);
-            if (lastFile == '') return rs;
-            const lastLines = await readLastLines.read(`${DATA_FOLDER}/${token}/${lastFile}`, n);
-            lastLines.trim().split('\n').forEach(line => {
-                const [block, , bs, , , amount0, , amountUSD, amountBNB] = line.split(',');
-                rs.push({ block, bs, amount0, amountUSD, amountBNB });
-            });
+            const lastFiles = getLastFiles(`${DATA_FOLDER}/${token}`);
+            if (lastFiles.length == 0) return rs;
+            let idx = 0;
+            while (rs.length < n && idx < 10) {
+                const lastLines = await readLastLines.read(`${DATA_FOLDER}/${token}/${lastFiles[idx]}`, n - rs.length);
+                lastLines.trim().split('\n').forEach(line => {
+                    const [block, , bs, , , amount0, , amountUSD, amountBNB] = line.split(',');
+                    rs.push({ block, bs, amount0, amountUSD, amountBNB });
+                });
+                idx++;
+            }
         } catch (err) { }
         return rs;
     }

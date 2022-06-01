@@ -19,6 +19,11 @@ function getLastFile(dir) {
     return files.sort((a, b) => parseInt(b) - parseInt(a))[0];
 }
 
+function getLastFiles(dir) {
+    let files = fs.readdirSync(dir);
+    return files.sort((a, b) => parseInt(b) - parseInt(a));
+}
+
 class Partitioner {
     constructor(prefix, suffix = "") {
         this.prefix = prefix;
@@ -53,4 +58,4 @@ class Partitioner {
     }
 }
 
-module.exports = { getLastLine, getLastFile, Partitioner }
+module.exports = { getLastLine, getLastFile, getLastFiles, Partitioner }

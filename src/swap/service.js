@@ -21,7 +21,8 @@ app.get('/api/v1/rating/pool/:token', async (req, res) => {
 app.get('/api/v1/wallets/profitable-by-percent/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const top = await getCache(`topWallets-${token}`, async () => {
-        return sharkModel.topWallets(token);
+        const { price } = (await axios.get(`${LIQUIDITY_BASE}/api/v1/transaction/${base}`)).data;
+        return sharkModel.topWallets(token, price);
     });
     const rs = top.topProfitByPercent.map(i => ({ address: i }));
     res.json(rs);
@@ -30,7 +31,8 @@ app.get('/api/v1/wallets/profitable-by-percent/:token', async (req, res) => {
 app.get('/api/v1/wallets/profitable-by-usd/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const top = await getCache(`topWallets-${token}`, async () => {
-        return sharkModel.topWallets(token);
+        const { price } = (await axios.get(`${LIQUIDITY_BASE}/api/v1/transaction/${base}`)).data;
+        return sharkModel.topWallets(token, price);
     });
     const rs = top.topProfitByUsd.map(i => ({ address: i }));
     res.json(rs);
@@ -39,7 +41,8 @@ app.get('/api/v1/wallets/profitable-by-usd/:token', async (req, res) => {
 app.get('/api/v1/wallets/total-transaction/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const top = await getCache(`topWallets-${token}`, async () => {
-        return sharkModel.topWallets(token);
+        const { price } = (await axios.get(`${LIQUIDITY_BASE}/api/v1/transaction/${base}`)).data;
+        return sharkModel.topWallets(token, price);
     });
     const rs = top.topTotal.map(i => ({ address: i }));
     res.json(rs);
