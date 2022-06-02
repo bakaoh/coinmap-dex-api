@@ -45,7 +45,7 @@ class SharkModel {
             const profitByPercent = profitByUsd.muln(100).div(toBN(accTotal));
             topProfitByPercent.push(acc, profitByPercent);
             } catch (err) {
-                console.log(accTotal)
+                console.log(err, accTotal)
             }
         })
         return {
