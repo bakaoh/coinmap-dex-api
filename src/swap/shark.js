@@ -36,11 +36,12 @@ class SharkModel {
         const topTotal = new Leaderboard(TOP_SIZE);
         const topProfitByPercent = new Leaderboard(TOP_SIZE);
         const topProfitByUsd = new Leaderboard(TOP_SIZE);
+        const priceBN = toBN(Math.round(price * 100000000));
         await this.partitioner.loadLog(token, 183, ([acc, accTotal, accToken, accUsd]) => {
             if (accTotal == '0') return;
             try {
             topTotal.push(acc, toBN(accTotal));
-            const profitByUsd = toBN(accToken).muln(price * 100000000).divn(100000000).sub(toBN(accUsd));
+            const profitByUsd = toBN(accToken).mul(priceBN).divn(100000000).sub(toBN(accUsd));
             topProfitByUsd.push(acc, profitByUsd);
             const profitByPercent = profitByUsd.muln(100).div(toBN(accTotal));
             topProfitByPercent.push(acc, profitByPercent);
