@@ -1,3 +1,4 @@
+const fs = require('fs');
 const LineByLine = require('line-by-line');
 const { Partitioner } = require('../utils/io');
 const Leaderboard = require('../utils/leaderboard');
@@ -5,11 +6,14 @@ const { toBN } = require('../utils/bsc');
 
 const DATA_FOLDER = 'db/shark';
 const TOP_SIZE = 10;
+const ID = 183;
+const CACHE_FOLDER = `cache/shark/${ID}`;
 
 class SharkModel {
     constructor() {
         this.partitioner = new Partitioner(DATA_FOLDER);
         this.topPools = [];
+        if (!fs.existsSync(CACHE_FOLDER)) fs.mkdirSync(CACHE_FOLDER, { recursive: true });
     }
 
     getPoolRate(token) {
@@ -33,12 +37,16 @@ class SharkModel {
     }
 
     async topWallets(token, price) {
+        const cacheFile = `${CACHE_FOLDER}/${token}`;
+        if (fs.existsSync(cacheFile)) {
+            return JSON.parse(fs.readFileSync(cacheFile));
+        }
         const topTotal = new Leaderboard(TOP_SIZE);
         const topProfitByPercent = new Leaderboard(TOP_SIZE);
         const topProfitByUsd = new Leaderboard(TOP_SIZE);
         const priceBN = toBN(Math.round(price * 100000000));
         const d = toBN("100000000")
-        await this.partitioner.loadLog(token, 183, ([acc, accTotal, accToken, accUsd]) => {
+        await this.partitioner.loadLog(token, ID, ([acc, accTotal, accToken, accUsd]) => {
             if (accTotal == '0') return;
             topTotal.push(acc, toBN(accTotal));
             const profitByUsd = toBN(accToken).mul(priceBN).div(d).sub(toBN(accUsd));
@@ -46,11 +54,13 @@ class SharkModel {
             const profitByPercent = profitByUsd.muln(100).div(toBN(accTotal));
             topProfitByPercent.push(acc, profitByPercent);
         })
-        return {
+        const rs = {
             topTotal: topTotal.getKeys(),
             topProfitByPercent: topProfitByPercent.getKeys(),
             topProfitByUsd: topProfitByUsd.getKeys(),
         };
+        fs.writeFileSync(cacheFile, JSON.stringify(rs, null, 2));
+        return rs;
     }
 }
 
