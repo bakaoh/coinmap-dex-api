@@ -11,7 +11,7 @@ const ID = 183;
 const CACHE_FOLDER = `cache/shark/${ID}`;
 
 async function getTopEOA(addresses) {
-    return checkIsContract(addresses).slice(0, TOP_SIZE);
+    return (await checkIsContract(addresses)).slice(0, TOP_SIZE);
 }
 
 class SharkModel {
