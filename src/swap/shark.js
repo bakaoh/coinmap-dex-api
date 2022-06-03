@@ -53,6 +53,7 @@ class SharkModel {
         const d = toBN("100000000")
         await this.partitioner.loadLog(token, ID, ([acc, accTotal, accToken, accUsd]) => {
             if (accTotal == '0') return;
+            if (acc.length != 42) return;
             topTotal.push(acc, toBN(accTotal));
             const profitByUsd = toBN(accToken).mul(priceBN).div(d).sub(toBN(accUsd));
             topProfitByUsd.push(acc, profitByUsd);
