@@ -64,7 +64,7 @@ async function checkIsContract(addresses) {
     const isContract = await multicheck.methods.checkMulti(addresses).call();
     const rs = [];
     for (let i = 0; i < addresses.length; i++) {
-        if (!isContract[i]) rs.push(addresses);
+        if (!isContract[i]) rs.push(addresses[i]);
     }
     return rs;
 }
