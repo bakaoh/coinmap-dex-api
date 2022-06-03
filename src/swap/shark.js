@@ -3,11 +3,16 @@ const LineByLine = require('line-by-line');
 const { Partitioner } = require('../utils/io');
 const Leaderboard = require('../utils/leaderboard');
 const { toBN } = require('../utils/bsc');
+const { checkIsContract } = require('../multicall')
 
 const DATA_FOLDER = 'db/shark';
 const TOP_SIZE = 10;
 const ID = 183;
 const CACHE_FOLDER = `cache/shark/${ID}`;
+
+async function getTopEOA(addresses) {
+    return checkIsContract(addresses).slice(0, TOP_SIZE);
+}
 
 class SharkModel {
     constructor() {
@@ -41,9 +46,9 @@ class SharkModel {
         if (fs.existsSync(cacheFile)) {
             return JSON.parse(fs.readFileSync(cacheFile));
         }
-        const topTotal = new Leaderboard(TOP_SIZE);
-        const topProfitByPercent = new Leaderboard(TOP_SIZE);
-        const topProfitByUsd = new Leaderboard(TOP_SIZE);
+        const topTotal = new Leaderboard(TOP_SIZE * 10);
+        const topProfitByPercent = new Leaderboard(TOP_SIZE * 10);
+        const topProfitByUsd = new Leaderboard(TOP_SIZE * 10);
         const priceBN = toBN(Math.round(price * 100000000));
         const d = toBN("100000000")
         await this.partitioner.loadLog(token, ID, ([acc, accTotal, accToken, accUsd]) => {
@@ -55,9 +60,9 @@ class SharkModel {
             topProfitByPercent.push(acc, profitByPercent);
         })
         const rs = {
-            topTotal: topTotal.getKeys(),
-            topProfitByPercent: topProfitByPercent.getKeys(),
-            topProfitByUsd: topProfitByUsd.getKeys(),
+            topTotal: await getTopEOA(topTotal.getKeys()),
+            topProfitByPercent: await getTopEOA(topProfitByPercent.getKeys()),
+            topProfitByUsd: await getTopEOA(topProfitByUsd.getKeys()),
         };
         fs.writeFileSync(cacheFile, JSON.stringify(rs, null, 2));
         return rs;
