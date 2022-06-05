@@ -39,11 +39,12 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const { symbol, decimals } = (await getToken(token));
     const { tokenPrice, pools, pricePool } = (await syncModel.getPools(token, pairModel.getPools(token), decimals));
-
+    console.log("getPools", tokenPrice, pools, pricePool)
     const data = await getCache(`poolhistory-${token}`, async () => {
         const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=10`)).data;
         for (let pool of pools) {
             pool.history = await syncModel.getReservesHistory(pool.pair, block, pool.token0 == token);
+            console.log("getReservesHistory", pool.history)
         }
         let quotePrice = 1;
         if (pricePool && token != ContractAddress.WBNB && (pricePool.token0 == ContractAddress.WBNB || pricePool.token1 == ContractAddress.WBNB)) quotePrice = await syncModel.getBNBPrice()
@@ -52,7 +53,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
             for (let pool of pools) {
                 totalToken = totalToken.add(toBN(pool.history[i][0]));
             }
-            const price = syncModel.calcPrice(pricePool.history[i], decimals) * quotePrice;
+            const price = pricePool ? syncModel.calcPrice(pricePool.history[i], decimals) * quotePrice : tokenPrice;
             return { date, price, totalAmount: getNumber(totalToken.toString(10), 0, decimals) * price };
         });
     });
@@ -109,6 +110,7 @@ app.get('/api/v1/transaction/:token', async (req, res) => {
             price,
             total: getNumber(txTotal.toString(10), 5),
             amount: getNumber(tx.amount0, 5, decimals),
+            from: tx.from,
             type: tx.bs,
         }
         transaction.push(item);

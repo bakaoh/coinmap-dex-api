@@ -83,8 +83,8 @@ class SwapModel {
             while (rs.length < n && idx < 10) {
                 const lastLines = await readLastLines.read(`${DATA_FOLDER}/${token}/${lastFiles[idx]}`, n - rs.length);
                 lastLines.trim().split('\n').forEach(line => {
-                    const [block, , bs, , , amount0, , amountUSD, amountBNB] = line.split(',');
-                    rs.push({ block, bs, amount0, amountUSD, amountBNB });
+                    const [block, , bs, from, , amount0, , amountUSD, amountBNB] = line.split(',');
+                    rs.push({ block, bs, from, amount0, amountUSD, amountBNB });
                 });
                 idx++;
             }
