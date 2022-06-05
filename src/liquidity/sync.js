@@ -49,7 +49,7 @@ class SyncModel {
 
     calcPrice([reserve0, reserve1], decimals = 18) {
         if (reserve0 == "0") return 0;
-        if (reserve1.length < 20) return 0;
+        if (reserve1.length < 18) return 0;
         let dd = toBN(10).pow(toBN(18 - decimals));
         return parseInt(toBN(reserve1).muln(100000).div(toBN(reserve0)).div(dd)) / 100000;
     }
