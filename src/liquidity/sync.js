@@ -145,7 +145,7 @@ class SyncModel {
         if (lpA[tokenB]) {
             const [reserveA, reserveB] = await this.getReserves(lpA[tokenB].pair, lpA[tokenB].isToken0);
             if (reserveA != '0' && reserveB != '0') {
-                const amountOut = getAmountOut(amountIn, toBN(reserveB), toBN(reserveA)).toString(10);
+                const amountOut = getAmountOut(amountIn, toBN(reserveA), toBN(reserveB)).toString(10);
                 return { paths: [tokenA, tokenB], amountOut, feePaths };
             }
         }
