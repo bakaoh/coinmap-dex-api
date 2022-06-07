@@ -8,13 +8,14 @@ const COMMON_BASE = 'http://localhost:9613';
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
 class Manager {
-    constructor(seed, nAccount = 1) {
+    constructor(seed, nAccount, orderModel) {
         const seedBuffer = Buffer.from(seed, "hex");
         this.master = hdkey.fromMasterSeed(seedBuffer);
         this.parent = this.master.derivePath("m/44'/60'/0'/0");
         this.accounts = [];
         this.nAccount = nAccount;
         this.processing = {};
+        this.orderModel = orderModel;
         this.init();
     }
 
@@ -39,9 +40,16 @@ class Manager {
                 const sig = order.sig;
                 delete order.status;
                 delete order.sig;
-                const rs = await this.accounts[0].executeOrder(order.maker, order, sig, data.paths, data.feePaths)
-                    .catch(error => console.log("executeOrder", error.toString(), error));
-                console.log(order, rs);
+                try {
+                    const rs = await this.accounts[0].executeOrder(order.maker, order, sig, data.paths, data.feePaths)
+                    console.log(order, rs);
+                } catch (err) {
+                    if (err.toString().includes("Transaction has been reverted by the EVM")) {
+                        this.orderModel.writeStatus(["0", order.maker, order.salt, 3]);
+                    } else {
+                        this.processing[order.salt] = false;
+                    }
+                }
                 return true;
             }
             await sleep(200);

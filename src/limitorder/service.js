@@ -7,7 +7,7 @@ const Manager = require("./manager");
 const cors = require('cors')
 
 const orderModel = new OrderModel();
-const manager = new Manager(process.env.MASTER_SEED, 1);
+const manager = new Manager(process.env.MASTER_SEED, 1, orderModel);
 
 const app = express();
 app.use(express.json());
@@ -37,7 +37,7 @@ async function start(port) {
                 if (await manager.process(order)) break;
             }
         } catch (err) { console.log(`Error:`, err); }
-    }, 3000)
+    }, 10000)
 
     app.listen(port);
     const ms = Date.now() - startMs;
