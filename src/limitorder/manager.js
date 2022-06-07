@@ -5,6 +5,8 @@ const Executor = require("./executor");
 
 const COMMON_BASE = 'http://localhost:9613';
 
+const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
 class Manager {
     constructor(seed, nAccount = 1) {
         const seedBuffer = Buffer.from(seed, "hex");
@@ -26,8 +28,9 @@ class Manager {
     }
 
     async process(order) {
-        if (order.status != 0) return;
-        if (this.processing[order.salt]) return;
+        if (order.status != 0) return false;
+        if (parseInt(order.deadline) * 1000 < Date.now()) return false;
+        if (this.processing[order.salt]) return false;
 
         this.processing[order.salt] = true;
         try {
@@ -38,12 +41,14 @@ class Manager {
                 delete order.sig;
                 const rs = await this.accounts[0].executeOrder(order.maker, order, sig, data.paths, data.feePaths);
                 console.log(order, rs);
-                return;
+                return true;
             }
+            await sleep(200);
         } catch (err) {
             console.log(err)
         }
         this.processing[order.salt] = false;
+        return false;
     }
 }
 

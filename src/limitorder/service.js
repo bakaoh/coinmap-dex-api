@@ -34,7 +34,7 @@ async function start(port) {
         try {
             const orders = orderModel.getAllOrders();
             for (let order of orders) {
-                await manager.process(order);
+                if (await manager.process(order)) break;
             }
         } catch (err) { console.log(`Error:`, err); }
     }, 3000)
