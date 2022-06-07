@@ -39,7 +39,8 @@ class Manager {
                 const sig = order.sig;
                 delete order.status;
                 delete order.sig;
-                const rs = await this.accounts[0].executeOrder(order.maker, order, sig, data.paths, data.feePaths);
+                const rs = await this.accounts[0].executeOrder(order.maker, order, sig, data.paths, data.feePaths)
+                    .catch(error => console.log("executeOrder", error.toString(), error));
                 console.log(order, rs);
                 return true;
             }
