@@ -1,7 +1,6 @@
 const Crawler = require("../utils/crawler");
 const { web3, ContractAddress, isUSD, toBN } = require('../utils/bsc');
-const { Partitioner, getLastLine, getLastFile } = require('../utils/io');
-const { getNumber } = require('../utils/format');
+const { Partitioner, getLastLine, getLastFile, getLastFiles } = require('../utils/io');
 
 const SYNC_TOPIC = '0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1';
 const BLOCK_FILE = 'logs/sync.block';
@@ -37,6 +36,7 @@ class SyncModel {
     constructor() {
         this.partitioner = new Partitioner(DATA_FOLDER);
         this.reserves = {};
+        this.bnb = {};
     }
 
     async runCrawler() {
@@ -45,6 +45,31 @@ class SyncModel {
             await this.writeSyncLog(log.blockNumber, log.transactionIndex, log.logIndex, log.address, values[0].toString(10), values[1].toString(10));
         }, 200);
         await this.crawler.run();
+    }
+
+    async loadBNBPrice() {
+        const startMs = Date.now();
+        const pair = ContractAddress.PAIR_WBNB_BUSD;
+        const lastFiles = getLastFiles(`${DATA_FOLDER}/${pair}`);
+        if (lastFiles.length == 0) return;
+        for (let i = lastFiles.length - 2; i < lastFiles.length; i++) {
+            const idx = parseInt(lastFiles[i]);
+            await this.partitioner.loadLog(pair, idx, ([block, , , reserve0, reserve1]) => {
+                this.updateBNBPrice(block, this.calcPrice([reserve0, reserve1]));
+            });
+        }
+        console.log(`Load BNB price (${Date.now() - startMs}ms)`)
+    }
+
+    updateBNBPrice(block, price) {
+        if (!this.bnb[block]) this.bnb[block] = { o: price, c: price, h: price, l: price };
+        this.bnb[block].c = price;
+        if (this.bnb[block].h < price) this.bnb[block].h = price;
+        if (this.bnb[block].l > price) this.bnb[block].l = price;
+    }
+
+    getBNB(block) {
+        return this.bnb[block];
     }
 
     calcPrice([reserve0, reserve1], decimals = 18) {
@@ -165,6 +190,9 @@ class SyncModel {
         const idx = Math.floor(block / 100000);
         this.partitioner.getWriter(pair, idx).write(`${block},${txIdx},${logIdx},${reserve0},${reserve1}\n`);
         this.reserves[pair] = [reserve0, reserve1];
+        if (pair == ContractAddress.PAIR_WBNB_BUSD) {
+            this.updateBNBPrice(block, this.calcPrice([reserve0, reserve1]));
+        }
     }
 }
 

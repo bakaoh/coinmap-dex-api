@@ -131,10 +131,18 @@ app.get('/api/v1/bigtx/:token', async (req, res) => {
     res.json(rs);
 })
 
+// internal api
+app.get('/price/bnb', (req, res) => {
+    const rs = syncModel.getBNB(req.query.block);
+    res.json(rs);
+})
+
 async function start(port) {
     const startMs = Date.now();
 
     await pairModel.warmup();
+    await syncModel.loadBNBPrice();
+
     await pairModel.runCrawler();
     await syncModel.runCrawler();
     await swapModel.runCrawler();
