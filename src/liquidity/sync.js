@@ -52,7 +52,7 @@ class SyncModel {
         const pair = ContractAddress.PAIR_WBNB_BUSD;
         const lastFiles = getLastFiles(`${DATA_FOLDER}/${pair}`);
         if (lastFiles.length == 0) return;
-        for (let i = lastFiles.length - 2; i < lastFiles.length; i++) {
+        for (let i = 0; i < 2; i++) {
             const idx = parseInt(lastFiles[i]);
             await this.partitioner.loadLog(pair, idx, ([block, , , reserve0, reserve1]) => {
                 this.updateBNBPrice(block, this.calcPrice([reserve0, reserve1]));
