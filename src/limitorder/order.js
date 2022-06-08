@@ -23,7 +23,7 @@ class OrderModel {
         this.crawler = new Crawler("Order", ORDER_TOPIC, BLOCK_FILE, async (log) => {
             const values = web3.eth.abi.decodeParameters(['bytes32', 'uint8'], log.data)
             const maker = web3.eth.abi.decodeParameters(['address'], log.topics[1])
-            this.writeStatus([log.blockNumber, maker[0], values[0], values[1].toString(10)]);
+            this.writeStatus([log.blockNumber, maker[0], values[0], values[1].toString(10), ""]);
         }, 2000);
         await this.crawler.run();
     }
@@ -44,7 +44,7 @@ class OrderModel {
     loadStatus() {
         const lr = new LineByLine(ORDER_STATUS_FILE);
         lr.on('line', (line) => {
-            const [block, maker, salt, status] = line.split(',');
+            const [, , salt, status] = line.split(',');
             this.status[salt] = parseInt(status);
         });
         return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
@@ -73,8 +73,8 @@ class OrderModel {
         this.orders.push({ maker, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig })
     }
 
-    writeStatus([block, maker, salt, status]) {
-        this.statusWriter.write(`${block},${maker},${salt},${status}\n`);
+    writeStatus([block, maker, salt, status, reason]) {
+        this.statusWriter.write(`${block},${maker},${salt},${status},${reason}\n`);
         this.status[salt] = status;
     }
 }

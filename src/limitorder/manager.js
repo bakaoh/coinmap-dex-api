@@ -33,6 +33,7 @@ class Manager {
         if (order.deadline * 1000 < Date.now()) return false;
         if (this.processing[order.salt]) return false;
 
+        let executed = false;
         this.processing[order.salt] = true;
         try {
             const feeAmount = toBN(order.payAmount).muln(25).divn(10000);
@@ -43,24 +44,27 @@ class Manager {
                 delete order.status;
                 delete order.sig;
                 try {
+                    executed = true;
                     const rs = await this.accounts[0].executeOrder(order.maker, order, sig, data.paths, data.feePaths)
-                    console.log(order, rs);
+                    console.log(order.salt, JSON.stringify(rs));
+                    return true;
                 } catch (err) {
                     if (err.toString().includes("Transaction has been reverted by the EVM")) {
                         console.log(order.salt, JSON.stringify(err));
-                        this.orderModel.writeStatus(["0", order.maker, order.salt, 3]);
-                    } else {
-                        this.processing[order.salt] = false;
+                        if (err.reason != "CMD006") {
+                            const blocknumber = err.receipt ? err.receipt.blockNumber : "0";
+                            this.orderModel.writeStatus([blocknumber, order.maker, order.salt, 3, err.reason]);
+                            return true;
+                        }
                     }
                 }
-                return true;
             }
             await sleep(200);
         } catch (err) {
             console.log(err)
         }
         this.processing[order.salt] = false;
-        return false;
+        return executed;
     }
 }
 
