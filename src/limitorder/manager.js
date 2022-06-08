@@ -30,12 +30,14 @@ class Manager {
 
     async process(order) {
         if (order.status != 0) return false;
-        if (parseInt(order.deadline) * 1000 < Date.now()) return false;
+        if (order.deadline * 1000 < Date.now()) return false;
         if (this.processing[order.salt]) return false;
 
         this.processing[order.salt] = true;
         try {
-            const data = (await axios.get(`${COMMON_BASE}/route/${order.payToken}/${order.buyToken}?in=${order.payAmount}`)).data;
+            const feeAmount = toBN(order.payAmount).muln(25).divn(10000);
+            const payAmount = toBN(order.payAmount).sub(feeAmount).toString();
+            const data = (await axios.get(`${COMMON_BASE}/route/${order.payToken}/${order.buyToken}?in=${payAmount}`)).data;
             if (toBN(data.amountOut).gt(toBN(order.buyAmount))) {
                 const sig = order.sig;
                 delete order.status;
@@ -45,6 +47,7 @@ class Manager {
                     console.log(order, rs);
                 } catch (err) {
                     if (err.toString().includes("Transaction has been reverted by the EVM")) {
+                        console.log(order.salt, err);
                         this.orderModel.writeStatus(["0", order.maker, order.salt, 3]);
                     } else {
                         this.processing[order.salt] = false;

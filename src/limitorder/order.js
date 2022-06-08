@@ -45,24 +45,30 @@ class OrderModel {
         const lr = new LineByLine(ORDER_STATUS_FILE);
         lr.on('line', (line) => {
             const [block, maker, salt, status] = line.split(',');
-            this.status[salt] = status;
+            this.status[salt] = parseInt(status);
         });
         return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
     }
 
+    getStatus(order) {
+        return this.status[order.salt] || (order.deadline * 1000 > Date.now() ? 0 : 4);
+    }
+
     getOrdersByAccount(account) {
-        return this.orders.filter(i => i.maker == account).map(i => ({ ...i, status: this.status[i.salt] || 0 }));
+        return this.orders.filter(i => i.maker == account).map(i => ({ ...i, status: this.getStatus(i) }));
     }
 
     getAllOrders() {
-        return this.orders.map(i => ({ ...i, status: this.status[i.salt] || 0 }));
+        return this.orders.map(i => ({ ...i, status: this.getStatus(i) }));
     }
 
     addOrder([maker, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig]) {
+        deadline = parseInt(deadline);
         this.orders.push({ maker, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig })
     }
 
     newOrder({ maker, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig }) {
+        deadline = parseInt(deadline);
         this.detailWriter.write(`${maker},${payToken},${buyToken},${payAmount},${buyAmount},${deadline},${salt},${sig}\n`);
         this.orders.push({ maker, payToken, buyToken, payAmount, buyAmount, deadline, salt, sig })
     }
