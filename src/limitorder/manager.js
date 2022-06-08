@@ -47,7 +47,7 @@ class Manager {
                     console.log(order, rs);
                 } catch (err) {
                     if (err.toString().includes("Transaction has been reverted by the EVM")) {
-                        console.log(order.salt, err);
+                        console.log(order.salt, JSON.stringify(err));
                         this.orderModel.writeStatus(["0", order.maker, order.salt, 3]);
                     } else {
                         this.processing[order.salt] = false;

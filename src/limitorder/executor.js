@@ -12,6 +12,8 @@ const common = Common.default.forCustomChain('mainnet', {
 
 const COINMAPDEX_ADDRESS = "0xa7e44aE03307de5192944520251e95e89A56A953";
 const web3 = new Web3("https://bsc-dataseed.binance.org");
+web3.eth.handleRevert = true;
+
 const CoinmapDexContract = new web3.eth.Contract(CoinmapDexAbi, COINMAPDEX_ADDRESS);
 
 class Executor {
@@ -54,7 +56,8 @@ class Executor {
         var privateKey = Buffer.from(this.key, 'hex')
         tx.sign(privateKey);
         var serializedTx = tx.serialize();
-        return web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex')).then(tx => tx.transactionHash);
+        return web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+            .then(tx => tx.transactionHash);
     }
 }
 
