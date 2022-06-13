@@ -122,8 +122,8 @@ app.get('/api/v1/bigtx/:token', async (req, res) => {
 })
 
 // internal api
-app.get('/price/bnb', (req, res) => {
-    const rs = syncModel.getBNB(req.query.block);
+app.get('/price/:pair/:block', (req, res) => {
+    const rs = await syncModel.getTick(pair, req.params.block);
     res.json(rs);
 })
 

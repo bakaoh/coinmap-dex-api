@@ -36,7 +36,7 @@ class SyncModel {
     constructor() {
         this.partitioner = new Partitioner(DATA_FOLDER);
         this.reserves = {};
-        this.bnb = {};
+        this.prices = {};
     }
 
     async runCrawler() {
@@ -50,26 +50,36 @@ class SyncModel {
     async loadBNBPrice() {
         const startMs = Date.now();
         const pair = ContractAddress.PAIR_WBNB_BUSD;
+        this.prices[pair] = {};
+        await this.loadPrice(pair);
+        console.log(`Load BNB price (${Date.now() - startMs}ms)`)
+    }
+
+    async loadPrice(pair) {
         const lastFiles = getLastFiles(`${DATA_FOLDER}/${pair}`);
         if (lastFiles.length == 0) return;
         for (let i = 0; i < 2; i++) {
             const idx = parseInt(lastFiles[i]);
             await this.partitioner.loadLog(pair, idx, ([block, , , reserve0, reserve1]) => {
-                this.updateBNBPrice(block, this.calcPrice([reserve0, reserve1]));
+                this.updatePrice(pair, block, this.calcPrice([reserve0, reserve1]));
             });
         }
-        console.log(`Load BNB price (${Date.now() - startMs}ms)`)
     }
 
-    updateBNBPrice(block, price) {
-        if (!this.bnb[block]) this.bnb[block] = { o: price, c: price, h: price, l: price };
-        this.bnb[block].c = price;
-        if (this.bnb[block].h < price) this.bnb[block].h = price;
-        if (this.bnb[block].l > price) this.bnb[block].l = price;
+    updatePrice(pair, block, price) {
+        if (!this.prices[pair]) return;
+        if (!this.prices[pair][block]) this.prices[pair][block] = { o: price, c: price, h: price, l: price };
+        this.prices[pair][block].c = price;
+        if (this.prices[pair][block].h < price) this.prices[pair][block].h = price;
+        if (this.prices[pair][block].l > price) this.prices[pair][block].l = price;
     }
 
-    getBNB(block) {
-        return this.bnb[block];
+    async getTick(pair, block) {
+        if (!this.prices[pair]) {
+            this.prices[pair] = {};
+            await this.loadPrice(pair);
+        }
+        return this.prices[pair][block];
     }
 
     calcPrice([reserve0, reserve1], decimals = 18) {
@@ -190,9 +200,7 @@ class SyncModel {
         const idx = Math.floor(block / 100000);
         this.partitioner.getWriter(pair, idx).write(`${block},${txIdx},${logIdx},${reserve0},${reserve1}\n`);
         this.reserves[pair] = [reserve0, reserve1];
-        if (pair == ContractAddress.PAIR_WBNB_BUSD) {
-            this.updateBNBPrice(block, this.calcPrice([reserve0, reserve1]));
-        }
+        this.updatePrice(pair, block, this.calcPrice([reserve0, reserve1]));
     }
 }
 
