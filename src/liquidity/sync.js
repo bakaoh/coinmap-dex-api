@@ -107,11 +107,14 @@ class SyncModel {
         }
         const fromBlock = toBlock - countback * blockInterval;
         const fromTs = toTs - countback * minuteCount * 60;
+        let lastC = undefined;
         for (let block = fromBlock; block <= toBlock; block++) {
             if (!tokenCandles[block]) continue;
             if (isBNBPair && !bnbCandles[block]) continue;
             const tick = mergeCandle(tokenCandles[block], isBNBPair ? bnbCandles[block] : undefined, isToken0);
             const ts = Math.floor((block - fromBlock) / blockInterval) * blockInterval * 3 + fromTs;
+            if (lastC) tick.o = lastC;
+            lastC = tick.c;
             updateRs(ts, tick);
         }
         return rs;
