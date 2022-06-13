@@ -1,6 +1,7 @@
 const fs = require('fs');
 const LineByLine = require('line-by-line');
 const { getTokenMetadata } = require('../multicall');
+const { getAddress } = require('../utils/bsc');
 
 const TOKEN_DETAIL_FILE = `db/token-detail-v2.log`;
 const opts = { flags: "a" };
@@ -50,6 +51,8 @@ class TokenModel {
 
     searchToken(text) {
         if (text.length < 3) return [];
+        const address = getAddress(text);
+        if (this.token[address]) return [this.token[address]];
         return this.indexer.search(text);
     }
 

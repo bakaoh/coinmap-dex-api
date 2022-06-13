@@ -25,16 +25,6 @@ const getToken = async (token) => {
     return tokenCache[token];
 };
 
-app.get('/route/:tokenA/:tokenB', async (req, res) => {
-    const tokenA = getAddress(req.params.tokenA);
-    const tokenB = getAddress(req.params.tokenB);
-    const rs = await syncModel.getPath(
-        tokenA, tokenB,
-        pairModel.getPools(tokenA), pairModel.getPools(tokenB),
-        req.query.in);
-    res.json(rs);
-})
-
 app.get('/api/v1/pool/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const { symbol, decimals } = (await getToken(token));
@@ -134,6 +124,16 @@ app.get('/api/v1/bigtx/:token', async (req, res) => {
 // internal api
 app.get('/price/bnb', (req, res) => {
     const rs = syncModel.getBNB(req.query.block);
+    res.json(rs);
+})
+
+app.get('/route/:tokenA/:tokenB', async (req, res) => {
+    const tokenA = getAddress(req.params.tokenA);
+    const tokenB = getAddress(req.params.tokenB);
+    const rs = await syncModel.getPath(
+        tokenA, tokenB,
+        pairModel.getPools(tokenA), pairModel.getPools(tokenB),
+        req.query.in);
     res.json(rs);
 })
 
