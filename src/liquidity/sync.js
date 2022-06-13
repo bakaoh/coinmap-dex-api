@@ -82,6 +82,14 @@ class SyncModel {
         return this.prices[pair][block];
     }
 
+    async getTicks(pair) {
+        if (!this.prices[pair]) {
+            this.prices[pair] = {};
+            await this.loadPrice(pair);
+        }
+        return this.prices[pair];
+    }
+
     calcPrice([reserve0, reserve1], decimals = 18) {
         if (reserve0 == "0") return 0;
         if (reserve1.length < 18) return 0;

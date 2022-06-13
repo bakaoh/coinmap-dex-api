@@ -127,6 +127,33 @@ app.get('/price/:pair/:block', async (req, res) => {
     res.json(rs);
 })
 
+const getTicker = (ticks, fromBlock, toBlock, startTs, minuteCount = 1) => {
+    const blockInterval = 20 * minuteCount;
+    let t = startTs;
+    const rs = {};
+    const updateRs = (t, { o, c, h, l }) => {
+        if (!rs[t]) rs[t] = { o, c, h, l };
+        rs[t].c = c;
+        if (rs[t].h < h) rs[t].h = h;
+        if (rs[t].l > l) rs[t].l = l;
+    }
+    for (let block = fromBlock; block <= toBlock; block++) {
+        if (!ticks[block]) continue;
+        const t = Math.floor((block - fromBlock) / blockInterval) * blockInterval * 3 + startTs;
+        updateRs(t, ticks[block]);
+    }
+    return rs;
+}
+
+app.get('/tick/:token', async (req, res) => {
+    const token = getAddress(req.params.token);
+    const { decimals } = (await getToken(token));
+    const { pools } = (await syncModel.getPools(token, pairModel.getPools(token), decimals));
+    const ticks = await syncModel.getTicks(pools[0].pair);
+    const rs = getTicker(ticks, 18650096 - 6000, 18650096, Math.floor(Date.now() / 1000) - 300 * 60, 1);
+    res.json(rs);
+})
+
 app.get('/route/:tokenA/:tokenB', async (req, res) => {
     const tokenA = getAddress(req.params.tokenA);
     const tokenB = getAddress(req.params.tokenB);
