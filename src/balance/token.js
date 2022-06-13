@@ -52,7 +52,7 @@ class TokenModel {
     searchToken(text) {
         if (text.length < 3) return [];
         const address = getAddress(text);
-        if (this.token[address]) return [this.token[address]];
+        if (this.token[address]) return [{ address, decimals: this.token[address][0], symbol: this.token[address][1], name: this.token[address][2] }];
         return this.indexer.search(text);
     }
 
