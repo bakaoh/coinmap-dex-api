@@ -149,13 +149,13 @@ const getTicker = (ticks, ticksBNB, isToken0, fromBlock, toBlock, startTs, minut
         } else if (ticksBNB) {
             tick.o = ticksBNB[block].o / tick.o
             tick.c = ticksBNB[block].c / tick.c
-            tick.h = ticksBNB[block].h / tick.l
-            tick.l = ticksBNB[block].l / tick.h
+            tick.h = ticksBNB[block].h / tick.h
+            tick.l = ticksBNB[block].l / tick.l
         } else if (!isToken0) {
             tick.o = 1 / tick.o
             tick.c = 1 / tick.c
-            tick.h = 1 / tick.l
-            tick.l = 1 / tick.h
+            tick.h = 1 / tick.h
+            tick.l = 1 / tick.l
         }
         const t = Math.floor((block - fromBlock) / blockInterval) * blockInterval * 3 + startTs;
         updateRs(t, tick);
@@ -172,7 +172,7 @@ app.get('/tick/:token', async (req, res) => {
     const isToken0 = pool.token0 == token;
     const quote = pool.token0 == token ? pool.token1 : pool.token0;
     const ticksBNB = quote == ContractAddress.WBNB ? await syncModel.getTicks(ContractAddress.PAIR_WBNB_BUSD) : undefined;
-    const rs = getTicker(ticks, ticksBNB, isToken0, 18650096 - 6000, 18650096, Math.floor(Date.now() / 1000) - 300 * 60, 1);
+    const rs = getTicker(ticks, ticksBNB, isToken0, 18650096 - 300 * 60 * 20, 18650096, Math.floor(Date.now() / 1000) - 300 * 60 * 60, 60);
     res.json(rs);
 })
 
