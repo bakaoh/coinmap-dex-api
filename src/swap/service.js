@@ -110,13 +110,15 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
         const countback = req.query.countback || Math.floor((to - from) / (60 * minuteCount));
         const candles = (await axios.get(`${CANDLE_BASE}/candle/${base}?resolution=${minuteCount}&to=${to}&countback=${countback}`)).data;
         const t = [], c = [], o = [], h = [], l = [], v = [];
+        let last;
         for (let ts in candles) {
             t.push(ts);
+            o.push(last || candles[ts].o);
             c.push(candles[ts].c);
-            o.push(candles[ts].o);
             h.push(candles[ts].h);
             l.push(candles[ts].l);
             v.push(candles[ts].v);
+            last = candles[ts].c;
         }
         if (t.length > 0) {
             res.json({ s: "ok", t, c, o, h, l, v });
