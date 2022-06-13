@@ -126,9 +126,9 @@ app.get('/tick/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const { decimals } = (await getToken(token));
     const { pools } = (await syncModel.getPools(token, pairModel.getPools(token), decimals));
-    const toTs = Math.floor(Date.now() / 1000);
+    const ts = Math.floor(Date.now() / 1000);
     const { block } = (await axios.get(`${COMMON_BASE}/block/estimate?ts=${ts}`)).data;
-    const rs = await syncModel.getChart(pools[0], token, block, toTs, 300, 60);
+    const rs = await syncModel.getChart(pools[0], token, block, ts, 300, 60);
     res.json(rs);
 })
 
