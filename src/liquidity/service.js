@@ -122,13 +122,16 @@ app.get('/api/v1/bigtx/:token', async (req, res) => {
 })
 
 // internal api
-app.get('/tick/:token', async (req, res) => {
+app.get('/candle/:token', async (req, res) => {
+    const resolution = parseInt(req.query.resolution) || 1;
+    const ts = parseInt(req.query.to) || Math.round(Date.now() / 1000);
+    const countback = parseInt(req.query.countback) || 300;
+
     const token = getAddress(req.params.token);
     const { decimals } = (await getToken(token));
     const { pools } = (await syncModel.getPools(token, pairModel.getPools(token), decimals));
-    const ts = Math.floor(Date.now() / 1000);
-    const { block } = (await axios.get(`${COMMON_BASE}/block/estimate?ts=${ts}`)).data;
-    const rs = await syncModel.getChart(pools[0], token, block, ts, 300, 60);
+    const block = (await axios.get(`${COMMON_BASE}/block/estimate?ts=${ts}`)).data;
+    const rs = await syncModel.getChart(pools[0], token, block, ts, countback, resolution);
     res.json(rs);
 })
 
