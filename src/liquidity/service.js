@@ -122,57 +122,11 @@ app.get('/api/v1/bigtx/:token', async (req, res) => {
 })
 
 // internal api
-app.get('/price/:pair/:block', async (req, res) => {
-    const rs = await syncModel.getTick(req.params.pair, req.params.block);
-    res.json(rs);
-})
-
-const getTicker = (ticks, ticksBNB, isToken0, fromBlock, toBlock, startTs, minuteCount = 1) => {
-    const blockInterval = 20 * minuteCount;
-    let t = startTs;
-    const rs = {};
-    const updateRs = (t, { o, c, h, l }) => {
-        if (!rs[t]) rs[t] = { o, c, h, l };
-        rs[t].c = c;
-        if (rs[t].h < h) rs[t].h = h;
-        if (rs[t].l > l) rs[t].l = l;
-    }
-    for (let block = fromBlock; block <= toBlock; block++) {
-        if (!ticks[block]) continue;
-        if (ticksBNB && !ticksBNB[block]) continue;
-        const tick = ticks[block];
-        if (ticksBNB && isToken0) {
-            tick.o *= ticksBNB[block].o
-            tick.c *= ticksBNB[block].c
-            tick.h *= ticksBNB[block].h
-            tick.l *= ticksBNB[block].l
-        } else if (ticksBNB) {
-            tick.o = ticksBNB[block].o / tick.o
-            tick.c = ticksBNB[block].c / tick.c
-            tick.h = ticksBNB[block].h / tick.h
-            tick.l = ticksBNB[block].l / tick.l
-        } else if (!isToken0) {
-            tick.o = 1 / tick.o
-            tick.c = 1 / tick.c
-            tick.h = 1 / tick.h
-            tick.l = 1 / tick.l
-        }
-        const t = Math.floor((block - fromBlock) / blockInterval) * blockInterval * 3 + startTs;
-        updateRs(t, tick);
-    }
-    return rs;
-}
-
 app.get('/tick/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const { decimals } = (await getToken(token));
     const { pools } = (await syncModel.getPools(token, pairModel.getPools(token), decimals));
-    const pool = pools[0];
-    const ticks = await syncModel.getTicks(pool.pair);
-    const isToken0 = pool.token0 == token;
-    const quote = pool.token0 == token ? pool.token1 : pool.token0;
-    const ticksBNB = quote == ContractAddress.WBNB ? await syncModel.getTicks(ContractAddress.PAIR_WBNB_BUSD) : undefined;
-    const rs = getTicker(ticks, ticksBNB, isToken0, 18650096 - 300 * 60 * 20, 18650096, Math.floor(Date.now() / 1000) - 300 * 60 * 60, 60);
+    const rs = await syncModel.getChart(pools[0], token, 18650096 - 300 * 60 * 20, 18650096, Math.floor(Date.now() / 1000) - 300 * 60 * 60, 60);
     res.json(rs);
 })
 
@@ -190,7 +144,7 @@ async function start(port) {
     const startMs = Date.now();
 
     await pairModel.warmup();
-    await syncModel.loadBNBPrice();
+    await syncModel.loadBNBCandles();
 
     await pairModel.runCrawler();
     await syncModel.runCrawler();

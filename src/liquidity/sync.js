@@ -36,7 +36,7 @@ class SyncModel {
     constructor() {
         this.partitioner = new Partitioner(DATA_FOLDER);
         this.reserves = {};
-        this.prices = {};
+        this.candles = {};
     }
 
     async runCrawler() {
@@ -47,47 +47,71 @@ class SyncModel {
         await this.crawler.run();
     }
 
-    async loadBNBPrice() {
-        const startMs = Date.now();
-        const pair = ContractAddress.PAIR_WBNB_BUSD;
-        this.prices[pair] = {};
-        await this.loadPrice(pair);
-        console.log(`Load BNB price (${Date.now() - startMs}ms)`)
-    }
-
-    async loadPrice(pair) {
+    async loadCandle(pair) {
         const lastFiles = getLastFiles(`${DATA_FOLDER}/${pair}`);
         if (lastFiles.length == 0) return;
         for (let i = 0; i < 2; i++) {
             const idx = parseInt(lastFiles[i]);
             await this.partitioner.loadLog(pair, idx, ([block, , , reserve0, reserve1]) => {
-                this.updatePrice(pair, block, this.calcPrice([reserve0, reserve1]));
+                this.updateCandle(pair, block, this.calcPrice([reserve0, reserve1]));
             });
         }
     }
 
-    updatePrice(pair, block, price) {
-        if (!this.prices[pair]) return;
-        if (!this.prices[pair][block]) this.prices[pair][block] = { o: price, c: price, h: price, l: price };
-        this.prices[pair][block].c = price;
-        if (this.prices[pair][block].h < price) this.prices[pair][block].h = price;
-        if (this.prices[pair][block].l > price) this.prices[pair][block].l = price;
+    updateCandle(pair, block, price) {
+        if (!this.candles[pair]) return;
+        if (!this.candles[pair][block]) this.candles[pair][block] = { o: price, c: price, h: price, l: price };
+        this.candles[pair][block].c = price;
+        if (this.candles[pair][block].h < price) this.candles[pair][block].h = price;
+        if (this.candles[pair][block].l > price) this.candles[pair][block].l = price;
     }
 
-    async getTick(pair, block) {
-        if (!this.prices[pair]) {
-            this.prices[pair] = {};
-            await this.loadPrice(pair);
+    async getCandles(pair) {
+        if (!this.candles[pair]) {
+            this.candles[pair] = {};
+            await this.loadCandle(pair);
         }
-        return this.prices[pair][block];
+        return this.candles[pair];
     }
 
-    async getTicks(pair) {
-        if (!this.prices[pair]) {
-            this.prices[pair] = {};
-            await this.loadPrice(pair);
+    async getChart(pool, token, fromBlock, toBlock, startTs, minuteCount) {
+        const tokenCandles = await this.getCandles(pool.pair);
+        const isToken0 = pool.token0 == token;
+        const quote = pool.token0 == token ? pool.token1 : pool.token0;
+        const bnbCandles = quote == ContractAddress.WBNB ? await this.getBNBCandles() : undefined;
+
+        const blockInterval = 20 * minuteCount;
+        const rs = {};
+        const updateRs = (t, { o, c, h, l }) => {
+            if (!rs[t]) rs[t] = { o, c, h, l };
+            rs[t].c = c;
+            if (rs[t].h < h) rs[t].h = h;
+            if (rs[t].l > l) rs[t].l = l;
         }
-        return this.prices[pair];
+        for (let block = fromBlock; block <= toBlock; block++) {
+            if (!tokenCandles[block]) continue;
+            if (bnbCandles && !bnbCandles[block]) continue;
+            const tick = tokenCandles[block];
+            if (bnbCandles && isToken0) {
+                tick.o *= bnbCandles[block].o
+                tick.c *= bnbCandles[block].c
+                tick.h *= bnbCandles[block].h
+                tick.l *= bnbCandles[block].l
+            } else if (bnbCandles) {
+                tick.o = bnbCandles[block].o / tick.o
+                tick.c = bnbCandles[block].c / tick.c
+                tick.h = bnbCandles[block].h / tick.h
+                tick.l = bnbCandles[block].l / tick.l
+            } else if (!isToken0) {
+                tick.o = 1 / tick.o
+                tick.c = 1 / tick.c
+                tick.h = 1 / tick.h
+                tick.l = 1 / tick.l
+            }
+            const t = Math.floor((block - fromBlock) / blockInterval) * blockInterval * 3 + startTs;
+            updateRs(t, tick);
+        }
+        return rs;
     }
 
     calcPrice([reserve0, reserve1], decimals = 18) {
@@ -99,6 +123,18 @@ class SyncModel {
 
     async getBNBPrice() {
         return this.calcPrice(await this.getReserves(ContractAddress.PAIR_WBNB_BUSD));
+    }
+
+    async getBNBCandles() {
+        return this.getCandles(ContractAddress.PAIR_WBNB_BUSD);
+    }
+
+    async loadBNBCandles() {
+        const startMs = Date.now();
+        const pair = ContractAddress.PAIR_WBNB_BUSD;
+        this.candles[pair] = {};
+        await this.loadCandle(pair);
+        console.log(`Load BNB price (${Date.now() - startMs}ms)`)
     }
 
     async getPools(token, pairs, decimals = 18) {
@@ -208,7 +244,7 @@ class SyncModel {
         const idx = Math.floor(block / 100000);
         this.partitioner.getWriter(pair, idx).write(`${block},${txIdx},${logIdx},${reserve0},${reserve1}\n`);
         this.reserves[pair] = [reserve0, reserve1];
-        this.updatePrice(pair, block, this.calcPrice([reserve0, reserve1]));
+        this.updateCandle(pair, block, this.calcPrice([reserve0, reserve1]));
     }
 }
 
