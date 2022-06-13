@@ -127,7 +127,7 @@ app.get('/price/:pair/:block', async (req, res) => {
     res.json(rs);
 })
 
-const getTicker = (ticks, fromBlock, toBlock, startTs, minuteCount = 1) => {
+const getTicker = (ticks, ticksBNB, isToken0, fromBlock, toBlock, startTs, minuteCount = 1) => {
     const blockInterval = 20 * minuteCount;
     let t = startTs;
     const rs = {};
@@ -139,8 +139,26 @@ const getTicker = (ticks, fromBlock, toBlock, startTs, minuteCount = 1) => {
     }
     for (let block = fromBlock; block <= toBlock; block++) {
         if (!ticks[block]) continue;
+        if (ticksBNB && !ticksBNB[block]) continue;
+        const tick = ticks[block];
+        if (ticksBNB && isToken0) {
+            tick.o *= ticksBNB[block].o
+            tick.c *= ticksBNB[block].c
+            tick.h *= ticksBNB[block].h
+            tick.l *= ticksBNB[block].l
+        } else if (ticksBNB) {
+            tick.o /= ticksBNB[block].o
+            tick.c /= ticksBNB[block].c
+            tick.h /= ticksBNB[block].h
+            tick.l /= ticksBNB[block].l
+        } else if (!isToken0) {
+            tick.o /= 1
+            tick.c /= 1
+            tick.h /= 1
+            tick.l /= 1
+        }
         const t = Math.floor((block - fromBlock) / blockInterval) * blockInterval * 3 + startTs;
-        updateRs(t, ticks[block]);
+        updateRs(t, tick);
     }
     return rs;
 }
@@ -149,8 +167,12 @@ app.get('/tick/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const { decimals } = (await getToken(token));
     const { pools } = (await syncModel.getPools(token, pairModel.getPools(token), decimals));
-    const ticks = await syncModel.getTicks(pools[0].pair);
-    const rs = getTicker(ticks, 18650096 - 6000, 18650096, Math.floor(Date.now() / 1000) - 300 * 60, 1);
+    const pool = pools[0];
+    const ticks = await syncModel.getTicks(pool.pair);
+    const isToken0 = pool.token0 == token;
+    const quote = pool.token0 == token ? pool.token1 : pool.token0;
+    const ticksBNB = quote == ContractAddress.WBNB ? await syncModel.getTicks(ContractAddress.PAIR_WBNB_BUSD) : undefined;
+    const rs = getTicker(ticks, ticksBNB, isToken0, 18650096 - 6000, 18650096, Math.floor(Date.now() / 1000) - 300 * 60, 1);
     res.json(rs);
 })
 
