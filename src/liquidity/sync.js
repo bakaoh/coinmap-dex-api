@@ -32,6 +32,23 @@ const getReserveFromLogs = async (pair) => {
     }
 }
 
+const mergeCandle = (tokenCandle, bnbCandle, isToken0) => {
+    let { o, c, h, l } = tokenCandle;
+    if (!isToken0) {
+        o = 1 / tokenCandle.o
+        c = 1 / tokenCandle.c
+        l = 1 / tokenCandle.h
+        h = 1 / tokenCandle.l
+    }
+    if (bnbCandle) {
+        o = o * bnbCandle.o
+        c = c * bnbCandle.c
+        h = h * bnbCandle.h
+        l = l * bnbCandle.l
+    }
+    return { o, c, h, l };
+}
+
 class SyncModel {
     constructor() {
         this.partitioner = new Partitioner(DATA_FOLDER);
@@ -74,11 +91,11 @@ class SyncModel {
         return this.candles[pair];
     }
 
-    async getChart(pool, token, fromBlock, toBlock, startTs, minuteCount) {
+    async getChart(pool, token, toBlock, toTs, countback, minuteCount) {
         const tokenCandles = await this.getCandles(pool.pair);
         const isToken0 = pool.token0 == token;
-        const quote = pool.token0 == token ? pool.token1 : pool.token0;
-        const bnbCandles = quote == ContractAddress.WBNB ? await this.getBNBCandles() : undefined;
+        const isBNBPair = (isToken0 ? pool.token1 : pool.token0) == ContractAddress.WBNB;
+        const bnbCandles = isBNBPair ? await this.getBNBCandles() : undefined;
 
         const blockInterval = 20 * minuteCount;
         const rs = {};
@@ -88,28 +105,14 @@ class SyncModel {
             if (rs[t].h < h) rs[t].h = h;
             if (rs[t].l > l) rs[t].l = l;
         }
+        const fromBlock = toBlock - countback * blockInterval;
+        const fromTs = toTs - countback * minuteCount * 60;
         for (let block = fromBlock; block <= toBlock; block++) {
             if (!tokenCandles[block]) continue;
-            if (bnbCandles && !bnbCandles[block]) continue;
-            const tick = tokenCandles[block];
-            if (bnbCandles && isToken0) {
-                tick.o *= bnbCandles[block].o
-                tick.c *= bnbCandles[block].c
-                tick.h *= bnbCandles[block].h
-                tick.l *= bnbCandles[block].l
-            } else if (bnbCandles) {
-                tick.o = bnbCandles[block].o / tick.o
-                tick.c = bnbCandles[block].c / tick.c
-                tick.h = bnbCandles[block].h / tick.h
-                tick.l = bnbCandles[block].l / tick.l
-            } else if (!isToken0) {
-                tick.o = 1 / tick.o
-                tick.c = 1 / tick.c
-                tick.h = 1 / tick.h
-                tick.l = 1 / tick.l
-            }
-            const t = Math.floor((block - fromBlock) / blockInterval) * blockInterval * 3 + startTs;
-            updateRs(t, tick);
+            if (isBNBPair && !bnbCandles[block]) continue;
+            const tick = mergeCandle(tokenCandles[block], isBNBPair ? bnbCandles[block] : undefined, isToken0);
+            const ts = Math.floor((block - fromBlock) / blockInterval) * blockInterval * 3 + fromTs;
+            updateRs(ts, tick);
         }
         return rs;
     }
