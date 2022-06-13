@@ -125,7 +125,7 @@ class SyncModel {
             const ts = Math.floor((block - fromBlock) / blockInterval) * blockInterval * 3 + fromTs;
             updateRs(ts, tick);
         }
-        for (let t in rs) rs[t].v = rs[t].v ? getNumber(rs[t].v) : 0;
+        for (let t in rs) rs[t].v = rs[t].v ? getNumber(rs[t].v.toString()) : 0;
         return rs;
     }
 
