@@ -11,6 +11,7 @@ const sharkModel = new SharkModel();
 app.use(express.json());
 
 const LIQUIDITY_BASE = 'http://10.148.0.34:9613';
+const CANDLE_BASE = 'http://10.148.0.42:9613';
 
 app.get('/api/v1/rating/pool/:token', async (req, res) => {
     const token = getAddress(req.params.token);
@@ -103,33 +104,24 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
     const base = getAddress(tokens[0]);
 
     if (RESOLUTION_INTERVAL[resolution] == "minute") {
-        const bars = await getDexTradesLocal(base, 300, RESOLUTION_COUNT[resolution]);
-        const from = parseInt(req.query.from);
+        const minuteCount = RESOLUTION_COUNT[resolution];
         const to = parseInt(req.query.to) || Math.round(Date.now() / 1000);
-        const countback = req.query.countback;
-
+        const from = parseInt(req.query.from);
+        const countback = req.query.countback || Math.floor((to - from) / (60 * minuteCount));
+        const candles = (await axios.get(`${CANDLE_BASE}/candle/${base}?resolution=${minuteCount}&to=${to}&countback=${countback}`)).data;
         const t = [], c = [], o = [], h = [], l = [], v = [];
-        for (let i = 0; i < bars.t.length; i++) {
-            if ((countback || bars.t[i] >= from) && bars.t[i] < to) {
-                t.push(bars.t[i]);
-                c.push(bars.c[i]);
-                o.push(bars.o[i]);
-                h.push(bars.h[i]);
-                l.push(bars.l[i]);
-                v.push(bars.v[i]);
-            }
-            if (t.length >= parseInt(countback)) break;
+        for (let ts in candles) {
+            t.push(ts);
+            c.push(candles[ts].c);
+            o.push(candles[ts].o);
+            h.push(candles[ts].h);
+            l.push(candles[ts].l);
+            v.push(candles[ts].v);
         }
         if (t.length > 0) {
-            const { price } = (await axios.get(`${LIQUIDITY_BASE}/api/v1/transaction/${base}`)).data;
-            c[c.length - 1] = price;
-            t[t.length - 1] = to;
             res.json({ s: "ok", t, c, o, h, l, v });
         } else {
-            let nextTime = bars.t[0] + RESOLUTION_NEXTTIME[resolution];
-            if (parseInt(req.query.to) < bars.t[bars.t.length - 1]) {
-                nextTime = bars.t[bars.t.length - 1];
-            }
+            let nextTime = Math.round(Date.now() / 1000);
             res.json({ s: "no_data", nextTime });
         }
         return;
