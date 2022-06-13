@@ -147,15 +147,15 @@ const getTicker = (ticks, ticksBNB, isToken0, fromBlock, toBlock, startTs, minut
             tick.h *= ticksBNB[block].h
             tick.l *= ticksBNB[block].l
         } else if (ticksBNB) {
-            tick.o /= ticksBNB[block].o
-            tick.c /= ticksBNB[block].c
-            tick.h /= ticksBNB[block].h
-            tick.l /= ticksBNB[block].l
+            tick.o = ticksBNB[block].o / tick.o
+            tick.c = ticksBNB[block].c / tick.c
+            tick.h = ticksBNB[block].h / tick.l
+            tick.l = ticksBNB[block].l / tick.h
         } else if (!isToken0) {
-            tick.o /= 1
-            tick.c /= 1
-            tick.h /= 1
-            tick.l /= 1
+            tick.o = 1 / tick.o
+            tick.c = 1 / tick.c
+            tick.h = 1 / tick.l
+            tick.l = 1 / tick.h
         }
         const t = Math.floor((block - fromBlock) / blockInterval) * blockInterval * 3 + startTs;
         updateRs(t, tick);
