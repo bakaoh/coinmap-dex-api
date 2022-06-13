@@ -88,8 +88,8 @@ class SyncModel {
         this.candles[pair][block].c = price;
         if (this.candles[pair][block].h < price) this.candles[pair][block].h = price;
         if (this.candles[pair][block].l > price) this.candles[pair][block].l = price;
-        v0 = v0.add(volume0);
-        v1 = v1.add(volume1);
+        this.candles[pair][block].v0 = this.candles[pair][block].v0.add(volume0);
+        this.candles[pair][block].v1 = this.candles[pair][block].v1.add(volume1);
     }
 
     async getCandles(pair) {
