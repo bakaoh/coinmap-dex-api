@@ -34,6 +34,7 @@ const getReserveFromLogs = async (pair) => {
 
 const mergeCandle = (tokenCandle, bnbCandle, isToken0) => {
     let { o, c, h, l } = tokenCandle;
+    let v = isToken0 ? tokenCandle.v0 : tokenCandle.v1;
     if (!isToken0) {
         o = 1 / tokenCandle.o
         c = 1 / tokenCandle.c
@@ -46,7 +47,7 @@ const mergeCandle = (tokenCandle, bnbCandle, isToken0) => {
         h = h * bnbCandle.h
         l = l * bnbCandle.l
     }
-    return { o, c, h, l };
+    return { o, c, h, l, v };
 }
 
 class SyncModel {
@@ -67,20 +68,28 @@ class SyncModel {
     async loadCandle(pair) {
         const lastFiles = getLastFiles(`${DATA_FOLDER}/${pair}`);
         if (lastFiles.length == 0) return;
+        let lastR0, lastR1;
         for (let i = 0; i < 2; i++) {
             const idx = parseInt(lastFiles[i]);
             await this.partitioner.loadLog(pair, idx, ([block, , , reserve0, reserve1]) => {
-                this.updateCandle(pair, block, this.calcPrice([reserve0, reserve1]));
+                let volume0 = toBN(0), volume1 = toBN(0);
+                if (lastR0) volume0 = lastR0.sub(toBN(reserve0)).abs();
+                if (lastR1) volume1 = lastR1.sub(toBN(reserve1)).abs();
+                this.updateCandle(pair, block, this.calcPrice([reserve0, reserve1]), volume0, volume1);
+                lastR0 = toBN(reserve0);
+                lastR1 = toBN(reserve1);
             });
         }
     }
 
-    updateCandle(pair, block, price) {
+    updateCandle(pair, block, price, volume0, volume1) {
         if (!this.candles[pair]) return;
-        if (!this.candles[pair][block]) this.candles[pair][block] = { o: price, c: price, h: price, l: price };
+        if (!this.candles[pair][block]) this.candles[pair][block] = { o: price, c: price, h: price, l: price, v0: toBN(0), v1: toBN(0) };
         this.candles[pair][block].c = price;
         if (this.candles[pair][block].h < price) this.candles[pair][block].h = price;
         if (this.candles[pair][block].l > price) this.candles[pair][block].l = price;
+        v0 = v0.add(volume0);
+        v1 = v1.add(volume1);
     }
 
     async getCandles(pair) {
@@ -99,22 +108,20 @@ class SyncModel {
 
         const blockInterval = 20 * minuteCount;
         const rs = {};
-        const updateRs = (t, { o, c, h, l }) => {
-            if (!rs[t]) rs[t] = { o, c, h, l };
+        const updateRs = (t, { o, c, h, l, v }) => {
+            if (!rs[t]) rs[t] = { o, c, h, l, v: toBN(0) };
             rs[t].c = c;
             if (rs[t].h < h) rs[t].h = h;
             if (rs[t].l > l) rs[t].l = l;
+            rs[t].v = rs[t].v.add(v);
         }
         const fromBlock = toBlock - countback * blockInterval;
         const fromTs = toTs - countback * minuteCount * 60;
-        let lastC = undefined;
         for (let block = fromBlock; block <= toBlock; block++) {
             if (!tokenCandles[block]) continue;
             if (isBNBPair && !bnbCandles[block]) continue;
             const tick = mergeCandle(tokenCandles[block], isBNBPair ? bnbCandles[block] : undefined, isToken0);
             const ts = Math.floor((block - fromBlock) / blockInterval) * blockInterval * 3 + fromTs;
-            if (lastC) tick.o = lastC;
-            lastC = tick.c;
             updateRs(ts, tick);
         }
         return rs;
