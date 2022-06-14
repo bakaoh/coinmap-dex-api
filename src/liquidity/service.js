@@ -5,8 +5,8 @@ const SyncModel = require("./sync");
 const SwapModel = require("./swap");
 const PairModel = require("./pair");
 const { getCache } = require("../cache");
-const { getAddress, ContractAddress, toBN, isUSD, getFactoryName } = require('../utils/bsc');
-const { getNumber } = require('../utils/format');
+const { getAddress, ContractAddress, toBN, getFactoryName } = require('../utils/bsc');
+const { getNumber, getPrice } = require('../utils/format');
 
 const COMMON_BASE = 'http://10.148.0.39:9612';
 
@@ -42,7 +42,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
             for (let pool of pools) {
                 totalToken = totalToken.add(toBN(pool.history[i][0]));
             }
-            const price = syncModel.correctPrice(syncModel.calcPrice(pricePool.history[i]), decimals) * quotePrice;
+            const price = getPrice(syncModel.calcPrice(pricePool.history[i]), decimals) * quotePrice;
             return { date, price, totalAmount: getNumber(totalToken.toString(10), 0, decimals) * price };
         });
     });
@@ -50,7 +50,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     const details = pools.slice(0, 3);
     for (let p of details) {
         p.name = symbol + "/" + (await getToken(p.token0 == token ? p.token1 : p.token0)).symbol;
-        p.liquidity = getNumber(p.token0 == token ? p.reserve0 : p.reserve1, 0, decimals) * syncModel.correctPrice(tokenPrice, decimals);
+        p.liquidity = getNumber(p.token0 == token ? p.reserve0 : p.reserve1, 0, decimals) * getPrice(tokenPrice, decimals);
         p.reserve0 = getNumber(p.reserve0);
         p.reserve1 = getNumber(p.reserve1);
         p.exchange = getFactoryName(p.factory);
@@ -81,7 +81,7 @@ app.get('/api/v1/transaction/:token', async (req, res) => {
     const bnbPriceBN = toBN(Math.round(await syncModel.getBNBPrice()));
     const { decimals } = await getToken(token);
     const { tokenPrice } = (await syncModel.getPools(token, pairModel.getPools(token)));
-    let price = syncModel.correctPrice(tokenPrice, decimals);
+    let price = getPrice(tokenPrice, decimals);
     const dd = toBN(10).pow(toBN(18 - decimals));
     lastTx.forEach(tx => {
         if (tx.amount0 == "0") return;
@@ -128,10 +128,21 @@ app.get('/candle/:token', async (req, res) => {
     const countback = parseInt(req.query.countback) || 300;
 
     const token = getAddress(req.params.token);
+    const { decimals } = await getToken(token);
     const { pools } = (await syncModel.getPools(token, pairModel.getPools(token)));
     const block = (await axios.get(`${COMMON_BASE}/block/estimate?ts=${ts}`)).data;
     const rs = await syncModel.getChart(pools[0], token, block, ts, countback, resolution);
-    res.json(rs);
+    if (decimals != 18) {
+        res.json(rs.map(i => ({
+            o: getPrice(i.o, decimals),
+            c: getPrice(i.c, decimals),
+            h: getPrice(i.o, decimals),
+            l: getPrice(i.o, decimals),
+            v: i.v
+        })));
+    } else {
+        res.json(rs);
+    }
 })
 
 app.get('/route/:tokenA/:tokenB', async (req, res) => {

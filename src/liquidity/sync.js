@@ -135,12 +135,6 @@ class SyncModel {
         return parseInt(toBN(reserve1).muln(100000).div(toBN(reserve0))) / 100000;
     }
 
-    correctPrice(price, decimals0 = 18, decimals1 = 18) {
-        if (decimals0 == decimals1) return price;
-        if (decimals0 < decimals1) return price / Math.pow(10, decimals1 - decimals0);
-        if (decimals0 > decimals1) return price * Math.pow(10, decimals0 - decimals1);
-    }
-
     async getBNBPrice() {
         return this.calcPrice(await this.getReserves(ContractAddress.PAIR_WBNB_BUSD));
     }
