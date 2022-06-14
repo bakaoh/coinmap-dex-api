@@ -133,16 +133,14 @@ app.get('/candle/:token', async (req, res) => {
     const block = (await axios.get(`${COMMON_BASE}/block/estimate?ts=${ts}`)).data;
     const rs = await syncModel.getChart(pools[0], token, block, ts, countback, resolution);
     if (decimals != 18) {
-        res.json(rs.map(i => ({
-            o: getPrice(i.o, decimals),
-            c: getPrice(i.c, decimals),
-            h: getPrice(i.o, decimals),
-            l: getPrice(i.o, decimals),
-            v: i.v
-        })));
-    } else {
-        res.json(rs);
+        for (let t in rs) {
+            rs[t].o = getPrice(rs[t].o, decimals);
+            rs[t].c = getPrice(rs[t].c, decimals);
+            rs[t].h = getPrice(rs[t].h, decimals);
+            rs[t].l = getPrice(rs[t].l, decimals);
+        }
     }
+    res.json(rs);
 })
 
 app.get('/route/:tokenA/:tokenB', async (req, res) => {

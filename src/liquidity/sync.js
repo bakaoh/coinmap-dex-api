@@ -69,28 +69,28 @@ class SyncModel {
     async loadCandle(pair) {
         const lastFiles = getLastFiles(`${DATA_FOLDER}/${pair}`);
         if (lastFiles.length == 0) return;
-        let lastR0, lastR1;
         for (let i = 0; i < 2; i++) {
             const idx = parseInt(lastFiles[i]);
             await this.partitioner.loadLog(pair, idx, ([block, , , reserve0, reserve1]) => {
-                let volume0 = toBN(0), volume1 = toBN(0);
-                if (lastR0) volume0 = lastR0.sub(toBN(reserve0)).abs();
-                if (lastR1) volume1 = lastR1.sub(toBN(reserve1)).abs();
-                this.updateCandle(pair, block, this.calcPrice([reserve0, reserve1]), volume0, volume1);
-                lastR0 = toBN(reserve0);
-                lastR1 = toBN(reserve1);
+                this.updateCandle(pair, block, reserve0, reserve1);
             });
         }
     }
 
-    updateCandle(pair, block, price, volume0, volume1) {
-        if (!this.candles[pair]) return;
-        if (!this.candles[pair][block]) this.candles[pair][block] = { o: price, c: price, h: price, l: price, v0: toBN(0), v1: toBN(0) };
-        this.candles[pair][block].c = price;
-        if (this.candles[pair][block].h < price) this.candles[pair][block].h = price;
-        if (this.candles[pair][block].l > price) this.candles[pair][block].l = price;
-        if (volume0) this.candles[pair][block].v0 = this.candles[pair][block].v0.add(volume0);
-        if (volume1) this.candles[pair][block].v1 = this.candles[pair][block].v1.add(volume1);
+    updateCandle(pair, block, reserve0, reserve1) {
+        if (this.candles[pair]) {
+            block = Math.floor(block / 20);
+            const price = this.calcPrice([reserve0, reserve1]);
+            if (!this.candles[pair][block]) this.candles[pair][block] = { o: price, c: price, h: price, l: price, v0: toBN(0), v1: toBN(0) };
+            this.candles[pair][block].c = price;
+            if (this.candles[pair][block].h < price) this.candles[pair][block].h = price;
+            if (this.candles[pair][block].l > price) this.candles[pair][block].l = price;
+            if (this.reserves[pair]) {
+                this.candles[pair][block].v0 = this.candles[pair][block].v0.add(toBN(this.reserves[pair][0]).sub(toBN(reserve0)).abs());
+                this.candles[pair][block].v1 = this.candles[pair][block].v1.add(toBN(this.reserves[pair][1]).sub(toBN(reserve1)).abs());
+            }
+        }
+        this.reserves[pair] = [reserve0, reserve1];
     }
 
     async getCandles(pair) {
@@ -107,7 +107,6 @@ class SyncModel {
         const isBNBPair = (isToken0 ? pool.token1 : pool.token0) == ContractAddress.WBNB;
         const bnbCandles = isBNBPair ? await this.getBNBCandles() : undefined;
 
-        const blockInterval = 20 * minuteCount;
         const rs = {};
         const updateRs = (t, { o, c, h, l, v }) => {
             if (!rs[t]) rs[t] = { o, c, h, l, v: toBN(0) };
@@ -116,13 +115,14 @@ class SyncModel {
             if (rs[t].l > l) rs[t].l = l;
             rs[t].v = rs[t].v.add(v);
         }
-        const fromBlock = toBlock - countback * blockInterval;
+        toBlock = Math.ceil(toBlock / 20);
+        const fromBlock = toBlock - countback * minuteCount;
         const fromTs = toTs - countback * minuteCount * 60;
         for (let block = fromBlock; block <= toBlock; block++) {
             if (!tokenCandles[block]) continue;
             if (isBNBPair && !bnbCandles[block]) continue;
             const tick = mergeCandle(tokenCandles[block], isBNBPair ? bnbCandles[block] : undefined, isToken0);
-            const ts = Math.floor((block - fromBlock) / blockInterval) * blockInterval * 3 + fromTs;
+            const ts = Math.floor((block - fromBlock) / minuteCount) * minuteCount * 3 + fromTs;
             updateRs(ts, tick);
         }
         for (let t in rs) rs[t].v = rs[t].v ? getNumber(rs[t].v.toString()) : 0;
@@ -257,8 +257,7 @@ class SyncModel {
     async writeSyncLog(block, txIdx, logIdx, pair, reserve0, reserve1) {
         const idx = Math.floor(block / 100000);
         this.partitioner.getWriter(pair, idx).write(`${block},${txIdx},${logIdx},${reserve0},${reserve1}\n`);
-        this.reserves[pair] = [reserve0, reserve1];
-        this.updateCandle(pair, block, this.calcPrice([reserve0, reserve1]));
+        this.updateCandle(pair, block, reserve0, reserve1);
     }
 }
 
