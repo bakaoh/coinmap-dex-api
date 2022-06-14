@@ -129,11 +129,16 @@ class SyncModel {
         return rs;
     }
 
-    calcPrice([reserve0, reserve1], decimals = 18) {
+    calcPrice([reserve0, reserve1]) {
         if (reserve0 == "0") return 0;
         if (reserve1.length < 18) return 0;
-        let dd = toBN(10).pow(toBN(18 - decimals));
-        return parseInt(toBN(reserve1).muln(100000).div(toBN(reserve0)).div(dd)) / 100000;
+        return parseInt(toBN(reserve1).muln(100000).div(toBN(reserve0))) / 100000;
+    }
+
+    correctPrice(price, decimals0 = 18, decimals1 = 18) {
+        if (decimals0 == decimals1) return price;
+        if (decimals0 < decimals1) return price / Math.pow(10, decimals1 - decimals0);
+        if (decimals0 > decimals1) return price * Math.pow(10, decimals0 - decimals1);
     }
 
     async getBNBPrice() {
@@ -152,7 +157,7 @@ class SyncModel {
         console.log(`Load BNB price (${Date.now() - startMs}ms)`)
     }
 
-    async getPools(token, pairs, decimals = 18) {
+    async getPools(token, pairs) {
         const pools = [];
         for (let pair in pairs) {
             const pool = pairs[pair];
@@ -163,10 +168,10 @@ class SyncModel {
         let tokenPrice = 0;
         let pricePool = undefined;
         for (let pool of pools) {
-            if (isUSD(pool.token1)) tokenPrice = this.calcPrice([pool.reserve0, pool.reserve1], decimals);
-            else if (isUSD(pool.token0)) tokenPrice = this.calcPrice([pool.reserve1, pool.reserve0], decimals);
-            else if (pool.token1 == ContractAddress.WBNB) tokenPrice = await this.getBNBPrice() * this.calcPrice([pool.reserve0, pool.reserve1], decimals);
-            else if (pool.token0 == ContractAddress.WBNB) tokenPrice = await this.getBNBPrice() * this.calcPrice([pool.reserve1, pool.reserve0], decimals);
+            if (isUSD(pool.token1)) tokenPrice = this.calcPrice([pool.reserve0, pool.reserve1]);
+            else if (isUSD(pool.token0)) tokenPrice = this.calcPrice([pool.reserve1, pool.reserve0]);
+            else if (pool.token1 == ContractAddress.WBNB) tokenPrice = await this.getBNBPrice() * this.calcPrice([pool.reserve0, pool.reserve1]);
+            else if (pool.token0 == ContractAddress.WBNB) tokenPrice = await this.getBNBPrice() * this.calcPrice([pool.reserve1, pool.reserve0]);
             if (tokenPrice) {
                 pricePool = pool;
                 break;
