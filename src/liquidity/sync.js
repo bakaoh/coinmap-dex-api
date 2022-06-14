@@ -79,19 +79,21 @@ class SyncModel {
     }
 
     updateCandle(pair, block, reserve0, reserve1) {
+        reserve0 = toBN(reserve0);
+        reserve1 = toBN(reserve1);
         if (this.candles[pair]) {
             block = Math.floor(block / 20);
             const price = this.calcPrice([reserve0, reserve1]);
-            if (!this.candles[pair][block]) this.candles[pair][block] = { o: price, c: price, h: price, l: price, v0: toBN(0), v1: toBN(0) };
+            if (!this.candles[pair][block]) this.candles[pair][block] = { o: price, c: price, h: price, l: price, v0: BN_ZERO, v1: BN_ZERO };
             this.candles[pair][block].c = price;
             if (this.candles[pair][block].h < price) this.candles[pair][block].h = price;
             if (this.candles[pair][block].l > price) this.candles[pair][block].l = price;
             if (this.reserves[pair]) {
-                this.candles[pair][block].v0 = this.candles[pair][block].v0.add(this.reserves[pair][0].sub(toBN(reserve0)).abs());
-                this.candles[pair][block].v1 = this.candles[pair][block].v1.add(this.reserves[pair][1].sub(toBN(reserve1)).abs());
+                this.candles[pair][block].v0 = this.candles[pair][block].v0.add(this.reserves[pair][0].sub(reserve0).abs());
+                this.candles[pair][block].v1 = this.candles[pair][block].v1.add(this.reserves[pair][1].sub(reserve1).abs());
             }
         }
-        this.reserves[pair] = [toBN(reserve0), toBN(reserve1)];
+        this.reserves[pair] = [reserve0, reserve1];
     }
 
     async getCandles(pair) {
