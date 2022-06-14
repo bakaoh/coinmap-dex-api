@@ -134,7 +134,7 @@ class SyncModel {
 
     calcPrice([reserve0, reserve1]) {
         if (reserve0 == ZERO || reserve1 == ZERO) return 0;
-        return parseInt(reserve1.muln(100000000).div(reserve0)) / 100000000;
+        return parseInt(reserve1.mul(toBN("100000000")).div(reserve0)) / 100000000;
     }
 
     async getBNBPrice() {
