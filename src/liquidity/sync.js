@@ -122,7 +122,7 @@ class SyncModel {
             if (!tokenCandles[block]) continue;
             if (isBNBPair && !bnbCandles[block]) continue;
             const tick = mergeCandle(tokenCandles[block], isBNBPair ? bnbCandles[block] : undefined, isToken0);
-            const ts = Math.floor((block - fromBlock) / minuteCount) * minuteCount * 3 + fromTs;
+            const ts = Math.floor((block - fromBlock) / minuteCount) * minuteCount * 60 + fromTs;
             updateRs(ts, tick);
         }
         for (let t in rs) rs[t].v = rs[t].v ? getNumber(rs[t].v.toString()) : 0;
