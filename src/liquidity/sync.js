@@ -6,6 +6,7 @@ const { getNumber } = require('../utils/format');
 const SYNC_TOPIC = '0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1';
 const BLOCK_FILE = 'logs/sync.block';
 const DATA_FOLDER = 'db/lpsync';
+const BN_ZERO = toBN("0");
 
 const getAmountOut = (amountIn, reserveIn, reserveOut) => {
     const amountInWithFee = amountIn.muln(9975);
@@ -23,13 +24,13 @@ const getAmountIn = (amountOut, reserveIn, reserveOut) => {
 const getReserveFromLogs = async (pair) => {
     try {
         const lastFile = getLastFile(`${DATA_FOLDER}/${pair}`);
-        if (lastFile == '') return ["0", "0"];;
+        if (lastFile == '') return [BN_ZERO, BN_ZERO];;
         const lastLine = await getLastLine(`${DATA_FOLDER}/${pair}/${lastFile}`);
         const p = lastLine.split(',');
-        if (p.length != 5) return ["0", "0"];
-        return [p[3], p[4]];
+        if (p.length != 5) return [BN_ZERO, BN_ZERO];
+        return [toBN(p[3]), toBN(p[4])];
     } catch (err) {
-        return ["0", "0"];
+        return [BN_ZERO, BN_ZERO];
     }
 }
 
@@ -86,11 +87,11 @@ class SyncModel {
             if (this.candles[pair][block].h < price) this.candles[pair][block].h = price;
             if (this.candles[pair][block].l > price) this.candles[pair][block].l = price;
             if (this.reserves[pair]) {
-                this.candles[pair][block].v0 = this.candles[pair][block].v0.add(toBN(this.reserves[pair][0]).sub(toBN(reserve0)).abs());
-                this.candles[pair][block].v1 = this.candles[pair][block].v1.add(toBN(this.reserves[pair][1]).sub(toBN(reserve1)).abs());
+                this.candles[pair][block].v0 = this.candles[pair][block].v0.add(this.reserves[pair][0].sub(toBN(reserve0)).abs());
+                this.candles[pair][block].v1 = this.candles[pair][block].v1.add(this.reserves[pair][1].sub(toBN(reserve1)).abs());
             }
         }
-        this.reserves[pair] = [reserve0, reserve1];
+        this.reserves[pair] = [toBN(reserve0), toBN(reserve1)];
     }
 
     async getCandles(pair) {
@@ -130,9 +131,9 @@ class SyncModel {
     }
 
     calcPrice([reserve0, reserve1]) {
-        if (reserve0 == "0") return 0;
-        if (reserve1.length < 18) return 0;
-        return parseInt(toBN(reserve1).muln(100000).div(toBN(reserve0))) / 100000;
+        if (reserve0 == BN_ZERO) return 0;
+        if (reserve1 == BN_ZERO) return 0;
+        return parseInt(reserve1.muln(100000).div(reserve0)) / 100000;
     }
 
     async getBNBPrice() {
@@ -158,7 +159,7 @@ class SyncModel {
             const [reserve0, reserve1] = await this.getReserves(pair);
             pools.push({ pair, token0: pool.token0, token1: pool.token1, reserve0, reserve1, factory: pool.factory });
         }
-        pools.sort((a, b) => toBN(b.token0 == token ? b.reserve0 : b.reserve1).gt(toBN(a.token0 == token ? a.reserve0 : a.reserve1)) ? 1 : -1);
+        pools.sort((a, b) => (b.token0 == token ? b.reserve0 : b.reserve1).gt(a.token0 == token ? a.reserve0 : a.reserve1) ? 1 : -1);
         let tokenPrice = 0;
         let pricePool = undefined;
         for (let pool of pools) {
@@ -191,7 +192,9 @@ class SyncModel {
             try {
                 await this.partitioner.loadLog(pair, idx, ([block, , , reserve0, reserve1]) => {
                     while (block > parseInt(checkpoints[cid])) {
-                        rs.push(isToken0 ? [reserve0, reserve1] : [reserve1, reserve0]);
+                        const r0 = toBN(reserve0);
+                        const r1 = toBN(reserve1);
+                        rs.push(isToken0 ? [r0, r1] : [r1, r0]);
                         cid++;
                     }
                 });
