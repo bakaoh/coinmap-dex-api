@@ -11,7 +11,6 @@ const sharkModel = new SharkModel();
 app.use(express.json());
 
 const LIQUIDITY_BASE = 'http://10.148.0.34:9613';
-const CANDLE_BASE = 'http://10.148.0.42:9613';
 
 app.get('/api/v1/rating/pool/:token', async (req, res) => {
     const token = getAddress(req.params.token);
@@ -108,20 +107,9 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
         const to = parseInt(req.query.to) || Math.round(Date.now() / 1000);
         const from = parseInt(req.query.from);
         const countback = req.query.countback || Math.floor((to - from) / (60 * minuteCount));
-        const candles = (await axios.get(`${CANDLE_BASE}/candle/${base}?resolution=${minuteCount}&to=${to}&countback=${countback}`)).data;
-        const t = [], c = [], o = [], h = [], l = [], v = [];
-        let last;
-        for (let ts in candles) {
-            t.push(ts);
-            o.push(last || candles[ts].o);
-            c.push(candles[ts].c);
-            h.push(candles[ts].h);
-            l.push(candles[ts].l);
-            v.push(candles[ts].v);
-            last = candles[ts].c;
-        }
-        if (t.length > 0) {
-            res.json({ s: "ok", t, c, o, h, l, v });
+        const rs = await getDexTradesLocal(base, resolution, to, countback);
+        if (rs.t.length > 0) {
+            res.json(rs);
         } else {
             let nextTime = Math.round(Date.now() / 1000);
             res.json({ s: "no_data", nextTime });

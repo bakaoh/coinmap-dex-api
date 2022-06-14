@@ -3,7 +3,7 @@ const LineByLine = require('line-by-line');
 const Leaderboard = require('../utils/leaderboard');
 
 const { toBN } = require('../utils/bsc');
-const { getLastFile } = require('../utils/io');
+const { getLastFile, Partitioner } = require('../utils/io');
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const ZERO = toBN(0);
@@ -47,14 +47,14 @@ class Indexer {
             }
             console.log(`Indexer load holders done (${Date.now() - startMs}ms)`)
         }
-        const fromIdx = Math.floor(this.lastCp / 100000);
-        const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / 100000);
+        const fromIdx = Math.floor(this.lastCp / Partitioner.BPF);
+        const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / Partitioner.BPF);
         for (let i = fromIdx; i <= toIdx; i++) {
             try {
                 await this.loadLogFile(i);
             } catch (err) {
                 if (err.toString().includes('no such file')) {
-                    const block = i * 100000;
+                    const block = i * Partitioner.BPF;
                     while (block > parseInt(this.checkpoints[this.cid])) {
                         this.createCacheFile(this.checkpoints[this.cid]);
                         this.cid++;

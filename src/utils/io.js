@@ -25,6 +25,8 @@ function getLastFiles(dir) {
 }
 
 class Partitioner {
+    static BPF = 100000; // BLOCK_PER_FILE
+
     constructor(prefix, suffix = "") {
         this.prefix = prefix;
         this.suffix = suffix;

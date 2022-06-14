@@ -1,30 +1,24 @@
 const axios = require('axios');
 
-const SwapModel = require("../liquidity/swap");
-const swapModel = new SwapModel();
-
-const COMMON_BASE = 'http://10.148.0.39:9612';
+const CANDLE_BASE = 'http://10.148.0.42:9613';
 const RESOLUTION_INTERVAL = { "1": "minute", "5": "minute", "15": "minute", "60": "minute", "1D": "day", "1W": "day" };
 const RESOLUTION_COUNT = { "1": 1, "5": 5, "15": 15, "60": 60, "1D": 1, "1W": 7 };
 const RESOLUTION_NEXTTIME = { "1": 60, "5": 5 * 60, "15": 15 * 60, "60": 60 * 60, "1D": 24 * 60 * 60, "1W": 7 * 24 * 60 * 60 };
 
-async function getDexTradesLocal(token, countback, count) {
-    const cur = new Date();
-    cur.setMilliseconds(0);
-    const toTs = Math.round(cur.getTime() / 1000);
-    const toBlock = (await axios.get(`${COMMON_BASE}/block/estimate?ts=${toTs}`)).data;
-    const fromTs = toTs - countback * count * 60;
-    const fromBlock = toBlock - countback * count * 20;
-    const rs = await swapModel.getTicker(token, fromBlock, toBlock, fromTs, count);
+async function getDexTradesLocal(token, resolution, to, countback) {
+    const minuteCount = RESOLUTION_COUNT[resolution];
+    const candles = (await axios.get(`${CANDLE_BASE}/candle/${token}?resolution=${minuteCount}&to=${to}&countback=${countback}`)).data;
     const t = [], c = [], o = [], h = [], l = [], v = [];
-    rs.forEach(item => {
-        t.push(item.t);
-        c.push(item.c);
-        o.push(item.o);
-        h.push(item.h);
-        l.push(item.l);
-        v.push(item.v);
-    });
+    let last;
+    for (let ts in candles) {
+        t.push(ts);
+        o.push(last || candles[ts].o);
+        c.push(candles[ts].c);
+        h.push(candles[ts].h);
+        l.push(candles[ts].l);
+        v.push(candles[ts].v);
+        last = candles[ts].c;
+    }
     return { s: "ok", t, c, o, h, l, v };
 }
 

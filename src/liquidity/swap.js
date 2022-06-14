@@ -31,7 +31,7 @@ class SwapModel {
             }
 
             for (let block in tx) {
-                const idx = Math.floor(block / 100000);
+                const idx = Math.floor(block / Partitioner.BPF);
                 for (let txIdx in tx[block]) {
                     const swap = tx[block][txIdx];
                     const from = swap.sort((a, b) => b[0] - a[0])[0][3];
@@ -94,8 +94,8 @@ class SwapModel {
 
     async getVolumeHistory(token0, checkpoints) {
         let cid = 0;
-        const fromIdx = Math.floor(checkpoints[0] / 100000);
-        const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / 100000);
+        const fromIdx = Math.floor(checkpoints[0] / Partitioner.BPF);
+        const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / Partitioner.BPF);
         const rs = [];
         let totalTransaction = toBN(0);
         let totalAmountSell = toBN(0);
@@ -123,8 +123,8 @@ class SwapModel {
 
     async getBigTransaction(token0, checkpoints) {
         let cid = 0;
-        const fromIdx = Math.floor(checkpoints[0] / 100000);
-        const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / 100000);
+        const fromIdx = Math.floor(checkpoints[0] / Partitioner.BPF);
+        const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / Partitioner.BPF);
         const rs = [];
         let total = toBN(0);
         const lastPrice = {};
@@ -142,55 +142,6 @@ class SwapModel {
                         total = toBN(0);
                         while (block > checkpoints[cid]) cid++;
                     }
-                });
-            } catch (err) { }
-        }
-        return rs;
-    }
-
-    calcPrice([reserve0, reserve1], decimals = 18) {
-        if (reserve0 == "0") return 0;
-        if (reserve1.length < 18) return 0;
-        let dd = toBN(10).pow(toBN(18 - decimals));
-        return parseInt(toBN(reserve1).muln(100000).div(toBN(reserve0)).div(dd)) / 100000;
-    }
-
-    async getTicker(token0, fromBlock, toBlock, startTs, minuteCount = 1, decimals = 18) {
-        const fromIdx = Math.floor(fromBlock / 100000);
-        const toIdx = Math.floor(toBlock / 100000);
-        const rs = [];
-        const blockInterval = 20 * minuteCount;
-        let lastBlock = fromBlock;
-        let t = startTs;
-        let o, h, l, c, v = toBN(0);
-        let lastPrice = undefined;
-        for (let idx = fromIdx; idx <= toIdx; idx++) {
-            try {
-                await this.partitioner.loadLog(token0, idx, ([block, , , , , amount0, , amountUSD, amountBNB]) => {
-                    block = parseInt(block);
-                    if (block < lastBlock) return;
-                    if (block > lastBlock + blockInterval) {
-                        while (block > lastBlock + blockInterval) {
-                            lastBlock = lastBlock + blockInterval;
-                            t = t + 60 * minuteCount;
-                        }
-                        if (o && h && l && c) {
-                            rs.push({ t, block, o, h, l, c, v: getNumber(v.toString(10), 5, decimals) });
-                            o = h = l = undefined;
-                            v = toBN(0);
-                        }
-                    }
-
-                    v = v.add(toBN(amount0));
-                    if (amountUSD.length < 20) return;
-                    const price = this.calcPrice([amount0, amountUSD], decimals);
-                    if (price == 0) return;
-                    if (lastPrice && Math.abs(lastPrice - price) * 5 > lastPrice) return;
-                    lastPrice = price;
-                    c = price;
-                    if (!o) o = price;
-                    if (!h || price > h) h = price;
-                    if (!l || price < l) l = price;
                 });
             } catch (err) { }
         }

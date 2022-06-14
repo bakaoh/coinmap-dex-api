@@ -40,7 +40,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
         return ts.map((date, i) => {
             let totalToken = toBN(0);
             for (let pool of pools) {
-                totalToken = totalToken.add(toBN(pool.history[i][0]));
+                totalToken = totalToken.add(pool.history[i][0]);
             }
             const price = getPrice(syncModel.calcPrice(pricePool.history[i]), decimals) * quotePrice;
             return { date, price, totalAmount: getNumber(totalToken.toString(10), 0, decimals) * price };

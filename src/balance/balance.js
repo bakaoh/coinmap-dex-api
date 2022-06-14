@@ -3,7 +3,7 @@ const LineByLine = require('line-by-line');
 const readLastLines = require('read-last-lines');
 
 const { web3, ContractAddress, toBN } = require('../utils/bsc');
-const { getLastLine } = require('../utils/io');
+const { getLastLine, Partitioner } = require('../utils/io');
 
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 const BLOCK_FILE = 'logs/transfer.block';
@@ -117,7 +117,7 @@ class Crawler {
 
     async writeTransferLog(block, txIdx, logIdx, token, from, to, value) {
         try {
-            const idx = Math.floor(block / 100000);
+            const idx = Math.floor(block / Partitioner.BPF);
             this.getWriter(token, idx).write(`${block},${txIdx},${logIdx},${from},${to},${value}\n`);
         } catch (err) { console.log(`Error`, block, txIdx, logIdx, token, from, to, value, err.toString()) }
     }

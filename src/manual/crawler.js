@@ -2,6 +2,7 @@ const fs = require("fs");
 const axios = require("axios");
 
 const { web3, ContractAddress } = require('../utils/bsc');
+const { Partitioner } = require('../utils/io');
 
 const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 const swapTopic = '0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822';
@@ -24,7 +25,7 @@ function getSyncWriter(token, idx) {
 
 async function writeSyncLog(block, txIdx, logIdx, lpToken, reserve0, reserve1) {
     try {
-        const idx = Math.floor(block / 100000);
+        const idx = Math.floor(block / Partitioner.BPF);
         getSyncWriter(lpToken, idx).write(`${block},${txIdx},${logIdx},${reserve0},${reserve1}\n`);
     } catch (err) { console.log(`Error`, block, txIdx, logIdx, lpToken, reserve0, reserve1, err.toString()) }
 }
@@ -39,7 +40,7 @@ function getSwapWriter(token, idx) {
 
 async function writeSwapLog(block, txIdx, logIdx, lpToken, from, to, in0, in1, out0, out1) {
     try {
-        const idx = Math.floor(block / 100000);
+        const idx = Math.floor(block / Partitioner.BPF);
         if (from == ContractAddress.PANCAKE_ROUTER) from = "ROUTER";
         if (to == ContractAddress.PANCAKE_ROUTER) to = "ROUTER";
         getSwapWriter(lpToken, idx).write(`${block},${txIdx},${logIdx},${from},${to},${in0},${in1},${out0},${out1}\n`);
@@ -47,7 +48,7 @@ async function writeSwapLog(block, txIdx, logIdx, lpToken, from, to, in0, in1, o
 }
 
 async function crawlLogs(fromBlock, toBlock) {
-    const fileIdx = Math.floor(fromBlock / 100000);
+    const fileIdx = Math.floor(fromBlock / Partitioner.BPF);
     if (fileIdx != lastFileIdx) {
         for (let a in writer) writer[a].end();
         writer = {};

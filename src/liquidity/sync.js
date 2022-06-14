@@ -6,7 +6,7 @@ const { getNumber } = require('../utils/format');
 const SYNC_TOPIC = '0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1';
 const BLOCK_FILE = 'logs/sync.block';
 const DATA_FOLDER = 'db/lpsync';
-const BN_ZERO = toBN("0");
+const ZERO = toBN(0);
 
 const getAmountOut = (amountIn, reserveIn, reserveOut) => {
     const amountInWithFee = amountIn.muln(9975);
@@ -24,13 +24,13 @@ const getAmountIn = (amountOut, reserveIn, reserveOut) => {
 const getReserveFromLogs = async (pair) => {
     try {
         const lastFile = getLastFile(`${DATA_FOLDER}/${pair}`);
-        if (lastFile == '') return [BN_ZERO, BN_ZERO];;
+        if (lastFile == '') return [ZERO, ZERO];;
         const lastLine = await getLastLine(`${DATA_FOLDER}/${pair}/${lastFile}`);
         const p = lastLine.split(',');
-        if (p.length != 5) return [BN_ZERO, BN_ZERO];
+        if (p.length != 5) return [ZERO, ZERO];
         return [toBN(p[3]), toBN(p[4])];
     } catch (err) {
-        return [BN_ZERO, BN_ZERO];
+        return [ZERO, ZERO];
     }
 }
 
@@ -70,7 +70,7 @@ class SyncModel {
     async loadCandle(pair) {
         const lastFiles = getLastFiles(`${DATA_FOLDER}/${pair}`);
         if (lastFiles.length == 0) return;
-        for (let i = 0; i < 40; i++) {
+        for (let i = 0; i < 4; i++) {
             const idx = parseInt(lastFiles[i]);
             await this.partitioner.loadLog(pair, idx, ([block, , , reserve0, reserve1]) => {
                 this.updateCandle(pair, block, reserve0, reserve1);
@@ -84,7 +84,7 @@ class SyncModel {
         if (this.candles[pair]) {
             block = Math.floor(block / 20);
             const price = this.calcPrice([reserve0, reserve1]);
-            if (!this.candles[pair][block]) this.candles[pair][block] = { o: price, c: price, h: price, l: price, v0: BN_ZERO, v1: BN_ZERO };
+            if (!this.candles[pair][block]) this.candles[pair][block] = { o: price, c: price, h: price, l: price, v0: ZERO, v1: ZERO };
             this.candles[pair][block].c = price;
             if (this.candles[pair][block].h < price) this.candles[pair][block].h = price;
             if (this.candles[pair][block].l > price) this.candles[pair][block].l = price;
@@ -133,9 +133,8 @@ class SyncModel {
     }
 
     calcPrice([reserve0, reserve1]) {
-        if (reserve0 == BN_ZERO) return 0;
-        if (reserve1 == BN_ZERO) return 0;
-        return parseInt(reserve1.muln(100000).div(reserve0)) / 100000;
+        if (reserve0 == ZERO || reserve1 == ZERO) return 0;
+        return parseInt(reserve1.muln(100000000).div(reserve0)) / 100000000;
     }
 
     async getBNBPrice() {
@@ -187,8 +186,8 @@ class SyncModel {
 
     async getReservesHistory(pair, checkpoints, isToken0 = true) {
         let cid = 0;
-        const fromIdx = Math.floor(checkpoints[0] / 100000);
-        const toIdx = Math.ceil(checkpoints[checkpoints.length - 1] / 100000);
+        const fromIdx = Math.floor(checkpoints[0] / Partitioner.BPF);
+        const toIdx = Math.ceil(checkpoints[checkpoints.length - 1] / Partitioner.BPF);
         const rs = [];
         for (let idx = fromIdx; idx <= toIdx; idx++) {
             try {
@@ -202,7 +201,7 @@ class SyncModel {
                 });
             } catch (err) {
                 if (!err.toString().includes('no such file')) { }
-                const block = (idx) * 100000;
+                const block = (idx) * Partitioner.BPF;
                 while (block > parseInt(checkpoints[cid])) {
                     rs.push(["0", "0"]);
                     cid++;
@@ -260,7 +259,7 @@ class SyncModel {
     }
 
     async writeSyncLog(block, txIdx, logIdx, pair, reserve0, reserve1) {
-        const idx = Math.floor(block / 100000);
+        const idx = Math.floor(block / Partitioner.BPF);
         this.partitioner.getWriter(pair, idx).write(`${block},${txIdx},${logIdx},${reserve0},${reserve1}\n`);
         this.updateCandle(pair, block, reserve0, reserve1);
     }
