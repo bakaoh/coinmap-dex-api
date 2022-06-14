@@ -70,7 +70,7 @@ class SyncModel {
     async loadCandle(pair) {
         const lastFiles = getLastFiles(`${DATA_FOLDER}/${pair}`);
         if (lastFiles.length == 0) return;
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < 40; i++) {
             const idx = parseInt(lastFiles[i]);
             await this.partitioner.loadLog(pair, idx, ([block, , , reserve0, reserve1]) => {
                 this.updateCandle(pair, block, reserve0, reserve1);
@@ -151,7 +151,7 @@ class SyncModel {
         const pair = ContractAddress.PAIR_WBNB_BUSD;
         this.candles[pair] = {};
         await this.loadCandle(pair);
-        console.log(`Load BNB price (${Date.now() - startMs}ms)`)
+        console.log(`Load BNB candles (${Date.now() - startMs}ms)`)
     }
 
     async getPools(token, pairs) {

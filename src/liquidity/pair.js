@@ -27,11 +27,14 @@ class PairModel {
     }
 
     warmup() {
+        const startMs = Date.now();
         const lr = new LineByLine(PAIR_DETAIL_FILE);
         lr.on('line', (line) => {
             this.addPool(line.split(','));
         });
-        return new Promise((res, rej) => lr.on('end', () => res()).on('error', err => rej(err)));
+        return new Promise((res, rej) => lr
+            .on('end', () => { console.log(`PairModel warmup (${Date.now() - startMs}ms)`); res() })
+            .on('error', err => rej(err)));
     }
 
     getPools(token) {
