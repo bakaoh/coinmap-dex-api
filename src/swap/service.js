@@ -74,8 +74,9 @@ app.get('/api/v1/tradingview/symbols', async (req, res) => {
     const base = getAddress(tokens[0]);
     const name = await getSymbol(base);
     const price = parseFloat((await axios.get(`${LIQUIDITY_BASE}/api/v1/transaction/${base}`)).data.price);
-    let pricescale = 1000;
-    while (price * pricescale < 1 && pricescale < 100000000) { pricescale *= 10 }
+    let pricescale = 1;
+    while (price * pricescale < 1 && pricescale < 1000000) { pricescale *= 10 }
+    pricescale *= 1000;
     const rs = {
         "name": name,
         "exchange-traded": symbol,
