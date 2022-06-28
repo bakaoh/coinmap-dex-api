@@ -92,7 +92,7 @@ app.get('/api/v1/transaction/:token', async (req, res) => {
         } else if (tx.amountBNB != "0") {
             txTotal = toBN(tx.amountBNB).mul(bnbPriceBN);
         } else return;
-        const newprice = parseInt(txTotal.muln(100000).div(amount0BN).div(dd).toString(10)) / 100000;
+        const newprice = parseInt(txTotal.mul(toBN("100000000")).div(amount0BN).div(dd).toString(10)) / 100000000;
         if (Math.abs(price - newprice) * 5 > price) return;
         price = newprice;
         const item = {
