@@ -203,7 +203,7 @@ class SyncModel {
                 if (!err.toString().includes('no such file')) { }
                 const block = (idx) * Partitioner.BPF;
                 while (block > parseInt(checkpoints[cid])) {
-                    rs.push(["0", "0"]);
+                    rs.push([ZERO, ZERO]);
                     cid++;
                 }
             }
