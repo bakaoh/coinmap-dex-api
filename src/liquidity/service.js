@@ -36,9 +36,8 @@ app.get('/api/v1/price/:tokenA/:tokenB', async (req, res) => {
     const amountOut = toBN(rs.amountOut);
     const decimalsA = (await getToken(tokenA)).decimals;
     const decimalsB = (await getToken(tokenB)).decimals;
-    const priceAB = parseInt(amountIn.mul(toBN("100000000")).div(amountOut).div(toBN(10).pow(toBN(decimalsB - decimalsA))).toString(10)) / 100000000;
-    const priceBA = parseInt(amountOut.mul(toBN("100000000")).div(amountIn).div(toBN(10).pow(toBN(decimalsA - decimalsB))).toString(10)) / 100000000;
-    res.json({ priceAB, priceBA });
+    const price = parseInt(amountOut.mul(toBN("100000000")).div(amountIn).div(toBN(10).pow(toBN(decimalsA - decimalsB))).toString(10)) / 100000000;
+    res.json({ price });
 })
 
 app.get('/api/v1/pool/:token', async (req, res) => {
