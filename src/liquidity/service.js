@@ -25,6 +25,22 @@ const getToken = async (token) => {
     return tokenCache[token];
 };
 
+app.get('/api/v1/price/:tokenA/:tokenB', async (req, res) => {
+    const tokenA = getAddress(req.params.tokenA);
+    const tokenB = getAddress(req.params.tokenB);
+    const amountIn = toBN("1000000000000000000");
+    const rs = await syncModel.getPath(
+        tokenA, tokenB,
+        pairModel.getPools(tokenA), pairModel.getPools(tokenB),
+        amountIn.toString());
+    const amountOut = toBN(rs.amountOut);
+    const decimalsA = (await getToken(tokenA)).decimals;
+    const decimalsB = (await getToken(tokenB)).decimals;
+    const priceAB = parseInt(amountIn.mul(toBN("100000000")).div(amountOut).div(toBN(10).pow(toBN(decimalsB - decimalsA))).toString(10)) / 100000000;
+    const priceBA = parseInt(amountOut.mul(toBN("100000000")).div(amountIn).div(toBN(10).pow(toBN(decimalsA - decimalsB))).toString(10)) / 100000000;
+    res.json({ priceAB, priceBA });
+})
+
 app.get('/api/v1/pool/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const { symbol, decimals } = (await getToken(token));
