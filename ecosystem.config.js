@@ -45,6 +45,15 @@ module.exports = {
       cron_restart: "0 1 * * *",
       watch: false,
       autorestart: false
+    },
+    {
+      name: "bot",
+      script: "src/bot/index.js",
+      instances: 1,
+      autorestart: true,
+      max_memory_restart: "2000M",
+      watch: false,
+      time: true
     }
   ]
 };
