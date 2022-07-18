@@ -52,7 +52,7 @@ class Crawler {
             topics: [this.topic],
         })
 
-        let lastBlock = fromBlock;
+        let lastBlock = 0;
         for (let log of pastLogs) {
             lastBlock = log.blockNumber;
             if (this.onLog) try {
@@ -66,6 +66,7 @@ class Crawler {
         if (lastBlock != 0) {
             this.blockWriter.write(`${lastBlock}\n`);
         } else if (toBlock != 'latest') {
+            this.blockWriter.write(`${fromBlock}\n`);
             lastBlock = toBlock;
         } else {
             lastBlock = await web3.eth.getBlockNumber() - 1;
