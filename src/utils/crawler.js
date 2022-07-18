@@ -52,7 +52,7 @@ class Crawler {
             topics: [this.topic],
         })
 
-        let lastBlock = 0;
+        let lastBlock = fromBlock;
         for (let log of pastLogs) {
             lastBlock = log.blockNumber;
             if (this.onLog) try {
