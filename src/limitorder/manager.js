@@ -43,6 +43,7 @@ class Manager {
                 const sig = order.sig;
                 delete order.status;
                 delete order.sig;
+                delete order.isBuy;
                 try {
                     executed = true;
                     const rs = await this.accounts[0].executeOrder(order.maker, order, sig, data.paths, data.feePaths)
