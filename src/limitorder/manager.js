@@ -28,10 +28,19 @@ class Manager {
         }
     }
 
+    isValidParams(order) {
+        try {
+            toBN(order.payAmount);
+            toBN(order.buyAmount);
+        } catch (err) { return false; }
+        return true;
+    }
+
     async process(order) {
         if (order.status != 0) return false;
         if (order.deadline * 1000 < Date.now()) return false;
         if (this.processing[order.salt]) return false;
+        if (!this.isValidParams(order)) return false;
 
         let executed = false;
         this.processing[order.salt] = true;
