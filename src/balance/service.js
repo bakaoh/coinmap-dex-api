@@ -10,9 +10,9 @@ const { ContractAddress, getAddress, isUSD } = require('../utils/bsc');
 const { getNumber } = require('../utils/format');
 
 const app = express();
-const balanceModel = new BalanceModel();
 const blockModel = new BlockModel();
 const tokenModel = new TokenModel();
+const balanceModel = new BalanceModel(tokenModel);
 
 app.use(express.json());
 
