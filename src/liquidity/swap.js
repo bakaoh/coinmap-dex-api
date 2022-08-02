@@ -1,7 +1,7 @@
 const Crawler = require("../utils/crawler");
 const { web3, ContractAddress, isUSD, toBN } = require('../utils/bsc');
 const { Partitioner, getLastFiles } = require('../utils/io');
-const { fetchTokens } = require("../cache");
+const { prefetchTokens } = require("../cache");
 const readLastLines = require('read-last-lines');
 
 const SWAP_TOPIC = '0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822';
@@ -72,7 +72,7 @@ class SwapModel {
                 }
                 tx[block] = null;
             }
-            await fetchTokens(Array.from(tokenAddresses).join()).catch(console.log);
+            await prefetchTokens(Array.from(tokenAddresses).join()).catch(console.log);
         });
         await this.crawler.run();
     }

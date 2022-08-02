@@ -22,7 +22,7 @@ const getToken = async (token) => {
     return tokenCache[token];
 };
 
-const fetchTokens = async (token) => axios.get(`${COMMON_BASE}/fetch/token?a=${token}`);
+const prefetchTokens = async (token) => axios.get(`${COMMON_BASE}/fetch/token?a=${token}`);
 
 async function getCache(key, getFunc) {
     let data = cache.get(key);
@@ -33,4 +33,4 @@ async function getCache(key, getFunc) {
     return data;
 }
 
-module.exports = { getCache, getSymbol, getToken, fetchTokens }
+module.exports = { getCache, getSymbol, getToken, prefetchTokens }

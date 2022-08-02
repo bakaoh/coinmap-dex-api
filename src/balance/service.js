@@ -102,7 +102,7 @@ app.get('/info/token', async (req, res) => {
 })
 
 app.get('/fetch/token', async (req, res) => {
-    await tokenModel.fetchTokens(req.query.a.split(","));
+    await tokenModel.prefetchTokens(req.query.a.split(",")).catch(console.log);
     res.json({ rs: "ok" });
 })
 

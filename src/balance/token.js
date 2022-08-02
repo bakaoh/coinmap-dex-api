@@ -89,23 +89,19 @@ class TokenModel {
         return { address, decimals: this.token[address][0], symbol: this.token[address][1], name: this.token[address][2] };
     }
 
-    async fetchTokens(addresses) {
+    async prefetchTokens(addresses) {
         addresses = addresses.filter(a => !this.invalid[a] && !this.token[a]);
-        if (addresses.length > 0) {
-            try {
-                const tokens = await getTokenMetadata(addresses)
-                const writer = fs.createWriteStream(TOKEN_DETAIL_FILE, opts);
-                for (let i = 0; i < tokens.length; i++) {
-                    this.token[tokens[i][0]] = [tokens[i][3], tokens[i][2], tokens[i][1]];
-                    this.indexer.add(tokens[i][0], tokens[i][3], tokens[i][2], tokens[i][1]);
-                    if (!this.readonly) {
-                        writer.write(`${tokens[i][0]},${tokens[i][3]},${tokens[i][2]},${tokens[i][1]}\n`);
-                    }
-                }
-                writer.end();
-            } catch (err) {
+        if (addresses.length == 0) return;
+        const tokens = await getTokenMetadata(addresses)
+        const writer = fs.createWriteStream(TOKEN_DETAIL_FILE, opts);
+        for (let i = 0; i < tokens.length; i++) {
+            this.token[tokens[i][0]] = [tokens[i][3], tokens[i][2], tokens[i][1]];
+            this.indexer.add(tokens[i][0], tokens[i][3], tokens[i][2], tokens[i][1]);
+            if (!this.readonly) {
+                writer.write(`${tokens[i][0]},${tokens[i][3]},${tokens[i][2]},${tokens[i][1]}\n`);
             }
         }
+        writer.end();
     }
 
     loadTokenDetailFile() {
