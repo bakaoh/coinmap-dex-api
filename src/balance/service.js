@@ -107,7 +107,7 @@ async function start(port) {
     await blockModel.loadLogFile();
     blockModel.run(60 * 60 * 1000);
     await tokenModel.loadTokenDetailFile();
-    await balanceModel.run();
+    await balanceModel.runCrawler();
 
     app.listen(port);
     const ms = Date.now() - startMs;
