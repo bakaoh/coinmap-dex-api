@@ -18,8 +18,8 @@ class Transfer {
 
     async runCrawler() {
         this.crawler = new Crawler("Transfer", TRANSFER_TOPIC, BLOCK_FILE, async (log) => {
-            if (IGNORE.includes(log.address)) continue;
-            if (log.topics.length != 3 || log.data == '0x') continue;
+            if (IGNORE.includes(log.address)) return;
+            if (log.topics.length != 3 || log.data == '0x') return;
             const values = web3.eth.abi.decodeParameters(['uint256'], log.data)
             const from = web3.eth.abi.decodeParameters(['address'], log.topics[1])
             const to = web3.eth.abi.decodeParameters(['address'], log.topics[2])
