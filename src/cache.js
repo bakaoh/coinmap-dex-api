@@ -13,6 +13,15 @@ const getSymbol = async (token) => {
     return symbolCache[token];
 };
 
+const tokenCache = {};
+const getToken = async (token) => {
+    if (!tokenCache[token]) {
+        tokenCache[token] = (await axios.get(`${COMMON_BASE}/info/token?a=${token}`)).data[0];
+        tokenCache[token].decimals = parseInt(tokenCache[token].decimals);
+    }
+    return tokenCache[token];
+};
+
 async function getCache(key, getFunc) {
     let data = cache.get(key);
     if (data == undefined) {
@@ -22,4 +31,4 @@ async function getCache(key, getFunc) {
     return data;
 }
 
-module.exports = { getCache, getSymbol }
+module.exports = { getCache, getSymbol, getToken }

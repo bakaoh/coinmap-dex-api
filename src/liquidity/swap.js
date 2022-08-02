@@ -1,7 +1,7 @@
 const Crawler = require("../utils/crawler");
 const { web3, ContractAddress, isUSD, toBN } = require('../utils/bsc');
 const { Partitioner, getLastFiles } = require('../utils/io');
-const { getNumber } = require('../utils/format');
+const { getToken } = require("../cache");
 const readLastLines = require('read-last-lines');
 
 const SWAP_TOPIC = '0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822';
@@ -66,6 +66,10 @@ class SwapModel {
 
                     this.partitioner.getWriter(tokenIn, idx).write(`${block},${txIdx},SELL,${from},${tokenOut},${amountIn},${amountOut},${usdAmount},${bnbAmount}\n`);
                     this.partitioner.getWriter(tokenOut, idx).write(`${block},${txIdx},BUY,${from},${tokenIn},${amountOut},${amountIn},${usdAmount},${bnbAmount}\n`);
+                    try {
+                        await getToken(tokenIn);
+                        await getToken(tokenOut);
+                    } catch (err) { }
                 }
                 tx[block] = null;
             }

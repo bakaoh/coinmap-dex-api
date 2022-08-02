@@ -4,7 +4,7 @@ const axios = require("axios");
 const SyncModel = require("./sync");
 const SwapModel = require("./swap");
 const PairModel = require("./pair");
-const { getCache } = require("../cache");
+const { getCache, getToken } = require("../cache");
 const { getAddress, ContractAddress, toBN, getFactoryName } = require('../utils/bsc');
 const { getNumber, getPrice } = require('../utils/format');
 
@@ -15,15 +15,6 @@ const pairModel = new PairModel();
 const syncModel = new SyncModel();
 const swapModel = new SwapModel(pairModel);
 app.use(express.json());
-
-const tokenCache = {};
-const getToken = async (token) => {
-    if (!tokenCache[token]) {
-        tokenCache[token] = (await axios.get(`${COMMON_BASE}/info/token?a=${token}`)).data[0];
-        tokenCache[token].decimals = parseInt(tokenCache[token].decimals);
-    }
-    return tokenCache[token];
-};
 
 app.get('/api/v1/price/:tokenA/:tokenB', async (req, res) => {
     const tokenA = getAddress(req.params.tokenA);
