@@ -11,8 +11,7 @@ const IGNORE = [ContractAddress.WBNB, ContractAddress.BUSD, ContractAddress.USDT
 const DATA_FOLDER = 'db/transfer';
 
 class Transfer {
-    constructor(tokenModel) {
-        this.tokenModel = tokenModel;
+    constructor() {
         this.partitioner = new Partitioner(DATA_FOLDER, '.log');
     }
 
@@ -91,7 +90,6 @@ class Transfer {
         try {
             const idx = Math.floor(block / Partitioner.BPF);
             this.partitioner.getWriter(token, idx).write(`${block},${txIdx},${logIdx},${from},${to},${value}\n`);
-            await this.tokenModel.getToken(token);
         } catch (err) { console.log(`Error`, block, txIdx, logIdx, token, from, to, value, err.toString()) }
     }
 }

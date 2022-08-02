@@ -12,7 +12,7 @@ const { getNumber } = require('../utils/format');
 const app = express();
 const blockModel = new BlockModel();
 const tokenModel = new TokenModel();
-const balanceModel = new BalanceModel(tokenModel);
+const balanceModel = new BalanceModel();
 
 app.use(express.json());
 
