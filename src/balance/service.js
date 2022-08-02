@@ -101,6 +101,11 @@ app.get('/info/token', async (req, res) => {
     res.json(rs);
 })
 
+app.get('/fetch/token', async (req, res) => {
+    await tokenModel.fetchTokens(req.query.a.split(","));
+    res.json({ rs: "ok" });
+})
+
 async function start(port) {
     const startMs = Date.now();
 

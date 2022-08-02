@@ -22,6 +22,8 @@ const getToken = async (token) => {
     return tokenCache[token];
 };
 
+const fetchTokens = async (token) => axios.get(`${COMMON_BASE}/fetch/token?a=${token}`);
+
 async function getCache(key, getFunc) {
     let data = cache.get(key);
     if (data == undefined) {
@@ -31,4 +33,4 @@ async function getCache(key, getFunc) {
     return data;
 }
 
-module.exports = { getCache, getSymbol, getToken }
+module.exports = { getCache, getSymbol, getToken, fetchTokens }
