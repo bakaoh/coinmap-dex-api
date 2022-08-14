@@ -16,6 +16,12 @@ const syncModel = new SyncModel();
 const swapModel = new SwapModel(pairModel);
 app.use(express.json());
 
+app.get('/api/v1/buyholder/:token', async (req, res) => {
+    const token = getAddress(req.params.token);
+    const buyHolder = swapModel.getBuyHolder(token);
+    res.json({ buyHolder })
+})
+
 app.get('/api/v1/price/:tokenA/:tokenB', async (req, res) => {
     const tokenA = getAddress(req.params.tokenA);
     const tokenB = getAddress(req.params.tokenB);

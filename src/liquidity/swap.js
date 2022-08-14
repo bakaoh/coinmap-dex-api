@@ -12,6 +12,7 @@ class SwapModel {
     constructor(pairModel) {
         this.pairModel = pairModel;
         this.partitioner = new Partitioner(DATA_FOLDER);
+        this.buyHolder = {};
     }
 
     async runCrawler() {
@@ -69,12 +70,23 @@ class SwapModel {
                     this.partitioner.getWriter(tokenOut, idx).write(`${block},${txIdx},BUY,${from},${tokenIn},${amountOut},${amountIn},${usdAmount},${bnbAmount}\n`);
                     tokenAddresses.add(tokenIn);
                     tokenAddresses.add(tokenOut);
+                    const firstPool = this.pairModel.firstPool[tokenOut];
+                    if (block - firstPool < 28800) { // pool < 24h
+                        if (!this.buyHolder[tokenOut]) this.buyHolder[tokenOut] = new Set();
+                        this.buyHolder[tokenOut].add(from)
+                    } else {
+                        delete this.buyHolder[tokenOut];
+                    }
                 }
                 tx[block] = null;
             }
             await prefetchTokens(Array.from(tokenAddresses).join()).catch(console.log);
         });
         await this.crawler.run();
+    }
+
+    getBuyHolder(token) {
+        return this.buyHolder[token] ? this.buyHolder[token].size : 0;
     }
 
     async getLastTx(token, n) {
