@@ -7,7 +7,7 @@ const { checkIsContract } = require('../multicall')
 
 const DATA_FOLDER = 'db/shark';
 const TOP_SIZE = 10;
-const ID = 183;
+const ID = 204;
 const CACHE_FOLDER = `cache/shark/${ID}`;
 
 async function getTopEOA(addresses) {

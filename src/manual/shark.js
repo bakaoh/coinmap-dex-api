@@ -10,7 +10,7 @@ async function run(token) {
     const accTotal = {};
     const accToken = {};
     const accUsd = {};
-    for (let idx = 0; idx <= 183; idx++) {
+    for (let idx = 0; idx <= 204; idx++) {
         try {
             await reader.loadLog(token, idx, ([block, txIdx, sb, from, otherToken, tokenAmount, otherTokenAmount, usdAmount, bnbAmount]) => {
                 if (usdAmount == '0') return;
@@ -32,7 +32,7 @@ async function run(token) {
             }
         }
     }
-    const w = writer.getWriter(token, 183);
+    const w = writer.getWriter(token, 204);
     for (let acc in accTotal) {
         w.write(`${acc},${accTotal[acc].toString(10)},${accToken[acc].toString(10)},${accUsd[acc].toString(10)}\n`)
     }
