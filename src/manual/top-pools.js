@@ -14,15 +14,17 @@ async function runAll() {
     let c = 0;
     await pairModel.warmup();
     for (let token of tokens) {
-        const startMs = Date.now();
-        const { tokenPrice, pools } = (await syncModel.getPools(token, pairModel.getPools(token)));
-        let totalToken = toBN(0);
-        for (let pool of pools) {
-            totalToken = totalToken.add(toBN(pool.token0 == token ? pool.reserve0 : pool.reserve1));
-        }
-        const totalAmount = getNumber(totalToken.toString(10)) * tokenPrice;
-        writer.write(`${token},${totalAmount}\n`);
-        console.log(`Top pools ${c++} [${token}] (${Date.now() - startMs}ms)`)
+        try {
+            const startMs = Date.now();
+            const { tokenPrice, pools } = (await syncModel.getPools(token, pairModel.getPools(token)));
+            let totalToken = toBN(0);
+            for (let pool of pools) {
+                totalToken = totalToken.add(toBN(pool.token0 == token ? pool.reserve0 : pool.reserve1));
+            }
+            const totalAmount = getNumber(totalToken.toString(10)) * tokenPrice;
+            writer.write(`${token},${totalAmount}\n`);
+            console.log(`Top pools ${c++} [${token}] (${Date.now() - startMs}ms)`)
+        } catch (err) { }
     }
 }
 
