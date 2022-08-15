@@ -27,7 +27,7 @@ class SharkModel {
 
     loadTopPools() {
         const startMs = Date.now();
-        const lr = new LineByLine(`db/pools-183.total`);
+        const lr = new LineByLine(`db/pools-204.total`);
         lr.on('line', (line) => {
             const [token, value] = line.split(',');
             if (value == "0") return;

@@ -6,7 +6,7 @@ const { getNumber } = require('../utils/format');
 
 const pairModel = new PairModel();
 const syncModel = new SyncModel();
-const writer = fs.createWriteStream(`db/pools-183.total`, { flags: "a" })
+const writer = fs.createWriteStream(`db/pools-204.total`, { flags: "a" })
 
 async function runAll() {
     const tokens = fs.readdirSync('db/cswap');

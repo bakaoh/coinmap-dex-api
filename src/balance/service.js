@@ -97,7 +97,7 @@ app.get('/block/startofday', (req, res) => {
 })
 
 app.get('/info/token', async (req, res) => {
-    const rs = await Promise.all(req.query.a.split(",").map(a => tokenModel.getToken(a)));
+    const rs = await Promise.all(req.query.a.split(",").map(a => tokenModel.getToken(getAddress(a))));
     res.json(rs);
 })
 
