@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const CANDLE_BASE = 'http://10.148.0.42:9613';
+const CANDLE_BASE = 'http://10.148.0.34:9613';
 const RESOLUTION_INTERVAL = { "1": "minute", "5": "minute", "15": "minute", "60": "minute", "1D": "day", "1W": "day" };
 const RESOLUTION_COUNT = { "1": 1, "5": 5, "15": 15, "60": 60, "1D": 1, "1W": 7 };
 const RESOLUTION_NEXTTIME = { "1": 60, "5": 5 * 60, "15": 15 * 60, "60": 60 * 60, "1D": 24 * 60 * 60, "1W": 7 * 24 * 60 * 60 };
