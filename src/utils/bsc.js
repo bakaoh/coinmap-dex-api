@@ -3,7 +3,7 @@ const { pack, keccak256 } = require('@ethersproject/solidity');
 const { getCreate2Address, getAddress } = require('@ethersproject/address');
 
 const PANCAKE_INIT_CODE_HASH = '0x00fb7f630766e6a796048ea87d01acd3068e8ff67d078148a3fa3f4a84f69bd5'
-const ENDPOINT = "https://bscrpc.com";
+const ENDPOINT = "https://long-long-firefly.bsc.discover.quiknode.pro/983a15976ac7d53feeaea731413e2bb7d4a7a298/";
 
 const web3 = new Web3(ENDPOINT);
 
