@@ -79,6 +79,7 @@ class SyncModel {
     }
 
     updateCandle(pair, block, reserve0, reserve1) {
+        if (!reserve0 || !reserve1) return;
         reserve0 = toBN(reserve0);
         reserve1 = toBN(reserve1);
         if (this.candles[pair]) {
