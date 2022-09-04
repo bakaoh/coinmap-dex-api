@@ -39,7 +39,7 @@ class Crawler {
         while (fromBlock < latest) {
             try {
                 fromBlock = await this.crawlLogs(fromBlock, fromBlock + batchSize - 1, 2000) + 1;
-            } catch (err) { console.log(`Error ${fromBlock}:`, err); await sleep(2000); }
+            } catch (err) { console.log(`Error ${fromBlock}:`, err); await sleep(10000); }
         }
         if (fromBlock > latest) fromBlock = latest;
 
