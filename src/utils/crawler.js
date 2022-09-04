@@ -1,4 +1,5 @@
 const fs = require('fs');
+const Web3 = require("web3");
 const { web3 } = require('./bsc');
 const { getLastLine } = require('./io');
 
@@ -13,6 +14,11 @@ class Crawler {
         this.onLog = onLog;
         this.onLogs = onLogs;
         this.batchSize = batchSize;
+        this.web3 = web3;
+    }
+
+    setWeb3(url) {
+        this.web3 = new Web3(url);
     }
 
     async getReserves(pair) {
@@ -26,7 +32,7 @@ class Crawler {
         const batchSize = this.batchSize;
         const lastLine = await getLastLine(this.blockFile);
         let fromBlock = lastLine ? parseInt(lastLine) + 1 : 0;
-        const latest = await web3.eth.getBlockNumber();
+        const latest = await this.web3.eth.getBlockNumber();
         console.log(`${this.name} start running from block ${fromBlock}, latest ${latest}`);
 
         this.blockWriter = fs.createWriteStream(this.blockFile, opts);
@@ -46,7 +52,7 @@ class Crawler {
 
     async crawlLogs(fromBlock, toBlock = 'latest', sleepMs = 0) {
         const startMs = Date.now();
-        const pastLogs = await web3.eth.getPastLogs({
+        const pastLogs = await this.web3.eth.getPastLogs({
             fromBlock,
             toBlock,
             topics: [this.topic],
@@ -69,7 +75,7 @@ class Crawler {
             this.blockWriter.write(`${fromBlock}\n`);
             lastBlock = toBlock;
         } else {
-            lastBlock = await web3.eth.getBlockNumber() - 1;
+            lastBlock = await this.web3.eth.getBlockNumber() - 1;
         }
 
         const ms = Date.now() - startMs;

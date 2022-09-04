@@ -24,6 +24,7 @@ class PairModel {
             const token1 = web3.eth.abi.decodeParameters(['address'], log.topics[2])
             this.writePairCreatedLog(log.blockNumber, log.transactionIndex, log.logIndex, log.address, token0[0], token1[0], values[0], values[1].toString(10));
         }, 4500);
+        this.crawler.setWeb3('https://bsc-dataseed3.binance.org/');
         await this.crawler.run();
     }
 

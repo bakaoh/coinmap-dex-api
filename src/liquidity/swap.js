@@ -82,6 +82,7 @@ class SwapModel {
             }
             await prefetchTokens(Array.from(tokenAddresses).join()).catch(console.log);
         });
+        this.crawler.setWeb3('https://bsc-dataseed3.defibit.io/');
         await this.crawler.run();
     }
 
