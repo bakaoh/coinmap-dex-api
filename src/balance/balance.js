@@ -58,9 +58,9 @@ class Transfer {
     }
 
     async getTotalHolders(token, n) {
-        if (token == ContractAddress.BUSD) return Array(n).fill(3847185);
-        if (token == ContractAddress.USDT) return Array(n).fill(5377855);
-        if (token == ContractAddress.WBNB) return Array(n).fill(1670039);
+        if (token == ContractAddress.BUSD) return Array(n).fill({ total: 3847185 });
+        if (token == ContractAddress.USDT) return Array(n).fill({ total: 5377855 });
+        if (token == ContractAddress.WBNB) return Array(n).fill({ total: 1670039 });
         const rs = [];
         try {
             const file = `cache/summary/${token}/total-holder.log`
