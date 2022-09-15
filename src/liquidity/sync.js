@@ -217,6 +217,7 @@ class SyncModel {
         amountIn = toBN(amountIn);
         const lpA = {};
         for (let pair in pairsA) {
+            if (pairsA[pair].factory != ContractAddress.PANCAKE_FACTORY) continue;
             if (pairsA[pair].token0 == tokenA) {
                 lpA[pairsA[pair].token1] = { pair, isToken0: true };
             } else {
@@ -225,6 +226,7 @@ class SyncModel {
         }
         const lpB = {};
         for (let pair in pairsB) {
+            if (pairsB[pair].factory != ContractAddress.PANCAKE_FACTORY) continue;
             if (pairsB[pair].token0 == tokenB) {
                 lpB[pairsB[pair].token1] = { pair, isToken0: true };
             } else {
