@@ -46,8 +46,8 @@ app.get('/api/v1/search', async (req, res) => {
 app.get('/api/v1/holder/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const rs = await getCache(`holder-${token}`, async () => {
-        const { ts, block } = getStartTsOfDay(30);
-        return (await balanceModel.getTotalHolders(token, 30)).map((p, i) => ({
+        const { ts, block } = getStartTsOfDay(26);
+        return (await balanceModel.getTotalHolders(token, 26)).map((p, i) => ({
             date: ts[i],
             num: parseInt(p.total),
         }));
@@ -72,7 +72,7 @@ app.get('/api/v1/shark/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const { decimals } = await tokenModel.getToken(token);
     const rs = await getCache(`shark-${token}`, async () => {
-        const { ts, block } = getStartTsOfDay(8);
+        const { ts, block } = getStartTsOfDay(26);
         const data = await balanceModel.getSharkHistory(token, block);
         const bigtx = (await axios.get(`${LIQUIDITY_BASE}/api/v1/bigtx/${token}`)).data;
         return bigtx.map((p, i) => ({
