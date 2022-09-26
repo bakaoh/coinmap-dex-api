@@ -106,77 +106,77 @@ app.get('/api/v1/tradingview/history', async (req, res) => {
     const tokens = req.query.symbol.split("~");
     const base = getAddress(tokens[0]);
 
-    // if (RESOLUTION_INTERVAL[resolution] == "minute") {
-    const minuteCount = RESOLUTION_COUNT[resolution];
-    const to = parseInt(req.query.to) || Math.round(Date.now() / 1000);
-    const from = parseInt(req.query.from);
-    const countback = req.query.countback || Math.floor((to - from) / (60 * minuteCount));
-    const rs = await getDexTradesLocal(base, resolution, to, countback);
-    if (rs.t.length > 0) {
-        res.json(rs);
+    if (RESOLUTION_INTERVAL[resolution] == "minute") {
+        const minuteCount = RESOLUTION_COUNT[resolution];
+        const to = parseInt(req.query.to) || Math.round(Date.now() / 1000);
+        const from = parseInt(req.query.from);
+        const countback = req.query.countback || Math.floor((to - from) / (60 * minuteCount));
+        const rs = await getDexTradesLocal(base, resolution, to, countback);
+        if (rs.t.length > 0) {
+            res.json(rs);
+        } else {
+            let nextTime = Math.round(Date.now() / 1000);
+            res.json({ s: "no_data", nextTime });
+        }
+        return;
+    }
+
+    let quote = tokens[1];
+    let barsBnb;
+    let exchangeName = undefined;
+    if (quote == "0") {
+        const { pools } = (await axios.get(`${LIQUIDITY_BASE}/api/v1/pool/${base}`)).data;
+        quote = pools[0].token0 == base ? pools[0].token1 : pools[0].token0;
+        exchangeName = pools[0].exchange;
+        if (quote == ContractAddress.WBNB) {
+            barsBnb = await getCache(`ticker-${resolution}-${ContractAddress.WBNB}-${ContractAddress.BUSD}`, async () => {
+                return await getDexTrades(ContractAddress.WBNB, ContractAddress.BUSD, resolution);
+            });
+        }
     } else {
-        let nextTime = Math.round(Date.now() / 1000);
+        quote = getAddress(quote);
+    }
+    const bars = await getCache(`ticker-${resolution}-${base}-${quote}`, async () => {
+        return await getDexTrades(base, quote, resolution, exchangeName);
+    });
+    const from = parseInt(req.query.from);
+    const to = parseInt(req.query.to) || Math.round(Date.now() / 1000);
+    const countback = req.query.countback;
+
+    const t = [], c = [], o = [], h = [], l = [], v = [];
+    for (let i = 0; i < bars.t.length; i++) {
+        if ((countback || bars.t[i] >= from) && bars.t[i] < to) {
+            if (quote == ContractAddress.WBNB) {
+                t.push(bars.t[i]);
+                c.push(bars.c[i] * barsBnb.c[i]);
+                o.push(bars.o[i] * barsBnb.o[i]);
+                h.push(bars.h[i] * barsBnb.h[i]);
+                l.push(bars.l[i] * barsBnb.l[i]);
+                v.push(bars.v[i] * barsBnb.v[i]);
+            } else {
+                t.push(bars.t[i]);
+                c.push(bars.c[i]);
+                o.push(bars.o[i]);
+                h.push(bars.h[i]);
+                l.push(bars.l[i]);
+                v.push(bars.v[i]);
+            }
+        }
+        if (t.length >= parseInt(countback)) break;
+    }
+    t.reverse(); c.reverse(); o.reverse(); h.reverse(); l.reverse(); v.reverse();
+    if (t.length > 0) {
+        const { price } = (await axios.get(`${LIQUIDITY_BASE}/api/v1/transaction/${base}`)).data;
+        c[c.length - 1] = price;
+        t[t.length - 1] = to;
+        res.json({ s: "ok", t, c, o, h, l, v });
+    } else {
+        let nextTime = bars.t[0] + RESOLUTION_NEXTTIME[resolution];
+        if (parseInt(req.query.to) < bars.t[bars.t.length - 1]) {
+            nextTime = bars.t[bars.t.length - 1];
+        }
         res.json({ s: "no_data", nextTime });
     }
-    return;
-    // }
-
-    // let quote = tokens[1];
-    // let barsBnb;
-    // let exchangeName = undefined;
-    // if (quote == "0") {
-    //     const { pools } = (await axios.get(`${LIQUIDITY_BASE}/api/v1/pool/${base}`)).data;
-    //     quote = pools[0].token0 == base ? pools[0].token1 : pools[0].token0;
-    //     exchangeName = pools[0].exchange;
-    //     if (quote == ContractAddress.WBNB) {
-    //         barsBnb = await getCache(`ticker-${resolution}-${ContractAddress.WBNB}-${ContractAddress.BUSD}`, async () => {
-    //             return await getDexTrades(ContractAddress.WBNB, ContractAddress.BUSD, resolution);
-    //         });
-    //     }
-    // } else {
-    //     quote = getAddress(quote);
-    // }
-    // const bars = await getCache(`ticker-${resolution}-${base}-${quote}`, async () => {
-    //     return await getDexTrades(base, quote, resolution, exchangeName);
-    // });
-    // const from = parseInt(req.query.from);
-    // const to = parseInt(req.query.to) || Math.round(Date.now() / 1000);
-    // const countback = req.query.countback;
-
-    // const t = [], c = [], o = [], h = [], l = [], v = [];
-    // for (let i = 0; i < bars.t.length; i++) {
-    //     if ((countback || bars.t[i] >= from) && bars.t[i] < to) {
-    //         if (quote == ContractAddress.WBNB) {
-    //             t.push(bars.t[i]);
-    //             c.push(bars.c[i] * barsBnb.c[i]);
-    //             o.push(bars.o[i] * barsBnb.o[i]);
-    //             h.push(bars.h[i] * barsBnb.h[i]);
-    //             l.push(bars.l[i] * barsBnb.l[i]);
-    //             v.push(bars.v[i] * barsBnb.v[i]);
-    //         } else {
-    //             t.push(bars.t[i]);
-    //             c.push(bars.c[i]);
-    //             o.push(bars.o[i]);
-    //             h.push(bars.h[i]);
-    //             l.push(bars.l[i]);
-    //             v.push(bars.v[i]);
-    //         }
-    //     }
-    //     if (t.length >= parseInt(countback)) break;
-    // }
-    // t.reverse(); c.reverse(); o.reverse(); h.reverse(); l.reverse(); v.reverse();
-    // if (t.length > 0) {
-    //     const { price } = (await axios.get(`${LIQUIDITY_BASE}/api/v1/transaction/${base}`)).data;
-    //     c[c.length - 1] = price;
-    //     t[t.length - 1] = to;
-    //     res.json({ s: "ok", t, c, o, h, l, v });
-    // } else {
-    //     let nextTime = bars.t[0] + RESOLUTION_NEXTTIME[resolution];
-    //     if (parseInt(req.query.to) < bars.t[bars.t.length - 1]) {
-    //         nextTime = bars.t[bars.t.length - 1];
-    //     }
-    //     res.json({ s: "no_data", nextTime });
-    // }
 })
 
 async function start(port) {
