@@ -43,7 +43,7 @@ app.get('/api/v1/pool/:token', async (req, res) => {
     const { tokenPrice, pools, pricePool } = (await syncModel.getPools(token, pairModel.getPools(token)));
 
     const data = await getCache(`poolhistory-${token}`, async () => {
-        const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=10`)).data;
+        const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=26`)).data;
         for (let pool of pools) {
             pool.history = await syncModel.getReservesHistory(pool.pair, block, pool.token0 == token);
         }
@@ -75,7 +75,7 @@ app.get('/api/v1/volume/:token', async (req, res) => {
     const token = getAddress(req.params.token);
     const { decimals } = await getToken(token);
     const rs = await getCache(`volume-${token}`, async () => {
-        const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=8`)).data;
+        const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=26`)).data;
         return (await swapModel.getVolumeHistory(token, block)).map((p, i) => ({
             date: ts[i],
             totalTransaction: getNumber(p[1], 0, decimals),
