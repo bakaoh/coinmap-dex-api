@@ -102,7 +102,7 @@ app.get('/api/v1/tradingview/symbols', async (req, res) => {
 })
 
 app.get('/api/v1/tradingview/history', async (req, res) => {
-    const resolution = req.query.resolution || "15";
+    const resolution = req.query.resolution || "1D";
     const tokens = req.query.symbol.split("~");
     const base = getAddress(tokens[0]);
 
