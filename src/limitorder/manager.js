@@ -38,7 +38,7 @@ class Manager {
 
     async process(order) {
         if (order.status != 0) return false;
-        if (order.deadline * 1000 < Date.now()) return false;
+        if (order.deadline * 1000 > Date.now()) return false;
         if (this.processing[order.salt]) return false;
         if (!this.isValidParams(order)) return false;
 
