@@ -67,12 +67,14 @@ class Manager {
                             this.orderModel.writeStatus([blocknumber, order.maker, order.salt, 3, err.reason]);
                             return true;
                         }
+                    } else {
+                        console.log(order.salt, err)
                     }
                 }
             }
             await sleep(200);
         } catch (err) {
-            console.log(err)
+            console.log(order.salt, err)
         }
         this.processing[order.salt] = false;
         return executed;
