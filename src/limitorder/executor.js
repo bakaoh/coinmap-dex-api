@@ -10,7 +10,7 @@ const common = Common.default.forCustomChain('mainnet', {
     chainId: 56,
 }, 'istanbul');
 
-const COINMAPDEX_ADDRESS = "0xa7e44aE03307de5192944520251e95e89A56A953";
+const COINMAPDEX_ADDRESS = "0x21429f576B867a1002B46972123c0e49cc93cc6A";
 const web3 = new Web3("https://bsc-dataseed.binance.org");
 web3.eth.handleRevert = true;
 
@@ -27,8 +27,7 @@ class Executor {
             web3.utils.toChecksumAddress(signer),
             order,
             signature,
-            paths.map(p => web3.utils.toChecksumAddress(p)),
-            feePaths.map(p => web3.utils.toChecksumAddress(p))
+            paths.map(p => web3.utils.toChecksumAddress(p))
         ).encodeABI();
         return this.sendTx(COINMAPDEX_ADDRESS, data);
     }
