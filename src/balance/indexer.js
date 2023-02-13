@@ -27,6 +27,7 @@ class Indexer {
         this.first = true;
 
         fs.mkdirSync(`cache/holders/${this.token}`, { recursive: true });
+        fs.mkdirSync(`cache/allholders/${this.token}`, { recursive: true });
         fs.mkdirSync(`cache/topholders/${this.token}`, { recursive: true });
         fs.mkdirSync(`cache/newholders/${this.token}`, { recursive: true });
         fs.mkdirSync(`cache/summary/${this.token}`, { recursive: true });
@@ -47,23 +48,30 @@ class Indexer {
             }
             console.log(`Indexer load holders done (${Date.now() - startMs}ms)`)
         }
-        const fromIdx = Math.floor(this.lastCp / Partitioner.BPF);
-        const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / Partitioner.BPF);
-        for (let i = fromIdx; i <= toIdx; i++) {
-            try {
-                await this.loadLogFile(i);
-            } catch (err) {
-                if (err.toString().includes('no such file')) {
-                    const block = i * Partitioner.BPF;
-                    while (block > parseInt(this.checkpoints[this.cid])) {
-                        this.createCacheFile(this.checkpoints[this.cid]);
-                        this.cid++;
-                    }
-                } else {
-                    console.log(`Indexer load log file [${i}] err: ${err}`);
-                }
-            }
+        // const fromIdx = Math.floor(this.lastCp / Partitioner.BPF);
+        // const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / Partitioner.BPF);
+        // for (let i = fromIdx; i <= toIdx; i++) {
+        //     try {
+        //         await this.loadLogFile(i);
+        //     } catch (err) {
+        //         if (err.toString().includes('no such file')) {
+        //             const block = i * Partitioner.BPF;
+        //             while (block > parseInt(this.checkpoints[this.cid])) {
+        //                 this.createCacheFile(this.checkpoints[this.cid]);
+        //                 this.cid++;
+        //             }
+        //         } else {
+        //             console.log(`Indexer load log file [${i}] err: ${err}`);
+        //         }
+        //     }
+        // }
+
+        const holders = fs.createWriteStream(`cache/allholders/${this.token}/all.log`);
+        for (let address in this.balance) {
+            const balance = this.balance[address];
+            holders.write(`${address},${balance}\n`);
         }
+        holders.end();
     }
 
     loadHoldersFile(cp) {
@@ -83,7 +91,7 @@ class Indexer {
     createCacheFile(block) {
         let count = 0;
         const top = new Leaderboard(TOP_SIZE);
-        const holders = fs.createWriteStream(`cache/holders/${this.token}/${block}.log`, opts);
+        const holders = fs.createWriteStream(`cache/allholders/${this.token}/all.log`);
         for (let address in this.balance) {
             const balance = this.balance[address];
             if (balance.gtn(0)) count++;
