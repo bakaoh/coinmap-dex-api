@@ -16,8 +16,8 @@ async function run() {
     const tokenModel = new TokenModel();
     await tokenModel.loadTokenDetailFile();
 
-    // const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=30`)).data;
-    const block = 0;
+    const { ts, block } = (await axios.get(`${COMMON_BASE}/block/startofday?n=30`)).data;
+
     let c = 0;
     {
         const token = '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82';

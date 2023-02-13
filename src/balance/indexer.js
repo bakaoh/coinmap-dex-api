@@ -35,47 +35,40 @@ class Indexer {
 
     async run(checkpoints) {
         this.checkpoints = checkpoints;
-        const lastFile = getLastFile(`cache/holders/${this.token}`);
+        const lastFile = getLastFile(`cache/topholders/${this.token}`);
         if (lastFile != "") {
             this.first = false;
             const startMs = Date.now();
             this.lastCp = parseInt(lastFile);
             await this.loadHoldersFile(this.lastCp);
-            // const block = this.lastCp;
-            // while (block >= parseInt(this.checkpoints[this.cid])) {
-            //     this.cid++;
-            //     if (this.cid >= this.checkpoints.length) return;
-            // }
+            const block = this.lastCp;
+            while (block >= parseInt(this.checkpoints[this.cid])) {
+                this.cid++;
+                if (this.cid >= this.checkpoints.length) return;
+            }
             console.log(`Indexer load holders done (${Date.now() - startMs}ms)`)
         }
-        // const fromIdx = Math.floor(this.lastCp / Partitioner.BPF);
-        // const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / Partitioner.BPF);
-        // for (let i = fromIdx; i <= toIdx; i++) {
-        //     try {
-        //         await this.loadLogFile(i);
-        //     } catch (err) {
-        //         if (err.toString().includes('no such file')) {
-        //             const block = i * Partitioner.BPF;
-        //             while (block > parseInt(this.checkpoints[this.cid])) {
-        //                 this.createCacheFile(this.checkpoints[this.cid]);
-        //                 this.cid++;
-        //             }
-        //         } else {
-        //             console.log(`Indexer load log file [${i}] err: ${err}`);
-        //         }
-        //     }
-        // }
-
-        const holders = fs.createWriteStream(`cache/allholders/${this.token}/all.log`);
-        for (let address in this.balance) {
-            const balance = this.balance[address];
-            holders.write(`${address},${balance}\n`);
+        const fromIdx = Math.floor(this.lastCp / Partitioner.BPF);
+        const toIdx = Math.floor(checkpoints[checkpoints.length - 1] / Partitioner.BPF);
+        for (let i = fromIdx; i <= toIdx; i++) {
+            try {
+                await this.loadLogFile(i);
+            } catch (err) {
+                if (err.toString().includes('no such file')) {
+                    const block = i * Partitioner.BPF;
+                    while (block > parseInt(this.checkpoints[this.cid])) {
+                        this.createCacheFile(this.checkpoints[this.cid]);
+                        this.cid++;
+                    }
+                } else {
+                    console.log(`Indexer load log file [${i}] err: ${err}`);
+                }
+            }
         }
-        holders.end();
     }
 
     loadHoldersFile(cp) {
-        const file = `cache/holders/${this.token}/${cp}.log`
+        const file = `cache/allholders/${this.token}/all.log`
         const lr = new LineByLine(file);
         lr.on('line', (line) => {
             const p = line.split(',');
